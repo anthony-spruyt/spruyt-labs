@@ -33,6 +33,9 @@ defaultRules:
     # Disable default NodeFilesystemSpaceFillingUp alerts - replaced with Talos-safe version in vmrules/
     NodeFilesystemSpaceFillingUp:
       create: false
+    # Replaced in vmrules/kube-pv-filling-up.yaml to exclude Block-mode Kata volumes (RBD allocation, not fs use). See #3547.
+    KubePersistentVolumeFillingUp:
+      create: false
     # The kube-scheduler.rules quantile recording rules produce no samples while the cluster
     # is idle: rate() over the histogram buckets is all-zero, so histogram_quantile() returns
     # NaN and the sample is dropped. Occasional pod scheduling emits a single sample, which

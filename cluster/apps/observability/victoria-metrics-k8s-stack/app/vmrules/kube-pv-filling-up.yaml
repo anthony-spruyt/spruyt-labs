@@ -1,0 +1,46 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+# Upstream KubePersistentVolumeFillingUp (kubernetes-storage) minus the Coder image cache PVCs:
+# Block-mode Kata volumes report RBD allocation, not filesystem use. See #3547.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: kube-pv-filling-up
+  namespace: observability
+spec:
+  groups:
+    - name: kubernetes-storage-pv-filling-up
+      rules:
+        - alert: KubePersistentVolumeFillingUp
+          annotations:
+            description: "The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} is only {{ $value | humanizePercentage }} free."
+            runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup
+            summary: PersistentVolume is filling up.
+          expr: |
+            ((((kubelet_volume_stats_available_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}
+            / kubelet_volume_stats_capacity_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"})
+            < 0.03) and (kubelet_volume_stats_used_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}
+            > 0)) unless on(cluster,namespace,persistentvolumeclaim) (kube_persistentvolumeclaim_access_mode{access_mode="ReadOnlyMany"}
+            == 1)) unless on(cluster,namespace,persistentvolumeclaim) (kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"}
+            == 1)
+            unless on(cluster,namespace,persistentvolumeclaim) kubelet_volume_stats_capacity_bytes{job="kubelet",metrics_path="/metrics",namespace="coder-workspaces",persistentvolumeclaim=~"coder-.*-containers"}
+          for: 1m
+          labels:
+            severity: critical
+        - alert: KubePersistentVolumeFillingUp
+          annotations:
+            description: "Based on recent sampling, the PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} is expected to fill up within four days. Currently {{ $value | humanizePercentage }} is available."
+            runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup
+            summary: PersistentVolume is filling up.
+          expr: |
+            (((((kubelet_volume_stats_available_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}
+            / kubelet_volume_stats_capacity_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"})
+            < 0.15) and (kubelet_volume_stats_used_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}
+            > 0)) and (predict_linear(kubelet_volume_stats_available_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}[6h],
+            345600) < 0)) unless on(cluster,namespace,persistentvolumeclaim) (kube_persistentvolumeclaim_access_mode{access_mode="ReadOnlyMany"}
+            == 1)) unless on(cluster,namespace,persistentvolumeclaim) (kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"}
+            == 1)
+            unless on(cluster,namespace,persistentvolumeclaim) kubelet_volume_stats_capacity_bytes{job="kubelet",metrics_path="/metrics",namespace="coder-workspaces",persistentvolumeclaim=~"coder-.*-containers"}
+          for: 1h
+          labels:
+            severity: warning
