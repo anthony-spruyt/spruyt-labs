@@ -59,7 +59,7 @@ All control plane and worker nodes
 3. If Ceph degraded, wait for recovery before next action
 
 ## Validation Steps
-- etcd 3/3 healthy, all nodes Ready on v<target>, Ceph HEALTH_OK
+- etcd 3/3 healthy, all nodes Ready on v<target>, Ceph ready (Step 4.1)
 - `task talos:diff` clean after apply
 
 ## Risk Level
@@ -226,14 +226,16 @@ curl -sS --max-time 60 -o /dev/null -w "%{http_code}\n" \
 # Expect 200. A timeout on first call usually means the image is still being built - retry.
 ```
 
-**Pre-flight drift check (before any node changes):** Renovate bumps under `talos/` (for example extraManifests URLs) merge to main without reaching the nodes. Apply them now so Phase 8 shows only this upgrade's changes. Run on an up-to-date main checkout, before the pin is merged, so the running version equals `talosVersion` and no installer-image diff is expected:
+**Pre-flight drift check (before any node changes):** Renovate bumps under `talos/` (for example extraManifests URLs) merge to main without reaching the nodes. Apply them now so Phase 8 shows only this upgrade's changes. `apply` renders from the working tree, so first require `git status --porcelain -- talos/` to be empty; otherwise report PRE-UPGRADE BLOCKED. Then, on an up-to-date main checkout:
 
 ```bash
 git pull --ff-only
 task talos:diff
 ```
 
-Exit 0 means no drift: continue. Otherwise the drift is **applyable** only if both hold:
+Exit 0 means no drift: continue. Exit 2 means drift; any other non-zero is an error to fix before going on.
+
+If `talosVersion` in `talos/topf.yaml` differs from the running Talos version, the pin already reached main (Renovate or Mergify merged it first). The `machine.install.image` / `installerImage` lines are then expected, not drift: skip the pre-flight apply, record any other drift (with the commits that explain it) in the upgrade issue, and leave it for Phase 8, which lists it as expected. Otherwise the running version equals `talosVersion`, no installer-image diff is expected, and the drift is **applyable** only if both hold:
 
 - Every changed line traces to a commit already on main under `talos/` (check `git log` on the changed patch files)
 - The dry run reports applying "without a reboot" for every node
@@ -431,7 +433,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree
 
 **Ceph ready** means all OSDs up and in, all PGs `active+clean`, mons in quorum, and health is either `HEALTH_OK` or `HEALTH_WARN` whose only checks are `OSD_SLOW_PING_TIME_BACK` / `OSD_SLOW_PING_TIME_FRONT` (stale reboot heartbeats, see Step 4.5) or `BLUESTORE_SLOW_OP_ALERT`. Any other warning, or any `HEALTH_ERR`, is not ready.
 
-`BLUESTORE_SLOW_OP_ALERT` stays raised for `bluestore_slow_ops_warn_lifetime` (24h default) after a single slow op and clears when the OSD restarts, so it is acceptable only while all OSDs are up/in and all PGs are `active+clean`. Note it in the progress comment. Live `SLOW_OPS` (slow requests) still blocks.
+`BLUESTORE_SLOW_OP_ALERT` stays raised for `bluestore_slow_ops_warn_lifetime` (24h default) after a single slow op and clears when the OSD restarts, so it is acceptable only while all OSDs are up/in and all PGs are `active+clean`. Note it in the progress comment and do not restart OSDs to clear it. Live `SLOW_OPS` (slow requests) still blocks.
 
 **BLOCK if Ceph is not ready:**
 
@@ -665,7 +667,9 @@ Expected diff:
 - **Minor upgrade:** the installer image, plus the migrated documents from Phase 2b
 - **Kata config fixed in Step 4.4a:** the `kata-containers/configuration.toml` file on the workers
 
-Pre-existing drift was already applied in Phase 1, so anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not apply.
+- **Pin merged before Phase 1:** the non-installer drift recorded in Phase 1, each line traced to a commit under `talos/` on main
+
+Pre-existing drift was already applied in Phase 1 (or recorded there, if the pin was already on main), so anything else, such as a Kubernetes version change or unrelated patch drift, means stop and report it. Do not apply.
 
 Apply it yourself. `topf` asks a `[y/n]` question per node on stdin; the diff you just checked is that confirmation, so turn the prompt off:
 
@@ -673,7 +677,7 @@ Apply it yourself. `topf` asks a `[y/n]` question per node on stdin; the diff yo
 TOPF_CONFIRM=false task talos:apply
 ```
 
-Then re-run `task talos:diff`. It must exit 0 (no drift). Re-check node Ready, etcd 3/3 and Ceph `HEALTH_OK`, because an apply can restart services.
+Then re-run `task talos:diff`. It must exit 0 (no drift). Re-check node Ready, etcd 3/3 and Ceph ready (Step 4.1), because an apply can restart services.
 
 Smoke-test Kata on the first worker. Kyverno forces `runAsNonRoot`, so the pod needs a non-root user:
 
@@ -708,7 +712,7 @@ Post completion report:
 
 ### Health Checks
 - etcd: 3/3 members healthy
-- Ceph: HEALTH_OK
+- Ceph: ready (Step 4.1); list any allowed warning still present
 - Flux: All kustomizations Ready
 
 ### Config
@@ -771,7 +775,7 @@ End every handoff (SUCCESS, ROLLBACK or PARTIAL) with an `### Agent Definition F
 ### Summary
 - All nodes upgraded to v<new-version>
 - etcd quorum: 3/3 healthy
-- Ceph: HEALTH_OK
+- Ceph: ready (Step 4.1); list any allowed warning still present
 - talos/README.md: updated on main
 - Machine config: applied, `task talos:diff` clean
 
@@ -846,7 +850,7 @@ On an unexpected Talos, etcd or Ceph error, look it up in Context7 (`/siderolabs
 8. **ALWAYS survey PDBs before worker upgrades** - any PDB stuck at `disruptionsAllowed: 0` makes drain-based upgrades impossible; fall back to `--drain=false` (see Phase 1 and Phase 4)
 9. **NEVER leave a worker cordoned across a reboot** - host-pinned Ceph mon and OSD pods cannot reschedule onto a cordoned node, which strands them `Pending` and degrades Ceph. If an upgrade aborted and left a node cordoned, `kubectl uncordon` it immediately
 10. **NEVER run `task talos:apply` / `topf apply` between the start of Phase 3 and the completion of Phase 4** - including the gap between the two phases, while nodes straddle versions - `talosctl upgrade` swaps the installer image only and leaves kubelet untouched. Applying machine configs can bump Kubernetes as a side effect. If `topf.yaml`'s `kubernetesVersion` differs from the running kubelet,
-    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. Phase 8, after the pin lands, is the only sanctioned apply
+    that drift is deliberate; flag it and stop rather than reconciling it mid-upgrade. Mid-upgrade the cluster also straddles two config contracts, so a single apply would hand different nodes different config forms. The Phase 1 pre-flight apply and the Phase 8 apply (after the pin lands) are the only sanctioned applies
 11. **ALWAYS run `task talos:diff` and check it before `TOPF_CONFIRM=false task talos:apply`** - the checked diff replaces the interactive confirmation, so an apply without one is blind
 
 ## Timeout Expectations
