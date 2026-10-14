@@ -3,6 +3,12 @@
 driver:
   kind: modern_ebpf
 
+# Drop once a chart ships Falco >= 0.45.1 - needed for kernel 6.18.53+ (falcosecurity/falco#4017)
+image:
+  registry: docker.io
+  repository: falcosecurity/falco
+  tag: 0.45.1-rc1@sha256:2adcf249bbe4078cc1959b7c24eeb4a65d9345ce48d3d9903a8dd1d9dfccd416
+
 podPriorityClassName: high-priority
 
 tolerations:
