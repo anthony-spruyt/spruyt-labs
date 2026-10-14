@@ -360,7 +360,7 @@ controllers:
       llm-tool-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-tool-guard
-          tag: "1.1.1@sha256:81d9c7d6575bcce4e56d6d0bdef283544679d1ff44ab9c72166baa44a993cb57"
+          tag: "1.2.0@sha256:e96255e98f4eb581f25cd8a2c5cf931bdedfa13e6eab9eccb1f8087d53fad2cf"
           pullPolicy: IfNotPresent
         env:
           HF_HUB_OFFLINE: "1"
