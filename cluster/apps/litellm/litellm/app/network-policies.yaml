@@ -400,7 +400,8 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
-  egress: []
+  egress:
+    - {}
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
@@ -422,7 +423,8 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
-  egress: []
+  egress:
+    - {}
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # =============================================================================
