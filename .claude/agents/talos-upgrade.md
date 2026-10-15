@@ -27,47 +27,26 @@ Track upgrade work with a GitHub issue. If no issue exists, create one.
 
 Use plain lists, not checkboxes, in the issue body: checkboxes are hard to edit reliably. Post per-node progress as comments, and edit the body when the plan changes.
 
-Create a GitHub issue with title `infra(talos): upgrade Talos v<current> to v<target>` and label `infra`. Body template:
+Create a GitHub issue with title `chore(talos): upgrade Talos v<current> to v<target>` and label `infra`. Fill the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form), using these upgrade-specific values:
 
-```markdown
-## Summary
-Upgrade Talos Linux across all cluster nodes.
-
-## Motivation
-<Renovate PR / security patches / feature requirements>
-
-## Infrastructure Type
-Talos (machine configs, upgrades)
-
-## Affected Nodes
-All control plane and worker nodes
-
-## Planned Changes
-1. Pre-upgrade validation (etcd backup, cluster health)
-2. Pre-flight drift check; apply pending `talos/` changes already on main (`task talos:diff`)
-3. Config migration and `talosctl validate` (minor upgrades only)
-4. Upgrade control plane nodes (sequential)
-5. Upgrade worker nodes (sequential, Ceph health gates)
-6. Post-upgrade validation
-7. Trigger descheduler for workload rebalancing
-8. Update talos/README.md on main
-9. Land the talosVersion pin, diff, and `task talos:apply`
-
-## Rollback Plan
-1. Downgrade affected node using previous version image
-2. If etcd corrupted, restore from snapshot
-3. If Ceph degraded, wait for recovery before next action
-
-## Validation Steps
-- etcd 3/3 healthy, all nodes Ready on v<target>, Ceph ready (Step 4.1)
-- `task talos:diff` clean after apply
-
-## Risk Level
-High (node reboot, potential data impact)
-
-## Related Issues/PRs
-<Renovate PR, if any>
-```
+- Summary: upgrade Talos Linux across all cluster nodes
+- Motivation: Renovate PR, security patches or feature requirements
+- Infrastructure Type: Talos (machine configs, upgrades)
+- Affected Nodes: all control plane and worker nodes
+- Planned Changes (plain numbered list):
+  1. Pre-upgrade validation (etcd backup, cluster health)
+  2. Pre-flight drift check; apply pending `talos/` changes already on main (`task talos:diff`)
+  3. Config migration and `talosctl validate` (minor upgrades only)
+  4. Upgrade control plane nodes (sequential)
+  5. Upgrade worker nodes (sequential, Ceph health gates)
+  6. Post-upgrade validation
+  7. Trigger descheduler for workload rebalancing
+  8. Update talos/README.md on main
+  9. Land the talosVersion pin, diff, and `task talos:apply`
+- Rollback Plan: downgrade the affected node using the previous version image; restore etcd from snapshot if corrupted; if Ceph is degraded, wait for recovery before the next action
+- Validation Steps: etcd 3/3 healthy, all nodes Ready on v<target>, Ceph ready (Step 4.1); `task talos:diff` clean after apply
+- Risk Level: High (node reboot, potential data impact)
+- Related Issues/PRs: the Renovate PR, if any
 
 ### Progress Tracking via Comments
 

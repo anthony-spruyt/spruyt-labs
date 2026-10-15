@@ -27,9 +27,9 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 
 ### Phase 2: Create GitHub Issue
 
-Find or create the issue per the GitHub rule (search first), using the `infra` template so SRE agents see maintenance context. Include:
+Find or create the issue per the GitHub rule (search first), filling the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form) so SRE agents see maintenance context. Include:
 
-- Title: `infra(k8s): upgrade Kubernetes to v<version>`
+- Title: `chore(k8s): upgrade Kubernetes to v<version>`
 - Label: `infra`
 - Summary, motivation (Renovate PR ref if applicable), planned changes, rollback plan, risk level (patch vs minor)
 - Track issue number for commit references (`Ref #<number>`)
