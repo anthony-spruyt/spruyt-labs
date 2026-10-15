@@ -4,7 +4,7 @@
 server:
   image:
     repository: temporalio/server
-    tag: 1.32.0@sha256:c3e752127759616bb1615e0f9ba0e21635aeb5fdeb922de4f371c350955f46ae
+    tag: 1.32.1@sha256:acecbab5b0b8ae9cf4012b508866ca97feda3709577bf157b537239f40029049
   priorityClassName: standard
   versionCheckDisabled: true
   deploymentAnnotations:
