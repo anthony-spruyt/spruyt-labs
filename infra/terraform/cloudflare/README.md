@@ -22,7 +22,7 @@ Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare W
 The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules. The current five, in order:
 
 1. Allow GitHub Webhooks (skip rule for the `flux-webhook`, `hooks` and `n8n` hosts)
-2. Block non-AU traffic, bots, and non-API LiteLLM paths. The blog host skips the country check, and bots in the verified categories Search Engine Crawler, Feed Fetcher and Page Preview pass on it
+2. Block non-AU traffic, bots, and non-API LiteLLM paths. The blog host skips the country check, and bots in the verified categories Search Engine Crawler, Feed Fetcher and Page Preview pass on it, as does Google's verified URL Inspection tool (`Google-InspectionTool`, category Security)
 3. AI Crawl Control - Block AI bots by User Agent (`[CF AI Audit]`, linked to the dashboard)
 4. Block Happy account creation and pairing, and Authentik admin paths outside home
 5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`. The `litellm` host is gated by Cloudflare Access (see the LiteLLM section below), and the blog host skips the challenge

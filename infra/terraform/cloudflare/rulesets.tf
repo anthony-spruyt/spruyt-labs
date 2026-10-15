@@ -92,7 +92,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
       ref         = "a2f6b0f5d2254d04a8665581a8dd234b"
       description = "Block non-AU traffic, bots, and non-API LiteLLM paths"
       expression = format(
-        "(ip.src.country ne \"AU\" and lower(http.host) ne \"%[1]s\" and lower(http.host) ne \"%[3]s\") or (cf.client.bot and not (lower(http.host) eq \"%[3]s\" and cf.verified_bot_category in {%[4]s})) or (lower(http.host) eq \"%[1]s\" and not lower(url_decode(http.request.uri.path)) in {%[2]s})",
+        "(ip.src.country ne \"AU\" and lower(http.host) ne \"%[1]s\" and lower(http.host) ne \"%[3]s\") or (cf.client.bot and not (lower(http.host) eq \"%[3]s\" and (cf.verified_bot_category in {%[4]s} or (cf.verified_bot_category eq \"Security\" and http.user_agent contains \"Google-InspectionTool\")))) or (lower(http.host) eq \"%[1]s\" and not lower(url_decode(http.request.uri.path)) in {%[2]s})",
         local.litellm_host,
         join(" ", [for path in local.litellm_ci_paths : format("\"%s\"", path)]),
         local.blog_host,
