@@ -158,6 +158,8 @@ controllers:
         env:
           PRESIDIO_DEVICE: cpu
           RECOGNIZER_REGISTRY_CONF_FILE: /opt/presidio/conf/recognizers.yaml
+          # No egress: fail the Public Suffix List fetch fast and use the bundled snapshot
+          TLDEXTRACT_CACHE_TIMEOUT: "2"
         probes:
           startup:    # NLP model loading takes 60-120s
             enabled: true
