@@ -29,11 +29,8 @@ Use plain lists, not checkboxes, in the issue body: checkboxes are hard to edit 
 
 Create a GitHub issue with title `chore(talos): upgrade Talos v<current> to v<target>` and label `infra`. Fill the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form), with one `## <field label>` heading per form field to match the form layout, using these upgrade-specific values:
 
-- Summary: upgrade Talos Linux across all cluster nodes
-- Motivation: Renovate PR, security patches or feature requirements
-- Infrastructure Type: Talos (machine configs, upgrades)
-- Affected Nodes: all control plane and worker nodes
-- Planned Changes (plain numbered list):
+- Why: upgrade Talos Linux across all cluster nodes; Renovate PR, security patches or feature requirements; link the Renovate PR, if any
+- What: Talos (machine configs, upgrades) on all control plane and worker nodes, with these steps (plain numbered list):
   1. Pre-upgrade validation (etcd backup, cluster health)
   2. Pre-flight drift check; apply pending `talos/` changes already on main (`task talos:diff`)
   3. Config migration and `talosctl validate` (minor upgrades only)
@@ -43,9 +40,8 @@ Create a GitHub issue with title `chore(talos): upgrade Talos v<current> to v<ta
   7. Trigger descheduler for workload rebalancing
   8. Update talos/README.md on main
   9. Land the talosVersion pin, diff, and `task talos:apply`
-- Rollback Plan: downgrade the affected node using the previous version image; restore etcd from snapshot if corrupted; if Ceph is degraded, wait for recovery before the next action
-- Validation Steps: etcd 3/3 healthy, all nodes Ready on v<target>, Ceph ready (Step 4.1); `task talos:diff` clean after apply
-- Related Issues/PRs: the Renovate PR, if any
+- Rollback: downgrade the affected node using the previous version image; restore etcd from snapshot if corrupted; if Ceph is degraded, wait for recovery before the next action
+- Done when: etcd 3/3 healthy, all nodes Ready on v<target>, Ceph ready (Step 4.1); `task talos:diff` clean after apply
 
 ### Progress Tracking via Comments
 

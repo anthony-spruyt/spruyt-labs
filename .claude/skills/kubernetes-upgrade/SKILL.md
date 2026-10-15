@@ -31,7 +31,10 @@ Find or create the issue per the GitHub rule (search first), filling the body fr
 
 - Title: `chore(k8s): upgrade Kubernetes to v<version>`
 - Label: `infra`
-- Summary, motivation (Renovate PR ref if applicable), planned changes, rollback plan, upgrade type (patch vs minor)
+- Why: summary and motivation (Renovate PR link if applicable)
+- What: upgrade type (patch vs minor), the components it touches, and the planned steps
+- Rollback: the rollback plan
+- Done when: how to check the upgrade worked
 - Track issue number for commit references (`Ref #<number>`)
 
 ### Phase 3: Breaking Changes Research
