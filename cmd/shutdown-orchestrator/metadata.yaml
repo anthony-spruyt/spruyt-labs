@@ -1,1 +1,6 @@
 language: go
+# gcr.io serves the distroless base; go mod download uses the Go module proxy
+egress:
+  - gcr.io:443
+  - proxy.golang.org:443
+  - sum.golang.org:443
