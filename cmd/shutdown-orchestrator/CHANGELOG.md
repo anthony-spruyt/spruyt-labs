@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.26](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.25...shutdown-orchestrator/v1.1.26) (2026-10-15)
+
+
+### Bug Fixes
+
+* **deps:** update talos group to v1.14.2 ([#3390](https://github.com/anthony-spruyt/spruyt-labs/issues/3390)) ([688147a](https://github.com/anthony-spruyt/spruyt-labs/commit/688147af6821929f0aae341c175eb69e72c9a1df))
+
+
+### Dependencies
+
+* **deps:** update module golang.org/x/net to v0.60.0 [security] ([#3502](https://github.com/anthony-spruyt/spruyt-labs/issues/3502)) ([0e10270](https://github.com/anthony-spruyt/spruyt-labs/commit/0e10270252324955c2335b09dbabb265b4ecadcc))
+
+
+### Continuous Integration
+
+* **image:** block shutdown-orchestrator image job egress to an allowlist ([#3570](https://github.com/anthony-spruyt/spruyt-labs/issues/3570)) ([03347e7](https://github.com/anthony-spruyt/spruyt-labs/commit/03347e7e41ea11268cdb4319c35aad73aaaa6f43))
+
 ## [1.1.25](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.24...shutdown-orchestrator/v1.1.25) (2026-10-07)
 
 
