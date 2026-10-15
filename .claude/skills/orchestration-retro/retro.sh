@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Read-only helper delegation report. Never print tool inputs, tool results or env values.
+# Keep variables unbraced: xfg substitutes brace-dollar references when it syncs this file.
 set -euo pipefail
 
 usage() {
@@ -8,16 +9,16 @@ usage() {
 }
 
 since=""
-projects_dir="${HOME}/.claude/projects"
-while [ $# -gt 0 ]; do
+projects_dir="$HOME/.claude/projects"
+while [[ $# -gt 0 ]]; do
   case "$1" in
   --since)
-    [ $# -ge 2 ] || usage
+    [[ $# -ge 2 ]] || usage
     since="$2"
     shift 2
     ;;
   --projects-dir)
-    [ $# -ge 2 ] || usage
+    [[ $# -ge 2 ]] || usage
     projects_dir="$2"
     shift 2
     ;;
@@ -25,12 +26,12 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ -n "${since}" ] && ! [[ "${since}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+if [[ -n "$since" ]] && ! [[ "$since" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
   echo "retro.sh: --since must be YYYY-MM-DD" >&2
   exit 2
 fi
-if [ ! -d "${projects_dir}" ]; then
-  echo "retro.sh: ${projects_dir} is not a directory" >&2
+if [[ ! -d "$projects_dir" ]]; then
+  echo "retro.sh: $projects_dir is not a directory" >&2
   exit 1
 fi
 
@@ -176,16 +177,16 @@ map(select($since == "" or .date >= $since)) as $runs
 JQ
 
 runs_file="$(mktemp)"
-trap 'rm -f "${runs_file}"' EXIT
+trap 'rm -f "$runs_file"' EXIT
 
 while IFS= read -r -d '' transcript; do
-  meta_file="${transcript%.jsonl}.meta.json"
+  meta_file=$(printf '%s' "$transcript" | sed 's/\.jsonl$/.meta.json/')
   meta='{"agent":"unknown","desc":""}'
-  if [ -f "${meta_file}" ]; then
-    meta="$(jq -c '{agent: (.agentType // "unknown"), desc: (.description // "")}' "${meta_file}" 2>/dev/null || echo "${meta}")"
+  if [[ -f "$meta_file" ]]; then
+    meta="$(jq -c '{agent: (.agentType // "unknown"), desc: (.description // "")}' "$meta_file" 2>/dev/null || echo "$meta")"
   fi
-  jq -R -n -c --argjson meta "${meta}" "${extract}" "${transcript}" >>"${runs_file}" ||
-    echo "retro.sh: skipped unreadable transcript ${transcript##*/}" >&2
-done < <(find "${projects_dir}" -mindepth 4 -maxdepth 4 -path '*/subagents/agent-*.jsonl' -type f -print0)
+  jq -R -n -c --argjson meta "$meta" "$extract" "$transcript" >>"$runs_file" ||
+    echo "retro.sh: skipped unreadable transcript $(basename "$transcript")" >&2
+done < <(find "$projects_dir" -mindepth 4 -maxdepth 4 -path '*/subagents/agent-*.jsonl' -type f -print0)
 
-jq -s -r --arg since "${since}" "${report}" "${runs_file}"
+jq -s -r --arg since "$since" "$report" "$runs_file"

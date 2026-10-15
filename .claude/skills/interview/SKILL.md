@@ -24,14 +24,14 @@ Read the issue, its comments and the code it touches. Don't ask what those answe
 
 ## The conversation
 
-While interviewing, this format replaces the Owner question rules in `.claude/rules/orchestration.md`.
+While interviewing, this format replaces the Owner question rules in the `orchestration` skill.
 
 - End each message with one question: one sentence, no list of example answers.
 - Open questions first. Their words carry intent your options can't. Offer two options with your pick only when they're stuck; when they say "you pick", propose something concrete.
 - A guess they can correct often beats a question: "I'm guessing this is because X keeps paging you?"
 - Find out which choices they want to make and which they hand to you. A choice you make goes in the design as your call, never as something they agreed to.
 - Ground to cover, never read out as a list: why now, what done looks like, goals, non-goals, anti-goals (what would make it a failure even if it works), what exists and what they've tried, prior art they liked or hated, the details they care about.
-- Look things up yourself (repo, cluster, upstream docs) instead of asking facts you can check.
+- Look things up yourself (repo, live systems, upstream docs) instead of asking facts you can check.
 
 ## Play it back
 
@@ -39,4 +39,4 @@ As soon as you understand one part, describe it back in a short paragraph, then 
 
 ## Done
 
-Stop when nothing that changes what gets built is still open. If it's really several pieces of work, say so and agree an order. Then write the design as `.claude/rules/orchestration.md` describes, built from what they told you.
+Stop when nothing that changes what gets built is still open. If it's really several pieces of work, say so and agree an order. Then write the design as the `orchestration` skill describes, built from what they told you.
