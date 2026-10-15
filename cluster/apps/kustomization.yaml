@@ -58,3 +58,4 @@ resources:
   - ./temporal-system
   - ./agent-platform
   - ./happy-system
+  - ./blog

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./agent-platform
   - ./authentik-system
+  - ./blog
   - ./coder-system
   - ./flux-system
   - ./foundryvtt
