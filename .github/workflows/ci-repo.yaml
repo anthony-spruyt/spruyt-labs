@@ -70,9 +70,6 @@ jobs:
               - 'cluster/apps/litellm/litellm/access-policy/**'
               # Script asserted by tests/litellm-mcp-tool-drift.bats
               - 'cluster/apps/litellm/litellm/mcp-tool-drift/**'
-              # Sources asserted by tests/orchestration-retro.bats
-              - '.claude/skills/orchestration-retro/**'
-              - 'tests/fixtures/orchestration-retro/**'
   kubeconform:
     name: "kubeconform"
     needs: "changes"
