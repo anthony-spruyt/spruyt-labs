@@ -17,7 +17,7 @@ jobs:
     permissions:
       contents: "read"
       packages: "write"
-    uses: "anthony-spruyt/repo-operator/.github/workflows/_container-retention.yaml@15a66ea662b072d4063c05254d821e3a31dae1a7"
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_container-retention.yaml@be979495055a051740987af8d1a28d551bc2dc14"
     with:
       dry-run: "${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}"
       dockerhub-namespace: "aspruyt"
