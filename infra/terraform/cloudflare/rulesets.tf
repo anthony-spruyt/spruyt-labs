@@ -31,6 +31,9 @@ locals {
   ]
   litellm_ci_path_regex = "^(${join("|", local.litellm_ci_paths)})$"
 
+  blog_host                   = var.zone_name
+  blog_allowed_bot_categories = ["Search Engine Crawler", "Feed Fetcher", "Page Preview"]
+
   github_webhook_hosts = ["flux-webhook.${var.zone_name}", "hooks.${var.zone_name}", "n8n.${var.zone_name}"]
 
   happy_signup_expression = "http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"}"
@@ -89,9 +92,11 @@ resource "cloudflare_ruleset" "firewall_custom" {
       ref         = "a2f6b0f5d2254d04a8665581a8dd234b"
       description = "Block non-AU traffic, bots, and non-API LiteLLM paths"
       expression = format(
-        "(ip.src.country ne \"AU\" and lower(http.host) ne \"%[1]s\") or (cf.client.bot) or (lower(http.host) eq \"%[1]s\" and not lower(url_decode(http.request.uri.path)) in {%[2]s})",
+        "(ip.src.country ne \"AU\" and lower(http.host) ne \"%[1]s\" and lower(http.host) ne \"%[3]s\") or (cf.client.bot and not (lower(http.host) eq \"%[3]s\" and cf.verified_bot_category in {%[4]s})) or (lower(http.host) eq \"%[1]s\" and not lower(url_decode(http.request.uri.path)) in {%[2]s})",
         local.litellm_host,
         join(" ", [for path in local.litellm_ci_paths : format("\"%s\"", path)]),
+        local.blog_host,
+        join(" ", [for category in local.blog_allowed_bot_categories : format("\"%s\"", category)]),
       )
       action  = "block"
       enabled = true
@@ -100,7 +105,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
       # This ref links the rule to the dashboard's AI Crawl Control page.
       ref         = "[CF AI Audit]"
       description = "AI Crawl Control - Block AI bots by User Agent"
-      expression  = "(http.request.uri.path ne \"/robots.txt\") and ((http.user_agent contains \"Applebot\") or (http.user_agent contains \"archive.org_bot\") or (http.user_agent contains \"Arquivo-web-crawler\") or (http.user_agent contains \"bingbot\") or (http.user_agent contains \"ChatGPT-User\") or (http.user_agent contains \"DuckAssistBot\") or (http.user_agent contains \"Googlebot\") or (http.user_agent contains \"Manus-User\") or (http.user_agent contains \"meta-externalfetcher\") or (http.user_agent contains \"MistralAI-User\") or (http.user_agent contains \"OAI-SearchBot\") or (http.user_agent contains \"Perplexity-User\") or (http.user_agent contains \"PerplexityBot\") or (http.user_agent contains \"ProRataInc\") or (http.user_agent contains \"Terracotta\"))"
+      expression  = "(http.request.uri.path ne \"/robots.txt\") and ((http.user_agent contains \"archive.org_bot\") or (http.user_agent contains \"Arquivo-web-crawler\") or (http.user_agent contains \"ChatGPT-User\") or (http.user_agent contains \"DuckAssistBot\") or (http.user_agent contains \"Manus-User\") or (http.user_agent contains \"meta-externalfetcher\") or (http.user_agent contains \"MistralAI-User\") or (http.user_agent contains \"OAI-SearchBot\") or (http.user_agent contains \"Perplexity-User\") or (http.user_agent contains \"PerplexityBot\") or (http.user_agent contains \"ProRataInc\") or (http.user_agent contains \"Terracotta\"))"
       action      = "block"
       enabled     = true
     },
@@ -115,9 +120,10 @@ resource "cloudflare_ruleset" "firewall_custom" {
       ref         = "challenge-cloud-asns"
       description = "Managed challenge for cloud and hosting networks"
       expression = format(
-        "(ip.src.asnum in {%s}) and (lower(http.host) ne \"%s\")",
+        "(ip.src.asnum in {%s}) and (lower(http.host) ne \"%s\") and (lower(http.host) ne \"%s\")",
         join(" ", local.challenged_asns),
         local.litellm_host,
+        local.blog_host,
       )
       action  = "managed_challenge"
       enabled = true
@@ -162,6 +168,51 @@ resource "cloudflare_ruleset" "cache" {
       action      = "set_cache_settings"
       action_parameters = {
         cache = false
+      }
+      enabled = true
+    },
+    {
+      ref         = "cache-blog-respect-origin"
+      description = "Cache the blog host per origin headers"
+      expression  = format("(lower(http.host) eq \"%s\")", local.blog_host)
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode = "respect_origin"
+          status_code_ttl = [
+            {
+              status_code_range = { from = 500, to = 599 }
+              value             = -1
+            },
+          ]
+        }
+      }
+      enabled = true
+    },
+  ]
+}
+
+resource "cloudflare_ruleset" "redirect" {
+  zone_id = local.zone_id
+  name    = "default"
+  kind    = "zone"
+  phase   = "http_request_dynamic_redirect"
+
+  rules = [
+    {
+      ref         = "redirect-www-to-apex"
+      description = "Redirect www to the apex"
+      expression  = format("(lower(http.host) eq \"www.%s\")", var.zone_name)
+      action      = "redirect"
+      action_parameters = {
+        from_value = {
+          status_code = 301
+          target_url = {
+            expression = format("concat(\"https://%s\", http.request.uri.path)", local.blog_host)
+          }
+          preserve_query_string = true
+        }
       }
       enabled = true
     },
