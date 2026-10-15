@@ -27,7 +27,7 @@ Track upgrade work with a GitHub issue. If no issue exists, create one.
 
 Use plain lists, not checkboxes, in the issue body: checkboxes are hard to edit reliably. Post per-node progress as comments, and edit the body when the plan changes.
 
-Create a GitHub issue with title `chore(talos): upgrade Talos v<current> to v<target>` and label `infra`. Fill the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form), using these upgrade-specific values:
+Create a GitHub issue with title `chore(talos): upgrade Talos v<current> to v<target>` and label `infra`. Fill the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form), with one `## <field label>` heading per form field to match the form layout, using these upgrade-specific values:
 
 - Summary: upgrade Talos Linux across all cluster nodes
 - Motivation: Renovate PR, security patches or feature requirements
@@ -45,7 +45,6 @@ Create a GitHub issue with title `chore(talos): upgrade Talos v<current> to v<ta
   9. Land the talosVersion pin, diff, and `task talos:apply`
 - Rollback Plan: downgrade the affected node using the previous version image; restore etcd from snapshot if corrupted; if Ceph is degraded, wait for recovery before the next action
 - Validation Steps: etcd 3/3 healthy, all nodes Ready on v<target>, Ceph ready (Step 4.1); `task talos:diff` clean after apply
-- Risk Level: High (node reboot, potential data impact)
 - Related Issues/PRs: the Renovate PR, if any
 
 ### Progress Tracking via Comments
