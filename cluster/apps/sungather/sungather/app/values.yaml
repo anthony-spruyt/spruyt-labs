@@ -22,7 +22,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/sungather
-          tag: 3.0.1@sha256:8a2d311a944340cca5c3dab0ce6edc96208beb0cc794b5f19849fc49d7bfc7f2
+          tag: 3.0.2@sha256:8bd63dc7a61190d206ae33121370a79f522f145743a32cd8716438897574b052
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
