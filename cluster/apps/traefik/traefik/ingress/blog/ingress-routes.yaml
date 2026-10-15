@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/traefik.io/ingressroute_v1alpha1.json
+# Documentation: https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-routes-wan-https
+  namespace: blog
+  annotations:
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER}
+    # Split DNS - the apex resolves via Cloudflare, not the ingress IP. Dropping the
+    # target annotation is not enough: hostnames are also read from Host() rules.
+    external-dns.kubernetes.io/controller: none
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`${EXTERNAL_DOMAIN}`)
+      services:
+        - name: blog
+          namespace: blog
+          passHostHeader: true
+          port: 8080
+  tls:
+    secretName: "blog-${EXTERNAL_DOMAIN/./-}-tls"

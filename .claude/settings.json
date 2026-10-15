@@ -136,7 +136,6 @@
     "hookify-plus@aspruyt-plugins": true,
     "security-hooks@aspruyt-plugins": true,
     "best-practices@aspruyt-plugins": true,
-    "agent-kit@aspruyt-plugins": true,
     "context7@claude-plugins-official": false,
     "claude-code-setup@claude-plugins-official": false,
     "claude-md-management@claude-plugins-official": false,
@@ -144,7 +143,8 @@
     "feature-dev@claude-plugins-official": false,
     "hookify@claude-plugins-official": false,
     "plugin-dev@claude-plugins-official": false,
-    "security-guidance@claude-plugins-official": false
+    "security-guidance@claude-plugins-official": false,
+    "agent-kit@aspruyt-plugins": true
   },
   "extraKnownMarketplaces": {
     "aspruyt-plugins": {

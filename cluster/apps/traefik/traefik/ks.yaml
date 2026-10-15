@@ -29,6 +29,7 @@ spec:
     - name: traefik
     - name: agent-platform-web
     - name: authentik
+    - name: blog
     - name: brave-search-mcp
     - name: coder
     - name: crafty-controller

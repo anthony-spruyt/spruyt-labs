@@ -158,6 +158,8 @@ controllers:
         env:
           PRESIDIO_DEVICE: cpu
           RECOGNIZER_REGISTRY_CONF_FILE: /opt/presidio/conf/recognizers.yaml
+          # No egress: fail the Public Suffix List fetch fast and use the bundled snapshot
+          TLDEXTRACT_CACHE_TIMEOUT: "2"
         probes:
           startup:    # NLP model loading takes 60-120s
             enabled: true
@@ -284,7 +286,7 @@ controllers:
       llm-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-guard
-          tag: "1.1.2@sha256:85a546aeddcc205c0640bee14b1cf80d46fc87e7bbd3bd6569f3089d5024aa00"
+          tag: "1.1.3@sha256:cd3e03f7cac45b87c86665b6c833e488e3f585e062b572b85c1722df8509ff8b"
           pullPolicy: IfNotPresent
         env:
           LISTEN_PORT: "8000"
@@ -378,7 +380,7 @@ controllers:
       llm-tool-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-tool-guard
-          tag: "1.2.1@sha256:8821e319a456aa21189ae3e61c45a9a9a300f2f23dff9551709c90ceeae5332c"
+          tag: "1.2.2@sha256:c6c2ce2aa7d8963f7a5ecf47327186133594a5586322a58287217dde9bf0575a"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
@@ -1365,7 +1367,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/llm-tool-guard-model
-      tag: 1.0.0@sha256:f57fbef0d0cc57bbe661c07452575837dea3330e4164d9c90f234391102ab81a
+      tag: 1.0.1@sha256:18d31f9765e9111ff1a0bd69056d27c46d24643e696a797cb367f45b2672a2af
     pullPolicy: IfNotPresent
     advancedMounts:
       llm-tool-guard:

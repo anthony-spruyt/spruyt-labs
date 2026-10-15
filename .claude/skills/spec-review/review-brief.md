@@ -8,23 +8,23 @@ For each architectural area in the spec, identify gaps, risks, incorrect assumpt
 
 - **Shared infrastructure impact** — how new components affect existing consumers, blast radius, resource contention
 - **Coordination correctness** — dedup, race conditions, state machine transitions, failure recovery semantics
-- **Security model** — credential separation, RBAC alignment, network policy coverage
+- **Security model** — credential separation, access-control alignment, network policy coverage
 - **Integration reliability** — callback patterns, failure modes during restarts, state tracking across components
 - **External service assumptions** — free-tier limitations, API behavior under concurrency, dependency chains
 - **Safety mechanisms** — loop prevention, circuit breakers, TTL correctness, cascading failure scenarios
-- **Kubernetes deployment** — resource sizing, pod lifecycle, namespace/CNP/RBAC alignment with existing cluster config
+- **Deployment** — resource sizing, lifecycle, alignment with the existing configuration
 - **Phase sequencing** — dependency ordering, what's deferred that shouldn't be, what's premature
 
-## Verify against live cluster state
+## Verify against the repo and live systems
 
 The spec's claims about existing infrastructure may not match what is deployed, so check each one:
 
-- Find and read actual deployed manifests in `cluster/apps/` for any component the spec references
-- Check existing namespace config (CNPs, RBAC, Kyverno policies) mentioned in the spec
-- Verify current deployment configs and capabilities of referenced services
-- Check network policies relevant to inter-component communication
+- Find and read the actual code and config in the repo for any component the spec references
+- Verify current configs and capabilities of referenced services
+- Check live state where the repo alone is insufficient
+- Follow the repo's `.claude/spec-review.md`, if it exists, for where and how to verify claims
 
-Use Context7 for library/framework docs. Where a finding depends on what is deployed, cite the manifest you read.
+Use Context7 for library/framework docs. Where a finding depends on what is deployed, cite the file you read.
 
 ## Before flagging a finding
 
@@ -44,6 +44,6 @@ Structure findings as:
 1. **Critical** — blocks implementation or risks data loss/cascading failure
 2. **Major** — significant design gap or incorrect assumption about existing infra
 3. **Minor** — improvement opportunities, over-engineering, or unclear spec language
-4. **Validated** — spec claims verified correct against cluster state
+4. **Validated** — spec claims verified correct against the repo and live state
 
-For each finding: state the problem, cite the spec section, show evidence (manifest snippet or doc reference), and suggest a fix.
+For each finding: state the problem, cite the spec section, show evidence (file snippet or doc reference), and suggest a fix.

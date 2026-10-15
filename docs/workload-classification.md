@@ -82,6 +82,7 @@ Can tolerate preemption.
 
 | Namespace        | Workload                                                  | Rationale            |
 | ---------------- | --------------------------------------------------------- | -------------------- |
+| blog             | blog                                                      | Public blog          |
 | brave-search-mcp | brave-search-mcp                                          | Agent tooling        |
 | foundryvtt       | foundryvtt                                                | Gaming (D&D)         |
 | headlamp-system  | headlamp                                                  | Kubernetes dashboard |

@@ -1,8 +1,7 @@
 ---
 name: spec-review
 description: >
-  Architectural and technical review of a design spec against the live cluster and
-  deployed manifests.
+  Architectural and technical review of a design spec against the repo and the live systems it describes.
   Use when the user asks to review, check, or critique a spec, design doc, or plan file
   before implementation. Not for code diffs or PRs (use code-review).
 argument-hint: <spec-file-path>
@@ -21,8 +20,8 @@ You are reviewing the spec at `$spec`.
    - The full review brief contents
    - The spec file path to review
    - Instruction to use Context7 for library/framework validation
-   - Instruction to search `cluster/apps/` for deployed manifests to verify spec claims
-   - Instruction to use `kubectl` CLI to check live cluster state where manifests alone are insufficient
+   - Instruction to verify the spec's claims against the code and config in the repo, and against live systems where the repo alone is insufficient
+   - The contents of `.claude/spec-review.md` in the repo, if it exists: where and how to verify claims in this repo
    - Instruction to cross-reference findings against the spec's own risks table, phase checklists, and tradeoff callouts before flagging — do not raise concerns the spec already addresses
 4. After receiving findings, present results organized by severity
 5. Offer to update the spec based on findings

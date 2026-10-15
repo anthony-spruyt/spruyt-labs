@@ -1,1 +1,7 @@
 language: go
+# gcr.io serves the distroless base; the Go module proxy redirects large zips to storage.googleapis.com
+egress:
+  - gcr.io:443
+  - proxy.golang.org:443
+  - storage.googleapis.com:443
+  - sum.golang.org:443

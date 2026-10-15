@@ -1,17 +1,14 @@
 <!-- markdownlint-disable MD041 -->
+## Why
 
-## Summary
+<!-- The problem or goal, in a sentence or two. -->
 
-<!-- Brief description -->
+Ref #
 
-## Linked Issue
-
-Closes #
-
-## Changes
+## What changed
 
 -
 
-## Testing
+## How it was verified
 
-<!-- How was this tested? -->
+<!-- Commands run, tests, CI, live checks. Say what was not verified. -->
