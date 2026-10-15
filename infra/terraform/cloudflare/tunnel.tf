@@ -67,7 +67,7 @@ locals {
     {
       subdomain      = "@"
       service        = local.traefik_service
-      origin_request = { http2_origin = true, no_tls_verify = true }
+      origin_request = { http2_origin = true, origin_server_name = local.blog_host, no_tls_verify = false }
     },
   ]
 

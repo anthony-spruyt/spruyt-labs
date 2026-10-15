@@ -13,7 +13,7 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 | `tunnel.tf`         | Tunnel `spruyt-labs-01`, its remote ingress config, and one proxied CNAME per route         |
 | `access.tf`         | Access application, policy and service token that gate the `litellm` host for CI            |
 | `dns.tf`            | Static DNS records (Brevo DKIM/verification, SPF, DMARC, site verification, Home Assistant) |
-| `rulesets.tf`       | Custom firewall rules, rate limiting, cache rules                                           |
+| `rulesets.tf`       | Custom firewall rules, rate limiting, cache rules, redirect rules                           |
 | `zone-settings.tf`  | Security and TLS zone settings                                                              |
 | `bot-management.tf` | Bot Fight Mode off and managed robots.txt on (other bot settings are set in the dashboard)  |
 
@@ -22,12 +22,17 @@ Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare W
 The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules. The current five, in order:
 
 1. Allow GitHub Webhooks (skip rule for the `flux-webhook`, `hooks` and `n8n` hosts)
-2. Block non-AU traffic, bots, and non-API LiteLLM paths
+2. Block non-AU traffic, bots, and non-API LiteLLM paths. The blog host skips the country check, and bots in the verified categories Search Engine Crawler, Feed Fetcher and Page Preview pass on it
 3. AI Crawl Control - Block AI bots by User Agent (`[CF AI Audit]`, linked to the dashboard)
 4. Block Happy account creation and pairing, and Authentik admin paths outside home
-5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`. The `litellm` host is gated by Cloudflare Access (see the LiteLLM section below)
+5. Managed challenge for the cloud and hosting ASNs in `local.challenged_asns`. The `litellm` host is gated by Cloudflare Access (see the LiteLLM section below), and the blog host skips the challenge
 
 Terraform manages Bot Fight Mode (disabled) and managed robots.txt (enabled) in `bot-management.tf`; the other bot settings are set in the dashboard. On the `litellm` host only the model API paths listed below pass, and Cloudflare Access gates it.
+
+The blog host is the zone apex. Besides the exemptions above, `rulesets.tf` also holds:
+
+- A cache rule for the blog host that respects origin cache headers and does not store 5xx responses
+- A redirect rule that sends `www` to the apex with a 301, keeping the path and query string
 
 ## LiteLLM external access for CI
 
@@ -68,7 +73,7 @@ When the home IP changes, update `cloudflare_home_ip` on workspace-factory, bump
 ### API token permissions
 
 - Account: `Cloudflare Tunnel:Edit`, `Access: Apps and Policies:Edit`, `Access: Service Tokens:Edit`, `Access: Organizations, Identity Providers, and Groups:Read`
-- Zone: `Zone:Read`, `DNS:Edit`, `Zone Settings:Edit`, `Zone WAF:Edit`, `Cache Rules:Edit`, `Bot Management:Edit`
+- Zone: `Zone:Read`, `DNS:Edit`, `Zone Settings:Edit`, `Zone WAF:Edit`, `Cache Rules:Edit`, `Single Redirect:Edit`, `Bot Management:Edit`
 
 ## Adding a tunnel route
 
