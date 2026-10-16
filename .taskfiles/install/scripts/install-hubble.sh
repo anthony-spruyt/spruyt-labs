@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=cilium/hubble datasource=github-releases
-VERSION="v1.19.4"
+VERSION="v1.20.2"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
