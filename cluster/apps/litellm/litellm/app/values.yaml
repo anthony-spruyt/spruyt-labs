@@ -380,7 +380,7 @@ controllers:
       llm-tool-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-tool-guard
-          tag: "1.2.2@sha256:c6c2ce2aa7d8963f7a5ecf47327186133594a5586322a58287217dde9bf0575a"
+          tag: "1.3.0@sha256:2429cada060b4adde48689d74b89dad9091d25556e0056dd29e0ea4182deb719"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
@@ -545,6 +545,7 @@ configMaps:
           # Pinned: keys get MCP access only by inheriting their team's grants
           require_key_mcp_access_defined: false
           store_model_in_db: true
+          store_prompts_in_spend_logs: true
           supported_db_objects:
             - mcp
           trusted_proxy_ranges:
@@ -581,6 +582,11 @@ configMaps:
               default_on: false
               skip_system_message_in_guardrail: true
               api_base: http://litellm-llm-guard.litellm.svc.cluster.local:8000
+          - guardrail_name: tool-guard
+            litellm_params:
+              guardrail: litellm_middleware.tool_guard.placeholder.ToolGuardPlaceholder
+              mode: pre_call
+              default_on: false
           # Sends tool outputs to TypeSafe (external) - keep opt-in
           - guardrail_name: jev-compaction
             litellm_params:
@@ -1378,7 +1384,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/litellm-middleware
-      tag: 1.3.1@sha256:d3fb0b42acf86b81274f3f7562c64c0adb5b2e371e2f5bfa7adf96a48a3d961c
+      tag: 1.4.0@sha256:ef1bb52c758d8f84616c5a6b0fb84a1246404713217c89e0caf7274919643c64
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:
