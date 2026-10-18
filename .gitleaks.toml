@@ -28,6 +28,10 @@ tags = ["ip-leakage"]
     '''talos/''',
     '''\.sops\.yaml$''',
   ]
+  # Generic RFC1918 aggregate, not a network detail
+  regexes = [
+    '''^[^0-9]?10\.0\.0\.0/8[^0-9]?$''',
+  ]
 
 [[rules]]
 id = "private-ip-rfc1918-172"
@@ -40,6 +44,10 @@ tags = ["ip-leakage"]
     '''talos/''',
     '''\.sops\.yaml$''',
   ]
+  # Generic RFC1918 aggregate, not a network detail
+  regexes = [
+    '''^[^0-9]?172\.16\.0\.0/12[^0-9]?$''',
+  ]
 
 [[rules]]
 id = "private-ip-rfc1918-192"
@@ -51,6 +59,10 @@ tags = ["ip-leakage"]
   paths = [
     '''talos/''',
     '''\.sops\.yaml$''',
+  ]
+  # Generic RFC1918 aggregate, not a network detail
+  regexes = [
+    '''^[^0-9]?192\.168\.0\.0/16[^0-9]?$''',
   ]
 
 # --- Generated Secrets ---

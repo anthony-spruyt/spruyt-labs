@@ -93,6 +93,8 @@ locals {
       fqdn = r.name == "@" ? var.zone_name : "${r.name}.${var.zone_name}"
     })
   }
+
+  home_ipv4 = [for ip in split(" ", var.home_ip) : ip if can(regex("^[0-9]{1,3}(\\.[0-9]{1,3}){3}$", ip))]
 }
 
 # Email Routing MX and DKIM records are read-only (owned by Email Routing) and not managed here.
@@ -105,10 +107,6 @@ resource "cloudflare_dns_record" "this" {
   content = each.value.content
   proxied = false
   ttl     = each.value.ttl
-}
-
-locals {
-  home_ipv4 = [for ip in split(" ", var.home_ip) : ip if can(regex("^[0-9]{1,3}(\\.[0-9]{1,3}){3}$", ip))]
 }
 
 # DNS-only: Cloudflare cannot proxy UDP game traffic, so the record points straight at the home router port forward.

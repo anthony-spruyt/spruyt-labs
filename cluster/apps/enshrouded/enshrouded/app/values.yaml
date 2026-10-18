@@ -3,6 +3,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
 defaultPodOptions:
   priorityClassName: low-priority
+  automountServiceAccountToken: false
 controllers:
   enshrouded:
     annotations:
@@ -10,8 +11,8 @@ controllers:
     replicas: 1
     type: statefulset
     pod:
-      # Matches supervisord stopwaitsecs=90 so the world is saved on shutdown
-      terminationGracePeriodSeconds: 90
+      # supervisord stopwaitsecs is 90; the rest covers stopping crond and rsyslog after the server
+      terminationGracePeriodSeconds: 120
       # Avoid co-locating with vmsingle - both are heavy CPU/memory consumers
       affinity:
         podAntiAffinity:
@@ -26,6 +27,8 @@ controllers:
                 namespaces: ["observability"]
                 topologyKey: kubernetes.io/hostname
       securityContext:
+        # Image starts supervisord as root and drops to PUID/PGID itself
+        runAsNonRoot: false
         seccompProfile:
           type: RuntimeDefault
     containers:
@@ -97,7 +100,7 @@ controllers:
                 key: VISITOR_PWD
         resources:
           requests:
-            cpu: 2000m
+            cpu: 3000m
             memory: 6Gi
           limits:
             cpu: 6000m
