@@ -98,6 +98,74 @@ controllers:
               secretKeyRef:
                 name: enshrouded-secrets
                 key: VISITOR_PWD
+          # Other SERVER_GS_ knobs only apply with preset Custom
+          SERVER_GS_PRESET: Custom # Default, Relaxed, Hard, Survival, Custom
+          # SERVER_GS_PRESET: Default
+          # SERVER_GS_PRESET: Relaxed
+          # SERVER_GS_PRESET: Hard
+          # SERVER_GS_PRESET: Survival
+          SERVER_GS_PLAYER_HEALTH_FACTOR: "1" # 0.25-4, player max health
+          SERVER_GS_PLAYER_MANA_FACTOR: "1" # 0.25-4, player max mana
+          SERVER_GS_PLAYER_STAMINA_FACTOR: "1" # 0.25-4, player max stamina
+          SERVER_GS_PLAYER_BODY_HEAT_FACTOR: "1" # 0.5-2, body heat before hypothermia
+          SERVER_GS_PLAYER_DIVING_TIME_FACTOR: "1" # 0.5-2, oxygen / time underwater
+          SERVER_GS_ENABLE_DURABILITY: "true" # weapon durability
+          # SERVER_GS_ENABLE_DURABILITY: "false"
+          SERVER_GS_ENABLE_STARVING_DEBUFF: "false" # hunger and starvation
+          # SERVER_GS_ENABLE_STARVING_DEBUFF: "true"
+          SERVER_GS_FOOD_BUFF_DURATION_FACTOR: "1" # 0.5-2, food buff duration
+          SERVER_GS_FROM_HUNGER_TO_STARVING: "600000000000" # 5-20 min, 1 min = 60000000000, hungry before starving
+          SERVER_GS_SHROUD_TIME_FACTOR: "1" # 0.5-2, time allowed in the Shroud
+          SERVER_GS_FLAME_LEVEL_FOG_REMOVAL: "11" # 0-20, Flame level to place Flame Altars in the Shroud
+          SERVER_GS_ENABLE_GLIDER_TURBULENCES: "true" # glider air turbulence
+          # SERVER_GS_ENABLE_GLIDER_TURBULENCES: "false"
+          SERVER_GS_WEATHER_FREQUENCY: Normal # how often weather happens
+          # SERVER_GS_WEATHER_FREQUENCY: Disabled
+          # SERVER_GS_WEATHER_FREQUENCY: Rare
+          # SERVER_GS_WEATHER_FREQUENCY: Often
+          SERVER_GS_FISHING_DIFFICULTY: Normal # fish strength in the fishing minigame
+          # SERVER_GS_FISHING_DIFFICULTY: VeryEasy
+          # SERVER_GS_FISHING_DIFFICULTY: Easy
+          # SERVER_GS_FISHING_DIFFICULTY: Hard
+          # SERVER_GS_FISHING_DIFFICULTY: VeryHard
+          SERVER_GS_RANDOM_SPAWNER_AMOUNT: Normal # amount of enemies in the world
+          # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Few
+          # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Automatic
+          # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Many
+          # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Extreme
+          SERVER_GS_MINING_DAMAGE_FACTOR: "1" # 0.5-2, mining damage and yield
+          SERVER_GS_PLANT_GROWTH_SPEED_FACTOR: "1" # 0.25-2, plant growth speed
+          SERVER_GS_RESOURCE_DROP_STACK_AMOUNT_FACTOR: "1" # 0.25-2, materials per loot stack
+          SERVER_GS_FACTORY_PRODUCTION_SPEED_FACTOR: "1" # 0.25-2, workshop production time
+          SERVER_GS_PERK_UPGRADE_RECYCLING_FACTOR: "0.5" # 0-1, Runes returned when salvaging upgraded weapons
+          SERVER_GS_PERK_COST_FACTOR: "1" # 0.25-2, Runes needed to upgrade weapons
+          SERVER_GS_EXPERIENCE_COMBAT_FACTOR: "1" # 0.25-2, XP from combat
+          SERVER_GS_EXPERIENCE_MINING_FACTOR: "1" # 0-2, XP from mining
+          SERVER_GS_EXPERIENCE_EXPLORATION_QUESTS_FACTOR: "1" # 0.25-2, XP from exploring and quests
+          SERVER_GS_AGGRO_POOL_AMOUNT: Normal # enemies allowed to attack at once
+          # SERVER_GS_AGGRO_POOL_AMOUNT: Few
+          # SERVER_GS_AGGRO_POOL_AMOUNT: Many
+          # SERVER_GS_AGGRO_POOL_AMOUNT: Extreme
+          SERVER_GS_ENEMY_DAMAGE_FACTOR: "1" # 0.25-5, enemy damage (not bosses)
+          SERVER_GS_ENEMY_HEALTH_FACTOR: "1" # 0.25-4, enemy health (not bosses)
+          SERVER_GS_ENEMY_STAMINA_FACTOR: "1" # 0.5-2, enemy stamina (not bosses)
+          SERVER_GS_ENEMY_PERCEPTION_RANGE_FACTOR: "1" # 0.5-2, enemy sight and hearing range (not bosses)
+          SERVER_GS_BOSS_DAMAGE_FACTOR: "1" # 0.2-5, boss damage
+          SERVER_GS_BOSS_HEALTH_FACTOR: "1" # 0.2-5, boss health
+          SERVER_GS_THREAT_BONUS: "1" # 0.25-4, frequency of enemy attacks (not bosses)
+          SERVER_GS_PACIFY_ALL_ENEMIES: "false" # enemies attack only when attacked (not bosses)
+          # SERVER_GS_PACIFY_ALL_ENEMIES: "true"
+          SERVER_GS_TAMING_STARTLE_REPERCUSSION: LoseSomeProgress # progress lost when startling wildlife while taming
+          # SERVER_GS_TAMING_STARTLE_REPERCUSSION: KeepProgress
+          # SERVER_GS_TAMING_STARTLE_REPERCUSSION: LoseAllProgress
+          SERVER_GS_DAY_TIME_DURATION: "1800000000000" # 2-60 min, 1 min = 60000000000, daytime length
+          SERVER_GS_NIGHT_TIME_DURATION: "720000000000" # 2-60 min, 1 min = 60000000000, nighttime length
+          SERVER_GS_TOMBSTONE_MODE: AddBackpackMaterials # what is lost in the backpack on death
+          # SERVER_GS_TOMBSTONE_MODE: Everything
+          # SERVER_GS_TOMBSTONE_MODE: NoTombstone
+          SERVER_GS_CURSE_MODIFIER: Normal # chance of being cursed, Easy disables curses
+          # SERVER_GS_CURSE_MODIFIER: Easy
+          # SERVER_GS_CURSE_MODIFIER: Hard
         resources:
           requests:
             cpu: 3000m
