@@ -1,0 +1,188 @@
+---
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+defaultPodOptions:
+  priorityClassName: low-priority
+controllers:
+  enshrouded:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    replicas: 1
+    type: statefulset
+    pod:
+      # Matches supervisord stopwaitsecs=90 so the world is saved on shutdown
+      terminationGracePeriodSeconds: 90
+      # Avoid co-locating with vmsingle - both are heavy CPU/memory consumers
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values: [vmsingle]
+                namespaces: ["observability"]
+                topologyKey: kubernetes.io/hostname
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      app:
+        image:
+          repository: mornedhels/enshrouded-server
+          # 1.8.0 is the Proton build (same digest as 1.8.0-proton)
+          tag: "1.8.0@sha256:689dcb30037b0c63e6929b2fe5951eaf8eca52a43792b2764440baeb012b2aa1"
+          pullPolicy: IfNotPresent
+        env:
+          TZ: ${TIMEZONE}
+          SERVER_NAME: Ember Kelmire
+          SERVER_SAVE_DIR: /opt/enshrouded-saves
+          SERVER_SLOT_COUNT: "16"
+          SERVER_ENABLE_TEXT_CHAT: "true"
+          SERVER_ENABLE_VOICE_CHAT: "true"
+          SERVER_VOICE_CHAT_MODE: Proximity
+          UPDATE_CRON: "*/30 * * * *"
+          UPDATE_CHECK_PLAYERS: "true"
+          BACKUP_CRON: "0 * * * *"
+          BACKUP_MAX_COUNT: "48"
+          SERVER_ROLE_0_NAME: Admin
+          SERVER_ROLE_0_CAN_KICK_BAN: "true"
+          SERVER_ROLE_0_CAN_ACCESS_INVENTORIES: "true"
+          SERVER_ROLE_0_CAN_EDIT_WORLD: "true"
+          SERVER_ROLE_0_CAN_EDIT_BASE: "true"
+          SERVER_ROLE_0_CAN_EXTEND_BASE: "true"
+          SERVER_ROLE_0_RESERVED_SLOTS: "1"
+          SERVER_ROLE_0_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: enshrouded-secrets
+                key: ADMIN_PWD
+          SERVER_ROLE_1_NAME: Friend
+          SERVER_ROLE_1_CAN_KICK_BAN: "false"
+          SERVER_ROLE_1_CAN_ACCESS_INVENTORIES: "true"
+          SERVER_ROLE_1_CAN_EDIT_WORLD: "true"
+          SERVER_ROLE_1_CAN_EDIT_BASE: "true"
+          SERVER_ROLE_1_CAN_EXTEND_BASE: "true"
+          SERVER_ROLE_1_RESERVED_SLOTS: "3"
+          SERVER_ROLE_1_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: enshrouded-secrets
+                key: FRIEND_PWD
+          SERVER_ROLE_2_NAME: Guest
+          SERVER_ROLE_2_CAN_KICK_BAN: "false"
+          SERVER_ROLE_2_CAN_ACCESS_INVENTORIES: "false"
+          SERVER_ROLE_2_CAN_EDIT_WORLD: "true"
+          SERVER_ROLE_2_CAN_EDIT_BASE: "false"
+          SERVER_ROLE_2_CAN_EXTEND_BASE: "false"
+          SERVER_ROLE_2_RESERVED_SLOTS: "0"
+          SERVER_ROLE_2_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: enshrouded-secrets
+                key: GUEST_PWD
+          SERVER_ROLE_3_NAME: Visitor
+          SERVER_ROLE_3_CAN_KICK_BAN: "false"
+          SERVER_ROLE_3_CAN_ACCESS_INVENTORIES: "false"
+          SERVER_ROLE_3_CAN_EDIT_WORLD: "false"
+          SERVER_ROLE_3_CAN_EDIT_BASE: "false"
+          SERVER_ROLE_3_CAN_EXTEND_BASE: "false"
+          SERVER_ROLE_3_RESERVED_SLOTS: "0"
+          SERVER_ROLE_3_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: enshrouded-secrets
+                key: VISITOR_PWD
+        resources:
+          requests:
+            cpu: 2000m
+            memory: 6Gi
+          limits:
+            cpu: 6000m
+            memory: 12Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              # Entrypoint chowns /opt/enshrouded to PUID:PGID on every start
+              - CHOWN
+              # root must reach files and the supervisor socket owned by the PUID user
+              - DAC_OVERRIDE
+              # Entrypoint remaps the enshrouded user; supervisord drops each program to it
+              - SETUID
+              - SETGID
+              # supervisord signals child processes to stop the server and cron jobs
+              - KILL
+        ports:
+          - name: game
+            containerPort: 15637
+            protocol: UDP
+        probes:
+          # First start downloads the game via steamcmd: allow up to 60 minutes
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - supervisorctl status enshrouded-server | grep -q RUNNING
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 120
+          # STOPPED is normal while the updater patches; FATAL or an unreachable supervisord is not
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - supervisorctl status enshrouded-server | grep -Eq 'RUNNING|STARTING|BACKOFF|STOPPED|EXITED'
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - supervisorctl status enshrouded-server | grep -q RUNNING
+              periodSeconds: 15
+              timeoutSeconds: 10
+              failureThreshold: 3
+persistence:
+  game:
+    existingClaim: "enshrouded-game"
+    advancedMounts:
+      enshrouded:
+        app:
+          - path: /opt/enshrouded
+  saves:
+    existingClaim: "enshrouded-saves"
+    advancedMounts:
+      enshrouded:
+        app:
+          - path: /opt/enshrouded-saves
+service:
+  game:
+    controller: enshrouded
+    type: LoadBalancer
+    annotations:
+      lbipam.cilium.io/ips: "${ENSHROUDED_IP4}"
+      external-dns.kubernetes.io/hostname: enshrouded.${EXTERNAL_DOMAIN}
+    externalTrafficPolicy: Local
+    ports:
+      game:
+        port: 15637
+        protocol: UDP

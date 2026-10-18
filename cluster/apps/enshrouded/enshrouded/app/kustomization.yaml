@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: enshrouded
+resources:
+  - ./persistent-volume-claim.yaml
+  - ./enshrouded-secrets.sops.yaml
+  - ./release.yaml
+  - ./network-policies.yaml
+  - ./vpa.yaml
+configMapGenerator:
+  - name: enshrouded-values
+    namespace: enshrouded
+    files:
+      - values.yaml
+configurations:
+  - ./kustomizeconfig.yaml

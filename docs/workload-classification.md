@@ -84,6 +84,7 @@ Can tolerate preemption.
 | ---------------- | --------------------------------------------------------- | -------------------- |
 | blog             | blog                                                      | Public blog          |
 | brave-search-mcp | brave-search-mcp                                          | Agent tooling        |
+| enshrouded       | enshrouded                                                | Gaming server        |
 | foundryvtt       | foundryvtt                                                | Gaming (D&D)         |
 | headlamp-system  | headlamp                                                  | Kubernetes dashboard |
 | minecraft        | crafty-controller, bedrock-connect                        | Gaming servers       |

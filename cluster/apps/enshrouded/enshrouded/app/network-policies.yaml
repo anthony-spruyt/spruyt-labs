@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Game traffic in from the LoadBalancer (LAN and port-forwarded internet players)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-enshrouded-game-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: enshrouded
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "15637"
+              protocol: UDP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Egress to internet hosts on any port (Steam uses wide port ranges); internal ranges excluded.
+# DNS comes from the cluster-wide allow-kube-dns-egress policy.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-enshrouded-internet-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: enshrouded
+  egress:
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - ${LAN_CIDR_IP4}
+            - ${VPN_CIDR_IP4}
+            - ${CLUSTER_NODE_CIDR_IP4}
+            - ${TELEPORT_CIDR_IP4}
+            - ${DEVCONTAINER_CIDR_IP4}
+            - 169.254.0.0/16
+            - 100.64.0.0/10

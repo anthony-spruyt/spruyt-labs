@@ -106,3 +106,24 @@ resource "cloudflare_dns_record" "this" {
   proxied = false
   ttl     = each.value.ttl
 }
+
+locals {
+  home_ipv4 = [for ip in split(" ", var.home_ip) : ip if can(regex("^[0-9]{1,3}(\\.[0-9]{1,3}){3}$", ip))]
+}
+
+# DNS-only: Cloudflare cannot proxy UDP game traffic, so the record points straight at the home router port forward.
+resource "cloudflare_dns_record" "enshrouded" {
+  zone_id = local.zone_id
+  name    = "enshrouded.${var.zone_name}"
+  type    = "A"
+  content = one(local.home_ipv4)
+  proxied = false
+  ttl     = 1
+
+  lifecycle {
+    precondition {
+      condition     = length(local.home_ipv4) == 1
+      error_message = "home_ip must contain exactly one bare IPv4 address (CIDRs and IPv6 are ignored) for the enshrouded record."
+    }
+  }
+}

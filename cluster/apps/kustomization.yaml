@@ -59,3 +59,4 @@ resources:
   - ./agent-platform
   - ./happy-system
   - ./blog
+  - ./enshrouded
