@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
-# Alerting rules for Cilium network policy drops
 # Requires Cilium hubble.metrics.enabled with sourceContext/destinationContext labels
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMRule
@@ -12,12 +11,16 @@ spec:
     - name: cilium-policy-drops
       interval: 30s
       rules:
-        # Alert when pods are consistently dropping packets due to policy
         - alert: CiliumPolicyDrops
           expr: |
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED", source!~"csi-addons-system|github-system|spegel"}[5m])
             ) > 0
+            # After a rollout Temporal keeps probing dead peers' pod IPs, which have no identity
+            unless on (source, destination)
+            sum by (source, destination) (
+              rate(hubble_drop_total{reason="POLICY_DENIED", source="temporal-system", destination=""}[5m])
+            )
           for: 10m
           labels:
             severity: warning
@@ -28,12 +31,16 @@ spec:
               Rate: {{ $value | printf "%.2f" }}/s. Check network policies.
             runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
 
-        # Critical alert for sustained high drop rate
         - alert: CiliumPolicyDropsCritical
           expr: |
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED", source!~"csi-addons-system|github-system|spegel"}[5m])
             ) > 10
+            # After a rollout Temporal keeps probing dead peers' pod IPs, which have no identity
+            unless on (source, destination)
+            sum by (source, destination) (
+              rate(hubble_drop_total{reason="POLICY_DENIED", source="temporal-system", destination=""}[5m])
+            )
           for: 5m
           labels:
             severity: critical
@@ -45,7 +52,6 @@ spec:
               This may be breaking application functionality.
             runbook_url: "Use 'task dev-env:hubble-drops' to see live dropped packets"
 
-        # Recording rules for dashboard queries
         # Empty source/destination = external traffic; label_replace normalizes to "external"
         - record: cilium:policy_drops:rate5m
           expr: |

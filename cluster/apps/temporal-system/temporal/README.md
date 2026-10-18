@@ -69,9 +69,9 @@ Temporal has no webhook receiver. External callers (GitHub etc.) hit an intake s
 
    - **Fix**: Check `temporal-cnpg-owner` and `temporal-cnpg-cluster-ca` exist and the CNPG cluster is Ready. The Job retries on its own once the database is up.
 
-3. **`CiliumPolicyDrops` for `temporal-system` after a node drain or Talos upgrade**
+3. **Steady `POLICY_DENIED` drops from `temporal-system` after a rollout, node drain or Talos upgrade**
 
-   - **Symptom**: Steady egress `POLICY_DENIED` drops from the server pods to IPs with no pod behind them, on membership ports 6933-6939.
+   - **Symptom**: Egress drops from the server pods to IPs with no pod behind them, on membership ports 6933-6939, in Hubble and the Cilium policy-drops dashboard. `CiliumPolicyDrops` skips drops from `temporal-system` to an unresolved destination, so they do not alert.
 
    - **Cause**: Ringpop keeps dead peers as faulty for 24h (hardcoded in Temporal) and keeps dialing them. Not a missing CNP rule; do not add a `world` egress rule.
 
