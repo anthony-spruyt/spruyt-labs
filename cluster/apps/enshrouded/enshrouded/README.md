@@ -19,6 +19,10 @@ The server is IPv4 only, UDP only, and has no web UI or HTTP endpoint. Cloudflar
 The role a player gets is decided by the password they enter. The four roles mirror the game's native presets (Keen's [Server Roles Configuration](https://enshrouded.zendesk.com/hc/en-us/articles/19191581489309)); the permissions are the `SERVER_ROLE_<index>_*` variables in `app/values.yaml`. Keen's page gives edit-world only in prose, so it is derived from that: only Visitor is barred from
 changing the world outside the base. The image applies the roles to `enshrouded_server.json` on every start, so a Git change takes effect on the next pod restart (Reloader restarts it when the Secret changes).
 
+### Difficulty
+
+The game settings are the `SERVER_GS_*` variables in `app/values.yaml`. Every rollout rewrites them in the game config, so a Git change takes effect on the next pod restart. Only the preset applies on its own; the other knobs apply only with preset `Custom`. To change a knob, edit its value. Don't delete the line: a removed variable keeps its last value in the game config.
+
 ### Joining
 
 Players pick the server from the in-game Join list, or choose "Search by IPv4 / Domain" and enter `enshrouded.${EXTERNAL_DOMAIN}`, then the role password.

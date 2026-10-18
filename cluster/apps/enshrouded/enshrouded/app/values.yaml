@@ -128,9 +128,9 @@ controllers:
           # SERVER_GS_FISHING_DIFFICULTY: Easy
           # SERVER_GS_FISHING_DIFFICULTY: Hard
           # SERVER_GS_FISHING_DIFFICULTY: VeryHard
-          SERVER_GS_RANDOM_SPAWNER_AMOUNT: Normal # amount of enemies in the world
+          SERVER_GS_RANDOM_SPAWNER_AMOUNT: Automatic # amount of enemies in the world
           # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Few
-          # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Automatic
+          # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Normal
           # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Many
           # SERVER_GS_RANDOM_SPAWNER_AMOUNT: Extreme
           SERVER_GS_MINING_DAMAGE_FACTOR: "1" # 0.5-2, mining damage and yield
