@@ -100,7 +100,7 @@ In eager mode `unifi_tool_index(category=...)` returns no tools and an empty `ca
    - **Resolution**: TCP to the controller is being dropped before it arrives. The controller sits behind a zone-based firewall policy on the gateway, and the allow rule for the cluster network is **order-sensitive** — a broader block policy with a lower rule ID is evaluated first and silently drops the SYN.
    - **Rule ordering**: the allow rule must sit **above** that block. A rule in the wrong position looks correct in the UI and reports zero hits.
    - **Diagnosis**: ICMP reaching the controller while every TCP port reads `filtered` is the signature — ICMP is permitted by a separate, higher-ordered rule. Confirm with `tcpdump` on the controller host: if the SYN never arrives but the echo request does, the drop is on the gateway, not the host. Checking the rule's hit counter is faster than either.
-   - Not to be confused with the controller host's own `ufw`, which allows all published UniFi ports from any source and is **not** the cause.
+   - Not to be confused with the controller host's own `ufw`, which permits the published UniFi ports and is **not** the cause.
 
 ## References
 

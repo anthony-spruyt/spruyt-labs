@@ -16,10 +16,6 @@ controllers:
     strategy: Recreate
     containers:
       app:
-        # On version bump: check whether upstream added inbound auth to the MCP
-        # listener (transport.py -> run_http). It has none as of 0.32.6, so the
-        # CiliumNetworkPolicy is the only boundary. See README "No inbound
-        # authentication". Renovate will not flag this.
         image:
           repository: ghcr.io/sirkirby/unifi-network-mcp
           tag: 0.33.0@sha256:1135662e79759beb907697ccb7656eab0de9ca3beefb09d730cd3ed8bc1f3cf5
@@ -52,16 +48,14 @@ controllers:
             value: "eager"
           - name: UNIFI_REDACT_SENSITIVE_FIELDS
             value: "true"
-          # A typo in any UNIFI_POLICY_* name fails open — check startup logs for
-          # "[policy] Unrecognized env var" after changing these.
+          # After changing UNIFI_POLICY_* names, check startup logs for "[policy] Unrecognized env var".
           - name: UNIFI_POLICY_CREATE
             value: "true"
           - name: UNIFI_POLICY_UPDATE
             value: "true"
           - name: UNIFI_POLICY_DELETE
             value: "true"
-          # Leave as confirm — bypass auto-injects confirm=true into every
-          # mutating tool, removing the last guard before a live change.
+          # Leave as confirm: mutating tools return a preview until called with confirm=true.
           - name: UNIFI_TOOL_PERMISSION_MODE
             value: "confirm"
           - name: UNIFI_NETWORK_SITE
