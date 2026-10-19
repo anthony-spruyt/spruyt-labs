@@ -48,7 +48,9 @@ Use the CI state the caller gives you (the agent platform passes one). Otherwise
 - If caused by this update → factor into verdict; red CI is never SAFE (FIXABLE at minimum)
 - If pre-existing/unrelated → continue analysis, note in summary; the verdict is still not SAFE (CI gate)
 
-Report CI as one state: green, failing <check>, pending, or pending approval. Never mention ignored checks, Mergify, or merge and approval rules.
+Approval is not CI: a PR that waits only on a review has green CI.
+
+Report CI as one state: green, failing <check> or pending, plus "pending approval" when a review is still needed. Never mention ignored checks, Mergify, or merge and approval rules.
 
 ### 2. Read PR Details
 

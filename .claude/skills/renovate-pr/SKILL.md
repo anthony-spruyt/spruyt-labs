@@ -77,7 +77,7 @@ Keep it short:
 - cluster-validator result, if run
 - New features worth adopting, from the analyzer. If any, offer to open an `enhancement` issue per feature using `.github/ISSUE_TEMPLATE/feature_request.yml`. Do not open them without asking.
 
-Report CI as one state: green, failing <check>, pending, or pending approval. Never mention ignored checks, Mergify, or merge and approval rules.
+Report CI as one state: green, failing <check> or pending, plus "pending approval" when a review is still needed. Never mention ignored checks, Mergify, or merge and approval rules.
 
 ## Rules
 
