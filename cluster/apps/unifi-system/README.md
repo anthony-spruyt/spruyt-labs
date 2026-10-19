@@ -31,7 +31,7 @@ Requirements, learned the hard way in `unifi-mcp`:
 - **No MFA.** An account with MFA enabled cannot complete a non-interactive login.
 - **Read-only, all sites.** UnPoller never writes; anything more is unnecessary exposure.
 
-Separate from `unifi-mcp`'s credential on purpose: the two have different blast radius (one is read-only polling, the other has create/update/delete policies enabled), and rotating or revoking one should never take down the other.
+Separate from `unifi-mcp`'s credential on purpose: this one polls read-only while the other is used for changes, so rotating or revoking one never takes down the other.
 
 ## Cluster variables
 

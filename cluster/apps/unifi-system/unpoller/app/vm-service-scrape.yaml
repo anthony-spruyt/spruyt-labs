@@ -14,8 +14,7 @@ spec:
     matchNames:
       - unifi-system
   endpoints:
-    # Unauthenticated by design — UnPoller's /metrics has no auth option.
-    # The CiliumNetworkPolicy restricts who may reach it.
+    # No scrape credentials: UnPoller's /metrics has no auth option, so access is set by allow-metrics-ingress.
     - port: http
       path: /metrics
       # Matches UP_PROMETHEUS_INTERVAL; the endpoint serves a cached snapshot

@@ -20,10 +20,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow metrics scraping from vmagent.
-# /metrics is unauthenticated and exposes every client name, MAC and IP on the
-# network. This policy is the only boundary — there is deliberately no
-# IngressRoute and no Cloudflare Tunnel route. Do not widen it.
+# Only vmagent may scrape /metrics; it has no IngressRoute or tunnel route. Do not widen it.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# No inbound auth on either server - this policy is the only boundary
+# Only LiteLLM pods may connect to either server. Do not widen it.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

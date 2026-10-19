@@ -99,7 +99,7 @@ data:
                   getIssueCookie()(res, user);
                   return next();
                 } catch (err) {
-                  // Fall through unauthenticated rather than 500; n8n's own login still applies.
+                  // On error, hand the request to n8n's own login instead of returning 500.
                   logError('request failed - passing through unauthenticated', err);
                   return next();
                 }
