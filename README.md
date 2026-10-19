@@ -41,6 +41,7 @@ For the development environment, see [DEVELOPMENT.md](DEVELOPMENT.md).
 | [docs/releases.md](docs/releases.md)                                   | Container image releases (release-please)      |
 | [docs/intel-hybrid-architecture.md](docs/intel-hybrid-architecture.md) | P-core / E-core tuning on the MS-01 workers    |
 | [docs/workload-classification.md](docs/workload-classification.md)     | Priority classes and CPU limit policy          |
+| [docs/plans/jev-eval-tooling.md](docs/plans/jev-eval-tooling.md)       | Jev eval tooling build plan (#3467)            |
 
 ## Component Documentation
 
