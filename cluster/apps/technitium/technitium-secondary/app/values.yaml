@@ -37,7 +37,7 @@ controllers:
       technitium:
         image:
           repository: technitium/dns-server
-          tag: 15.5.1@sha256:b8efe03a5e3bdc6e9d2baff3f6e70c382c7f98afa2a7ca66f318d4b58a8d5944
+          tag: 15.6.1@sha256:e5474007d142d509c7de0d855132e3f0469bd6d5d77abf23dff5dad4e2975d09
           pullPolicy: IfNotPresent
         env:
           - name: DNS_SERVER_DOMAIN
