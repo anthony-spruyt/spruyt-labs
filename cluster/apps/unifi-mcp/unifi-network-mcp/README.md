@@ -30,6 +30,8 @@ Two upstream alternatives were considered and rejected: `apps/api` (a separate R
 
 Check the release notes and `apps/network/docs/transports.md` for new caller-authentication options; Renovate will not flag them. If one lands, add the credential to `unifi-network-mcp-secrets`, set the env var in `values.yaml`, configure the matching header on the LiteLLM MCP server entry, and keep the CNP unchanged.
 
+On an image bump, rebuild `disallowed_tools` under `mcp_servers.unifi` in `cluster/apps/litellm/litellm/app/values.yaml` from the keys of `.module_map` in the new tag's `apps/network/src/unifi_network_mcp/tools_manifest.json`; otherwise the daily drift job opens an issue.
+
 ### LiteLLM registration
 
 The server is declared under `mcp_servers.unifi` in the LiteLLM `config.yaml` (`cluster/apps/litellm/litellm/app/values.yaml`), so a cluster rebuild restores it. Only `n8n` is still UI-managed, and LiteLLM's [README](../../litellm/README.md#mcp-servers) covers how to add a server.
@@ -42,20 +44,22 @@ No client-side change is needed: `.mcp.json` holds a single `litellm` entry and 
 
 `UNIFI_POLICY_CREATE`, `UNIFI_POLICY_UPDATE` and `UNIFI_POLICY_DELETE` are all `true`. Every mutating tool in the catalog reaches the production controller — creating and deleting firewall policies, networks, WLANs and clients included.
 
-Mutations require an explicit `confirm=true` argument — all 96 mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason; keep it there.
+Mutations require an explicit `confirm=true` argument — all mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason; keep it there.
 
 The controller is covered by weekly automated cloud backups, which is the recovery path for a destructive mistake. There is no undo on the controller side.
 
-Set any of the three policy variables to `false` to gate that verb off. Upstream also supports narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) if the blast radius ever needs cutting to a few categories rather than all 96 tools. Gates block execution at invocation time; they do **not** hide tools from the tool list, so an agent still sees every mutating tool either
+Set any of the three policy variables to `false` to gate that verb off. Upstream also supports narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) if the blast radius ever needs cutting to a few categories rather than all tools. Gates block execution at invocation time; they do **not** hide tools from the tool list, so an agent still sees every mutating tool either
 way.
 
 After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[policy] Unrecognized env var`.
 
 ### Tool registration mode
 
-`UNIFI_TOOL_REGISTRATION_MODE=eager` registers the five meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`, `unifi_get_support_bundle`) and all 189 catalog tools up front. `lazy` is not used: it adds each module's tools to `tools/list` on first use, so the list changes with use and the LiteLLM drift check cannot track it.
+`UNIFI_TOOL_REGISTRATION_MODE=eager` registers the five meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`, `unifi_get_support_bundle`) and every catalog tool up front. `lazy` is not used: it adds each module's tools to `tools/list` on first use, so the list changes with use and the LiteLLM drift check cannot track it.
 
 LiteLLM's `allowed_tools` exposes only the five meta-tools and every catalog tool is in `disallowed_tools`. Agents run catalog tools through `unifi_tool_index` then `unifi_execute`.
+
+In eager mode `unifi_tool_index(category=...)` returns no tools and an empty `categories` list: upstream `get_tool_index` in `packages/unifi-mcp-shared/src/unifi_mcp_shared/tool_index.py` reads the manifest `module_map` only in `lazy` mode, so every tool's category is empty. Use `search` or no filter instead. Remove this note once upstream derives categories in eager mode.
 
 ## Troubleshooting
 
@@ -88,7 +92,7 @@ LiteLLM's `allowed_tools` exposes only the five meta-tools and every catalog too
 6. **Tool missing from the list**
 
    - **Symptom**: an expected tool does not appear in the LiteLLM tool list
-   - **Resolution**: by design, LiteLLM shows only the five meta-tools — use `unifi_tool_index` then `unifi_execute`. Policy gates never hide tools.
+   - **Resolution**: by design, LiteLLM shows only the five meta-tools — use `unifi_tool_index` then `unifi_execute`. Policy gates never hide tools. A `category` filter on `unifi_tool_index` returns nothing in eager mode — use `search` or no filter (see Tool registration mode).
 
 7. **Tool calls time out; pod logs show `Connection attempt N failed: RequestError`**
 
