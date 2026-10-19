@@ -77,10 +77,9 @@ Keep it short:
 - cluster-validator result, if run
 - New features worth adopting, from the analyzer. If any, offer to open an `enhancement` issue per feature using `.github/ISSUE_TEMPLATE/feature_request.yml`. Do not open them without asking.
 
-Report CI as one state: green, failing <check> or pending, plus "pending approval" when a review is still needed. Never mention ignored checks, Mergify, or merge and approval rules.
-
 ## Rules
 
 - Never merge on anything but SAFE with green CI.
 - Never close the PR, even on BLOCKED. Leave that to the user.
 - Never put IPs, CIDRs, or secrets in PR comments.
+- Report CI as one state: green, failing <check> or pending. Never mention ignored checks, Mergify, approvals, or merge rules.

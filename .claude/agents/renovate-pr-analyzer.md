@@ -41,7 +41,7 @@ Either way: do your analysis, then output a clear verdict with summary. Do NOT w
 
 Ignore `renovate/stability-days`, any `Mergify` check and the platform's own `Agent triage` check when judging CI, whether pending or failing. The first two are merge gates, not tests (the user often triggers PRs before the release-age gate clears); `Agent triage` is this run, still in progress.
 
-Use the CI state the caller gives you (the agent platform passes one). Otherwise run `gh pr checks <PR#>` yourself. If any check fails:
+Use the CI state the caller gives you, if it gives one. Otherwise run `gh pr checks <PR#>` yourself. If any check fails:
 
 - Identify which jobs failed
 - Determine if failures are caused by this dependency update or pre-existing
@@ -50,7 +50,7 @@ Use the CI state the caller gives you (the agent platform passes one). Otherwise
 
 Approval is not CI: a PR that waits only on a review has green CI.
 
-Report CI as one state: green, failing <check> or pending, plus "pending approval" when a review is still needed. Never mention ignored checks, Mergify, or merge and approval rules.
+Report CI as one state: green, failing <check> or pending. Never mention ignored checks, Mergify, approvals, or merge rules.
 
 ### 2. Read PR Details
 
