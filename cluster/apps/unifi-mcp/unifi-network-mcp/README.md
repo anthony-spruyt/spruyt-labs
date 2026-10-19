@@ -53,7 +53,9 @@ After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[polic
 
 ### Tool registration mode
 
-`UNIFI_TOOL_REGISTRATION_MODE=lazy` registers six meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`, `unifi_load_tools`, `unifi_get_support_bundle`) and loads the ~194-tool catalog on demand. Setting `eager` would register all of them up front — a large surface to push through the gateway.
+`UNIFI_TOOL_REGISTRATION_MODE=eager` registers the five meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`, `unifi_get_support_bundle`) and all 189 catalog tools up front. `lazy` is not used: it adds each module's tools to `tools/list` on first use, so the list changes with use and the LiteLLM drift check cannot track it.
+
+LiteLLM's `allowed_tools` exposes only the five meta-tools and every catalog tool is in `disallowed_tools`. Agents run catalog tools through `unifi_tool_index` then `unifi_execute`.
 
 ## Troubleshooting
 
@@ -85,8 +87,8 @@ After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[polic
 
 6. **Tool missing from the list**
 
-   - **Symptom**: an expected tool does not appear
-   - **Resolution**: expected in `lazy` mode — use `unifi_tool_index` then `unifi_execute`. Policy gates never hide tools.
+   - **Symptom**: an expected tool does not appear in the LiteLLM tool list
+   - **Resolution**: by design, LiteLLM shows only the five meta-tools — use `unifi_tool_index` then `unifi_execute`. Policy gates never hide tools.
 
 7. **Tool calls time out; pod logs show `Connection attempt N failed: RequestError`**
 

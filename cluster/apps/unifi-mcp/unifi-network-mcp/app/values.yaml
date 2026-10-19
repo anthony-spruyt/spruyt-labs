@@ -47,8 +47,9 @@ controllers:
             value: "true"
           - name: UNIFI_MCP_LOG_LEVEL
             value: "INFO"
+          # Not lazy: lazy adds tools to tools/list as they load, so the LiteLLM drift check flip-flops.
           - name: UNIFI_TOOL_REGISTRATION_MODE
-            value: "lazy"
+            value: "eager"
           - name: UNIFI_REDACT_SENSITIVE_FIELDS
             value: "true"
           # A typo in any UNIFI_POLICY_* name fails open — check startup logs for
