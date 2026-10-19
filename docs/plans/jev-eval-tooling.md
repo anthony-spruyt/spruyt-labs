@@ -3,9 +3,9 @@
 ## Status
 
 - **Design:** owner-reviewed 2026-10-19 after two spec reviews and a spike that passed (cost $0.83). The xfg reviewers feature (§10 step 2) stays marked "needs owner OK" until the owner confirms it.
-- **Prereq:** [agent-platform#117](https://github.com/anthony-spruyt/agent-platform/pull/117), the release-notes detector (`ReleaseNotesDetector`, "the code detector" below). It is in a final fix round for changelog-format coverage. The eval build starts after it merges.
+- **Prereq:** [agent-platform#117](https://github.com/anthony-spruyt/agent-platform/pull/117), the release-notes detector (`ReleaseNotesDetector`, "the code detector" below). It is in a final fix round for changelog-format coverage. §10 step 7 starts after it merges.
 - **Next steps (§10 step numbers):**
-  - Steps 3, 4 and 6 can start now.
+  - Steps 3, 4 and 6 can start now. Step 6 adds the `eval` `reviewers` and `preventSelfReview` only once step 2's xfg release is in repo-operator; until then the owner sets them by hand (step 5.3).
   - Step 2 starts only after the owner OKs the new xfg feature.
   - Step 5 is the owner's.
   - Step 7, the agent-platform build, waits for [agent-platform#117](https://github.com/anthony-spruyt/agent-platform/pull/117) to merge.
@@ -196,7 +196,7 @@ The run stops as soon as the result is decided, and cancels calls in flight (one
    - It also gets a `keys` section matched by `key_alias`, because route limits exist per key only (spike). The Job sets `team_id`, `allowed_routes`, `rpm_limit`, the budget and "no MCP servers". It never creates, reads or prints a key value. It skips an alias that doesn't exist yet with a warning and never fails on it. After an update it reads `/key/info` for the alias and logs the team, routes,
      `rpm_limit` and budget.
      - `agent-platform-eval`: team `jev-eval`, `allowed_routes: ["/typesafe/v1/systemone"]`, `rpm_limit: 900`. The spike peaked at 17 req/s; the runner paces itself to 10 req/s (600 a minute).
-     - `github-ci`: `allowed_routes: ["/v1/chat/completions"]`. No key except the eval key lists any route under `/typesafe`.
+     - `github-ci`: `allowed_routes: ["/v1/chat/completions"]`. No key except the eval key lists any route under `/typesafe`, and every key lists exact routes, not route groups such as `llm_api_routes`.
    - LiteLLM matches routes exactly or by `/` prefix for every role (`route_checks.py:94-210,587-610`), and only a proxy admin may set them (`key_mgmt.py:919-960`), so the Job makes these calls as admin.
    - `reconcile.py` and `test_reconcile.py` plan and apply keys through `/key/list?key_alias=` and `/key/update`, test-first. The litellm Terraform provider has a key resource, but TFC can't reach the in-cluster admin API, and the Job already owns teams.
    - Update `cluster/apps/litellm/README.md:22,82-90,121`. Run qa-validator before the commit and cluster-validator after the push.
@@ -209,7 +209,8 @@ The run stops as soon as the result is decided, and cancels calls in flight (one
    - `.github/scripts/check-xfg-config.sh` runs before every xfg step. It fails any secret source env outside its lists (`:9-10`, `:58-64`) and passes the gateway names only under xfg's `integration`/`integration-main` (`gateway_secret_site`, `:40-43`). It gets the three new names, `LITELLM_EVAL_API_KEY`, `CF_ACCESS_EVAL_CLIENT_ID` and `CF_ACCESS_EVAL_CLIENT_SECRET`, and `gateway_secret_site` gets
      one more site: the agent-platform repo's `eval` environment. At that site only `LITELLM_HOST` and the three eval names pass, and the eval names pass nowhere else. Tests in `test/check-xfg-config.bats` mirror the xfg cases (`:210-298`); update `CLAUDE.md:52`.
    - In `src/repos.yaml`, the agent-platform entry (`:4-21`) gets:
-     - `environments` with `deleteOrphaned: false` and `eval`: `reviewers: [{type: User, id: 99536297}]`, `preventSelfReview: true`, no branch policy. Its secrets (`deleteOrphaned: false`) map `LITELLM_HOST` from `LITELLM_HOST`, `LITELLM_API_KEY` from `LITELLM_EVAL_API_KEY`, and `CF_ACCESS_CLIENT_ID`/`CF_ACCESS_CLIENT_SECRET` from the `CF_ACCESS_EVAL_*` names, like xfg (`:551-585`).
+     - `environments` with `deleteOrphaned: false` and `eval`: `reviewers: [{type: User, id: 99536297}]`, `preventSelfReview: true` (these two once step 2's xfg release is in repo-operator), no branch policy. Its secrets (`deleteOrphaned: false`) map `LITELLM_HOST` from `LITELLM_HOST`, `LITELLM_API_KEY` from `LITELLM_EVAL_API_KEY`, and `CF_ACCESS_CLIENT_ID`/`CF_ACCESS_CLIENT_SECRET` from the
+       `CF_ACCESS_EVAL_*` names, like xfg (`:551-585`).
      - `.mergify.yml` var `gateFilesExtra: 'eval/renovate-triage/labels\.jsonl$|'`, as repo-operator sets for itself (`:232-234`), so a label change needs the owner's approval.
    - Update `docs/ci.md:154-161`.
 7. agent-platform, after `ReleaseNotesDetector` lands:
