@@ -60,13 +60,10 @@ data:
 
               const handler = async (req, res, next) => {
                 try {
-                  // Skip if instance owner not set up yet
                   if (!config.get('userManagement.isInstanceOwnerSetUp', false)) return next();
 
-                  // Skip if already has n8n session cookie (already authenticated)
                   if (req.cookies?.['n8n-auth']) return next();
 
-                  // Skip if no forward auth header configured
                   if (!process.env.N8N_FORWARD_AUTH_HEADER) return next();
 
                   // Get email from trusted Authentik header (headers are lowercase in Node.js)

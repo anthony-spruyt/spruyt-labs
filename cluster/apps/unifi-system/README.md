@@ -29,7 +29,7 @@ Requirements, learned the hard way in `unifi-mcp`:
 
 - **Local account only.** Cloud SSO (Ubiquiti account) logins fail against the local API.
 - **No MFA.** An account with MFA enabled cannot complete a non-interactive login.
-- **Read-only, all sites.** UnPoller never writes; anything more is unnecessary exposure.
+- **Read-only, all sites.** UnPoller only reads, and it polls every site.
 
 Separate from `unifi-mcp`'s credential on purpose: this one polls read-only while the other is used for changes, so rotating or revoking one never takes down the other.
 
