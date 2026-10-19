@@ -41,12 +41,14 @@ Either way: do your analysis, then output a clear verdict with summary. Do NOT w
 
 Ignore `renovate/stability-days`, any `Mergify` check and the platform's own `Agent triage` check when judging CI, whether pending or failing. The first two are merge gates, not tests (the user often triggers PRs before the release-age gate clears); `Agent triage` is this run, still in progress.
 
-Run `gh pr checks <PR#>` yourself, even when CI status is provided. If any check fails:
+Use the CI state the caller gives you (the agent platform passes one). Otherwise run `gh pr checks <PR#>` yourself. If any check fails:
 
 - Identify which jobs failed
 - Determine if failures are caused by this dependency update or pre-existing
 - If caused by this update → factor into verdict; red CI is never SAFE (FIXABLE at minimum)
 - If pre-existing/unrelated → continue analysis, note in summary; the verdict is still not SAFE (CI gate)
+
+Report CI as one state: green, failing <check>, pending, or pending approval. Never mention ignored checks, Mergify, or merge and approval rules.
 
 ### 2. Read PR Details
 
@@ -153,7 +155,7 @@ A breaking change only matters if it affects what we actually use.
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
 - No high-engagement bugs for target version
 - No local repo issues with `blocked` label referencing this dependency
-- CI passed, as read from `gh pr checks`
+- CI passed
 
 **FIXABLE**: the update is wanted but needs a small change in this repository (list it in Fix), or CI fails because of a fixable break:
 
@@ -183,7 +185,7 @@ Structure your final output as:
 ```markdown
 ## Verdict: <SAFE|FIXABLE|BLOCKED|NEEDS_REVIEW>
 
-**Summary:** <2-5 sentences giving the verdict and the main evidence: what changed, CI status, version coherence if relevant, local blockers if any>
+**Summary:** <2-5 sentences giving the verdict and the main evidence: what changed, CI state, version coherence if relevant, local blockers if any>
 
 **Versions:**
 

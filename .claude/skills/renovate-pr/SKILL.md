@@ -48,7 +48,7 @@ Labels left by an earlier verdict stay until the skill merges the PR or adds a n
 **SAFE**
 
 1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days`, `Mergify` (they never clear on early-triggered PRs) and `Agent triage` (not CI); none blocks a direct merge. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE and follow the **NEEDS_REVIEW** steps (label and comment).
-2. Remove stale labels (above), then merge: `gh pr merge <N> --squash`. Ignore Mergify's approval check.
+2. Remove stale labels (above), then merge: `gh pr merge <N> --squash`.
 3. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). If one is already running, wait for it to finish, then run.
 
 **FIXABLE**
@@ -76,6 +76,8 @@ Keep it short:
 - What you did: merged, commented, or labelled `blocked` or `agent/needs-human-review`
 - cluster-validator result, if run
 - New features worth adopting, from the analyzer. If any, offer to open an `enhancement` issue per feature using `.github/ISSUE_TEMPLATE/feature_request.yml`. Do not open them without asking.
+
+Report CI as one state: green, failing <check>, pending, or pending approval. Never mention ignored checks, Mergify, or merge and approval rules.
 
 ## Rules
 
