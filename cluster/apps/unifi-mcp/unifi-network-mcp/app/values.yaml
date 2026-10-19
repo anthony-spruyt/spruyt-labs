@@ -48,7 +48,7 @@ controllers:
             value: "eager"
           - name: UNIFI_REDACT_SENSITIVE_FIELDS
             value: "true"
-          # After changing UNIFI_POLICY_* names, check startup logs for "[policy] Unrecognized env var".
+          # An unrecognized UNIFI_POLICY_* name is ignored; check startup logs for "[policy] Unrecognized env var".
           - name: UNIFI_POLICY_CREATE
             value: "true"
           - name: UNIFI_POLICY_UPDATE

@@ -31,8 +31,7 @@ spec:
       app.kubernetes.io/name: unifi-network-mcp
   ingress:
     - fromEndpoints:
-        # Keep the controller label: llm-guard and the presidio sidecars also
-        # carry app.kubernetes.io/name: litellm.
+        # Keep the controller label: every pod in the litellm release carries app.kubernetes.io/name: litellm.
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: litellm
             k8s:app.kubernetes.io/name: litellm

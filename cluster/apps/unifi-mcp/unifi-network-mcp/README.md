@@ -28,8 +28,6 @@ Two upstream alternatives were considered and rejected: `apps/api` (a separate R
 
 #### When upgrading
 
-Check the release notes and `apps/network/docs/transports.md` for new caller-authentication options; Renovate will not flag them. If one lands, add the credential to `unifi-network-mcp-secrets`, set the env var in `values.yaml`, configure the matching header on the LiteLLM MCP server entry, and keep the CNP unchanged.
-
 On an image bump, rebuild `disallowed_tools` under `mcp_servers.unifi` in `cluster/apps/litellm/litellm/app/values.yaml` from the keys of `.module_map` in the new tag's `apps/network/src/unifi_network_mcp/tools_manifest.json`; otherwise the daily drift job opens an issue.
 
 ### LiteLLM registration
@@ -42,14 +40,13 @@ No client-side change is needed: `.mcp.json` holds a single `litellm` entry and 
 
 ### Write operations are enabled
 
-`UNIFI_POLICY_CREATE`, `UNIFI_POLICY_UPDATE` and `UNIFI_POLICY_DELETE` are all `true`. Every mutating tool in the catalog reaches the production controller — creating and deleting firewall policies, networks, WLANs and clients included.
+`UNIFI_POLICY_CREATE`, `UNIFI_POLICY_UPDATE` and `UNIFI_POLICY_DELETE` are all `true`; every write goes through the confirm step below.
 
 Mutations require an explicit `confirm=true` argument — all mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason; keep it there.
 
 The controller is covered by weekly automated cloud backups, which is the recovery path for a destructive mistake. There is no undo on the controller side.
 
-Set any of the three policy variables to `false` to gate that verb off. Upstream also supports narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) if the blast radius ever needs cutting to a few categories rather than all tools. Gates block execution at invocation time; they do **not** hide tools from the tool list, so an agent still sees every mutating tool either
-way.
+Set any of the three policy variables to `false` to turn that verb off; narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) limit writes to chosen categories. Gates act at invocation time and do not change the tool list.
 
 After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[policy] Unrecognized env var`.
 
