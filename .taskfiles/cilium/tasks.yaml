@@ -14,7 +14,7 @@ tasks:
 
   # Drop debugging
   drops:
-    desc: Show recent dropped flows (last 100)
+    desc: Show recent dropped flows (last 100 per node)
     cmds:
       - bash {{ .ciliumScriptsDir }}/hubble-drops.sh
 
@@ -41,7 +41,7 @@ tasks:
 
   # General flow observation
   flows:
-    desc: Show recent flows (last 100)
+    desc: Show recent flows (last 100 per node)
     cmds:
       - bash {{ .ciliumScriptsDir }}/hubble-flows.sh
 

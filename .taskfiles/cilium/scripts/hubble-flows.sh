@@ -1,5 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Show recent flows (last 100)
-kubectl exec -n kube-system ds/cilium -- hubble observe --last 100
+# Show recent flows (last 100 per node)
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+hubble_relay observe --last 100

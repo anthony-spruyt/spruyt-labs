@@ -2,4 +2,6 @@
 set -euo pipefail
 
 # Stream dropped flows in real-time
-kubectl exec -n kube-system ds/cilium -- hubble observe --verdict DROPPED -f
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+hubble_relay observe --verdict DROPPED -f

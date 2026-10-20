@@ -2,4 +2,6 @@
 set -euo pipefail
 
 # Show drops with policy match info
-kubectl exec -n kube-system ds/cilium -- hubble observe --verdict DROPPED --last 100 -o compact
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+hubble_relay observe --verdict DROPPED --last 100 -o compact

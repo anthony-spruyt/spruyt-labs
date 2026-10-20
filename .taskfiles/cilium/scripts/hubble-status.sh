@@ -1,5 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Show Hubble status and flow buffer capacity
-kubectl exec -n kube-system ds/cilium -- cilium-dbg status --verbose | grep -A2 "Hubble"
+# Show Hubble status and flow buffer capacity across all nodes
+# shellcheck source=lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+hubble_relay status
