@@ -25,7 +25,7 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/agent-platform
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
-          tag: "1.17.0@sha256:df4d5d3b0dbc0f19e3374883d1d6a43f774ed75222b54548dba4c156e5d4a7ce"
+          tag: "1.17.1@sha256:70d3ea2c55e659512cca16136abb6f24369ba9b14b5dcdf8d506712a79376d8b"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Web
