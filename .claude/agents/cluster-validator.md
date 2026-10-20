@@ -61,7 +61,7 @@ Classify the change to optimize checks:
 | `helm-release`     | HelmRelease, values.yaml    | HR status, pod health, app logs       |
 | `kustomization`    | ks.yaml, kustomization.yaml | KS status, resource creation          |
 | `talos-config`     | talos/, machine configs     | Node health, system pods              |
-| `network-policy`   | CiliumNetworkPolicy         | Drops via `kubectl -n kube-system exec ds/cilium -c cilium-agent -- hubble observe --verdict DROPPED --last 100` |
+| `network-policy`   | CiliumNetworkPolicy         | Drops on every node (see Network drops) |
 | `cronjob-workload` | HelmRelease with CronJob    | Manual test job (see CronJob section) |
 | `infrastructure`   | Storage, ingress, certs     | System services, cluster-wide health  |
 | `mixed`            | Multiple types              | All checks                            |
@@ -73,6 +73,18 @@ git fetch origin main
 git log --oneline <base>..origin/main
 git diff <base> origin/main --name-only
 ```
+
+### Network drops
+
+Each Cilium agent sees only its own node's flows and keeps seconds of history, so `ds/cilium` alone misses drops. Query every agent, and use `hubble_drop_total` in VictoriaMetrics for drops since the push:
+
+```bash
+for p in $(kubectl -n kube-system get pods -l k8s-app=cilium -o name); do
+  kubectl -n kube-system exec "$p" -c cilium-agent -- hubble observe --verdict DROPPED --last 100 --namespace <ns>
+done
+```
+
+Ignore `POLICY_DENIED` from `temporal-system` to IPs with no pod behind them: stale Temporal peers, which `CiliumPolicyDrops` also skips (see `cluster/apps/temporal-system/temporal/README.md`).
 
 ## Parallel Execution
 
