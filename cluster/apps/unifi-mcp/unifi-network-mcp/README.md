@@ -28,7 +28,8 @@ Two upstream alternatives were considered and rejected: `apps/api` (a separate R
 
 #### When upgrading
 
-On an image bump, rebuild `disallowed_tools` under `mcp_servers.unifi` in `cluster/apps/litellm/litellm/app/values.yaml` from the keys of `.module_map` in the new tag's `apps/network/src/unifi_network_mcp/tools_manifest.json`; otherwise the daily drift job opens an issue.
+On an image bump, new tools show up as drift. Compare the keys of `.module_map` in the new tag's `apps/network/src/unifi_network_mcp/tools_manifest.json` (plus `unifi_get_support_bundle` and the meta-tools named under Tool registration mode) with `allowed_tools` and `disallowed_tools` under `mcp_servers.unifi` in `cluster/apps/litellm/litellm/app/values.yaml`. Add each new tool to one of the two
+lists, keep the lists disjoint, and drop entries upstream removed. Otherwise the daily drift job opens an issue.
 
 ### LiteLLM registration
 
@@ -52,11 +53,9 @@ After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[polic
 
 ### Tool registration mode
 
-`UNIFI_TOOL_REGISTRATION_MODE=eager` registers the five meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`, `unifi_get_support_bundle`) and every catalog tool up front. `lazy` is not used: it adds each module's tools to `tools/list` on first use, so the list changes with use and the LiteLLM drift check cannot track it.
+`UNIFI_TOOL_REGISTRATION_MODE=eager` registers every tool, meta-tools included, up front. `lazy` is not used: it adds each module's tools to `tools/list` on first use, so the list changes with use and the LiteLLM drift check cannot track it.
 
-LiteLLM's `allowed_tools` exposes only the five meta-tools and every catalog tool is in `disallowed_tools`. Agents run catalog tools through `unifi_tool_index` then `unifi_execute`.
-
-In eager mode `unifi_tool_index(category=...)` returns no tools and an empty `categories` list: upstream `get_tool_index` in `packages/unifi-mcp-shared/src/unifi_mcp_shared/tool_index.py` reads the manifest `module_map` only in `lazy` mode, so every tool's category is empty. Use `search` or no filter instead. Remove this note once upstream derives categories in eager mode.
+LiteLLM exposes the domain tools directly by name, plus `unifi_get_support_bundle`, and hides tools for hardware or features this site doesn't have, plus the meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`). `allowed_tools` decides what agents can call and `disallowed_tools` records the tools kept off, so a tool is in exactly one of the two lists.
 
 ## Troubleshooting
 
@@ -89,7 +88,7 @@ In eager mode `unifi_tool_index(category=...)` returns no tools and an empty `ca
 6. **Tool missing from the list**
 
    - **Symptom**: an expected tool does not appear in the LiteLLM tool list
-   - **Resolution**: by design, LiteLLM shows only the five meta-tools — use `unifi_tool_index` then `unifi_execute`. Policy gates never hide tools. A `category` filter on `unifi_tool_index` returns nothing in eager mode — use `search` or no filter (see Tool registration mode).
+   - **Resolution**: check whether the tool is in `disallowed_tools` under `mcp_servers.unifi` in `values.yaml`. If the site now has that hardware or feature (for example a guest network or hotspot), move it to `allowed_tools`. Policy gates never hide tools.
 
 7. **Tool calls time out; pod logs show `Connection attempt N failed: RequestError`**
 

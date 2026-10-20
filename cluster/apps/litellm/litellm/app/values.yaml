@@ -896,18 +896,10 @@ configMaps:
             transport: http
             auth_type: none
             allowed_tools:
-              - unifi_get_support_bundle
-              - unifi_tool_index
-              - unifi_execute
-              - unifi_batch
-              - unifi_batch_status
-            disallowed_tools:
               - unifi_adopt_device
               - unifi_archive_alarm
               - unifi_archive_all_alarms
-              - unifi_authorize_guest
               - unifi_block_client
-              - unifi_configure_port_aggregation
               - unifi_configure_port_mirror
               - unifi_create_acl_rule
               - unifi_create_ap_group
@@ -928,7 +920,6 @@ configMaps:
               - unifi_create_simple_qos_rule
               - unifi_create_traffic_route
               - unifi_create_usergroup
-              - unifi_create_voucher
               - unifi_create_wlan
               - unifi_delete_acl_rule
               - unifi_delete_ap_group
@@ -957,7 +948,6 @@ configMaps:
               - unifi_get_client_details
               - unifi_get_client_dpi_traffic
               - unifi_get_client_group_details
-              - unifi_get_client_sessions
               - unifi_get_client_stats
               - unifi_get_client_wifi_details
               - unifi_get_content_filter_details
@@ -981,7 +971,6 @@ configMaps:
               - unifi_get_network_health
               - unifi_get_network_stats
               - unifi_get_oon_policy_details
-              - unifi_get_pdu_outlets
               - unifi_get_port_forward
               - unifi_get_port_profile_details
               - unifi_get_port_stats
@@ -993,6 +982,7 @@ configMaps:
               - unifi_get_snmp_settings
               - unifi_get_speedtest_results
               - unifi_get_speedtest_status
+              - unifi_get_support_bundle
               - unifi_get_switch_capabilities
               - unifi_get_switch_ports
               - unifi_get_system_info
@@ -1001,7 +991,6 @@ configMaps:
               - unifi_get_traffic_flows
               - unifi_get_traffic_route_details
               - unifi_get_usergroup_details
-              - unifi_get_voucher_details
               - unifi_get_vpn_client_details
               - unifi_get_vpn_server_details
               - unifi_get_wlan_details
@@ -1024,7 +1013,6 @@ configMaps:
               - unifi_list_firewall_groups
               - unifi_list_firewall_policies
               - unifi_list_firewall_zones
-              - unifi_list_legacy_firewall_rules
               - unifi_list_networks
               - unifi_list_oon_policies
               - unifi_list_port_forwards
@@ -1034,7 +1022,6 @@ configMaps:
               - unifi_list_routes
               - unifi_list_traffic_routes
               - unifi_list_usergroups
-              - unifi_list_vouchers
               - unifi_list_vpn_clients
               - unifi_list_vpn_servers
               - unifi_list_wlans
@@ -1046,14 +1033,11 @@ configMaps:
               - unifi_rename_client
               - unifi_rename_device
               - unifi_reorder_firewall_policies
-              - unifi_revoke_voucher
               - unifi_set_client_ip_settings
               - unifi_set_device_led
               - unifi_set_jumbo_frames
-              - unifi_set_outlet_state
               - unifi_set_site_leds
               - unifi_set_switch_port_profile
-              - unifi_subscribe_events
               - unifi_toggle_device
               - unifi_toggle_firewall_policy
               - unifi_toggle_oon_policy
@@ -1063,7 +1047,6 @@ configMaps:
               - unifi_toggle_wlan
               - unifi_trigger_rf_scan
               - unifi_trigger_speedtest
-              - unifi_unauthorize_guest
               - unifi_unblock_client
               - unifi_update_acl_rule
               - unifi_update_ap_group
@@ -1091,6 +1074,23 @@ configMaps:
               - unifi_update_vpn_server_state
               - unifi_update_wlan
               - unifi_upgrade_device
+            disallowed_tools:
+              - unifi_authorize_guest
+              - unifi_batch
+              - unifi_batch_status
+              - unifi_configure_port_aggregation
+              - unifi_create_voucher
+              - unifi_execute
+              - unifi_get_client_sessions
+              - unifi_get_pdu_outlets
+              - unifi_get_voucher_details
+              - unifi_list_legacy_firewall_rules
+              - unifi_list_vouchers
+              - unifi_revoke_voucher
+              - unifi_set_outlet_state
+              - unifi_subscribe_events
+              - unifi_tool_index
+              - unifi_unauthorize_guest
             allow_all_keys: false
             available_on_public_internet: false
           valkeyshared:
