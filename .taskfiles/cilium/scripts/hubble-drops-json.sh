@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Show drops with full JSON detail (for debugging policy issues)
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 hubble_relay observe --verdict DROPPED --last 50 -o json |
