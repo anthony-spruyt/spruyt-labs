@@ -221,13 +221,14 @@ Check endpoints, ingress routes, certificates, and network policies as relevant.
 
 ## Network Drop Validation
 
-For drops since the push, query VictoriaMetrics with both `source="<ns>"` and `destination="<ns>"`. The counter runs from agent start, so use `increase`; its `namespace` label is always `kube-system`, so never filter on it:
+For drops since the push, run both queries in VictoriaMetrics (one selector with both labels matches only drops inside the namespace). The counter runs from agent start, so use `increase`; its `namespace` label is always `kube-system`, so never filter on it:
 
 ```promql
-sum by (source, destination, reason) (increase(hubble_drop_total{source="<ns>"}[<minutes since push>m]))
+sum by (pod, source, destination, reason) (increase(hubble_drop_total{source="<ns>"}[<minutes since push>m]))
+sum by (pod, source, destination, reason) (increase(hubble_drop_total{destination="<ns>"}[<minutes since push>m]))
 ```
 
-The metric has no port or pod. For those, read Hubble on every agent: each holds only its own node's flows, a minute or two at most, so `ds/cilium` alone misses drops.
+`pod` is the Cilium agent that saw the drop; the metric has no port or workload pod. For those, read Hubble on every agent: each holds only its own node's flows, a minute or two at most, so `ds/cilium` alone misses drops.
 
 ```bash
 for p in $(kubectl -n kube-system get pods -l k8s-app=cilium -o name); do
