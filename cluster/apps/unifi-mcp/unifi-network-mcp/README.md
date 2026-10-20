@@ -45,7 +45,7 @@ No client-side change is needed: `.mcp.json` holds a single `litellm` entry and 
 
 Mutations require an explicit `confirm=true` argument — all mutating tools default to `confirm=false` and return a preview instead. `UNIFI_TOOL_PERMISSION_MODE` is pinned to `confirm` for that reason; keep it there.
 
-The controller is covered by weekly automated cloud backups, which is the recovery path for a destructive mistake. There is no undo on the controller side.
+The controller is covered by roughly weekly UniFi OS console backups to the UI account (account.ui.com/backups), the recovery path for a destructive mistake. The Network app's own cloud-backup flag (`get_autobackup_settings`) reads false; that is expected, as the console backup is the cloud copy. There is no undo on the controller side.
 
 Set any of the three policy variables to `false` to turn that verb off; narrower `UNIFI_POLICY_<SERVER>_<CATEGORY>_<ACTION>` gates (most specific wins) limit writes to chosen categories. Gates act at invocation time and do not change the tool list.
 
