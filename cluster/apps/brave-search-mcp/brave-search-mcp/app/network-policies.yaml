@@ -1,7 +1,5 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow egress to Brave Search API
-# DNS egress with L7 rule required for toFQDNs to populate Cilium's FQDN cache
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -19,7 +17,6 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow ingress from LiteLLM MCP gateway
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -30,9 +27,11 @@ spec:
       app.kubernetes.io/name: brave-search-mcp
   ingress:
     - fromEndpoints:
+        # Keep the controller label: every pod in the litellm release carries app.kubernetes.io/name: litellm.
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: litellm
             k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
       toPorts:
         - ports:
             - port: "8000"

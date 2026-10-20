@@ -30,9 +30,11 @@ spec:
       app.kubernetes.io/name: terraform-mcp
   ingress:
     - fromEndpoints:
+        # Keep the controller label: every pod in the litellm release carries app.kubernetes.io/name: litellm.
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: litellm
             k8s:app.kubernetes.io/name: litellm
+            k8s:app.kubernetes.io/controller: litellm
       toPorts:
         - ports:
             - port: "8080"
