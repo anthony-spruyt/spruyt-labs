@@ -66,14 +66,14 @@ data:
 
                   if (!process.env.N8N_FORWARD_AUTH_HEADER) return next();
 
-                  // Get email from trusted Authentik header (headers are lowercase in Node.js)
+                  // Node.js lowercases header names.
                   const raw = req.headers[process.env.N8N_FORWARD_AUTH_HEADER.toLowerCase()];
                   const value = Array.isArray(raw) ? raw[0] : raw;
                   if (!value) return next();
                   const email = value.trim().toLowerCase();
                   if (!email) return next();
 
-                  // Find existing user by email - user must be pre-provisioned.
+                  // The user must be pre-provisioned.
                   // The role relation must be loaded: issueCookie dereferences user.role.slug.
                   // TypeORM parameterises the where clause (SQL injection safe).
                   const user = await this.dbCollections.User.findOne({
@@ -87,7 +87,6 @@ data:
                     return;
                   }
 
-                  // Never issue a cookie for a user whose role failed to load
                   if (!user.role?.slug) {
                     logError('refusing to issue cookie - user role not loaded', new Error('user.role.slug missing'));
                     return next();

@@ -20,7 +20,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Only vmagent may scrape /metrics; it has no IngressRoute or tunnel route. Do not widen it.
+# Only vmagent may scrape /metrics; unpoller has no IngressRoute or tunnel route. Do not widen it.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

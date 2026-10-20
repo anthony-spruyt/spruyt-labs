@@ -23,7 +23,7 @@ Both are declared in the LiteLLM `config.yaml` (`mcp_servers.postgres` and `mcp_
 
 Access is controlled in three layers:
 
-1. `allow-litellm-ingress` CNP - only LiteLLM reaches the pod.
+1. `allow-litellm-ingress` CNP - only the LiteLLM proxy reaches the pod.
 2. A read-only database login per source (below) - writes fail at the database.
 3. The LiteLLM tool allowlist per server.
 

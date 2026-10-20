@@ -14,7 +14,7 @@ spec:
     matchNames:
       - unifi-system
   endpoints:
-    # No scrape credentials: UnPoller's /metrics has no auth option, so access is set by allow-metrics-ingress.
+    # Scraped without credentials; allow-metrics-ingress sets who may reach it.
     - port: http
       path: /metrics
       # Matches UP_PROMETHEUS_INTERVAL; the endpoint serves a cached snapshot
