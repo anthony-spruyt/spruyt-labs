@@ -29,7 +29,7 @@ spec:
             description: |
               Traffic from {{ $labels.source }} to {{ $labels.destination }} is being blocked.
               Rate: {{ $value | printf "%.2f" }}/s. Check network policies.
-            runbook_url: "Use 'task cilium:drops' to see live dropped packets"
+            runbook_url: "Use 'task cilium:policy-drops' to see live dropped packets"
 
         - alert: CiliumPolicyDropsCritical
           expr: |
@@ -50,7 +50,7 @@ spec:
               High drop rate ({{ $value | printf "%.1f" }}/s) for traffic from
               {{ $labels.source }} to {{ $labels.destination }}.
               This may be breaking application functionality.
-            runbook_url: "Use 'task cilium:drops' to see live dropped packets"
+            runbook_url: "Use 'task cilium:policy-drops' to see live dropped packets"
 
         # Empty source/destination = external traffic; label_replace normalizes to "external"
         - record: cilium:policy_drops:rate5m
