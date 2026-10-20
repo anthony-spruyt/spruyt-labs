@@ -9,6 +9,7 @@ resources:
   - ./brave-secret-store.yaml
   - ./litellm-oauth-external-secret.yaml
   - ./litellm-secrets.sops.yaml
+  - ./llm-tool-guard-secrets.sops.yaml
   - ./litellm-cnpg-object-stores.yaml
   - ./cnpg-roles-eso.yaml
   - ./litellm-cnpg-cluster.yaml

@@ -380,7 +380,7 @@ controllers:
       llm-tool-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-tool-guard
-          tag: "1.3.0@sha256:2429cada060b4adde48689d74b89dad9091d25556e0056dd29e0ea4182deb719"
+          tag: "1.5.0@sha256:3d493b0ac22cc9680395cc561fe139257da515e34ff53b73a94b514109154a5e"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
@@ -388,6 +388,17 @@ controllers:
               seconds: 10
         env:
           HF_HUB_OFFLINE: "1"
+          JEV_API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: llm-tool-guard-secrets
+                key: JEV_API_KEY
+          JEV_API_URL: "http://litellm.litellm.svc.cluster.local:4000/typesafe"
+          JEV_BLOCK_AT: "0.90"
+          JEV_CLEAR_BELOW: "0.08"
+          JEV_MAX_TEXT_BYTES: "16384"
+          JEV_MODE: enforce
+          JEV_MODEL: jev-1.13.0
           VALKEY_URL: "redis://litellm-valkey.litellm.svc:6379"
           VALKEY_USERNAME: llm-tool-guard
           VALKEY_PASSWORD:
@@ -1455,7 +1466,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/litellm-middleware
-      tag: 1.6.0@sha256:ff0220804ffab691dbef97246b8dfa86da669444aba2edabb93ab2a4bbc2adca
+      tag: 1.7.0@sha256:4749d2bcd64a793daaa08a8ec15ded4be66f9e5e9405d02cddbcd34b9523d7ab
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:

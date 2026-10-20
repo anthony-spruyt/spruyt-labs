@@ -24,3 +24,14 @@ spec:
           annotations:
             summary: "llm-tool-guard has fewer than 2 ready pods"
             description: "Fewer than 2 llm-tool-guard pods have reported a loaded model for 15 minutes."
+        - alert: LLMToolGuardJevFailing
+          expr: |
+            sum(increase(llm_tool_guard_jev_requests_total{namespace="litellm",outcome="error"}[6h])) > 0
+            unless
+            sum(increase(llm_tool_guard_jev_requests_total{namespace="litellm",outcome=~"blocked|cleared|middle"}[6h])) > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "llm-tool-guard has had no Jev answer in 6 hours"
+            description: "Jev questions failed in the last 6 hours and none were answered, so flagged tool output keeps the warning notice. Check that the LiteLLM TypeSafe route and the llm-tool-guard virtual key work."
