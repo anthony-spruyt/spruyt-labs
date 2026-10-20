@@ -86,8 +86,8 @@ CI on GitHub-hosted runners calls the `litellm` host over the Cloudflare tunnel 
 - Only `/v1/messages`, `/v1/messages/count_tokens`, `/v1/chat/completions` and `/health/liveliness` pass from the internet. Unprefixed aliases such as `/chat/completions` do not.
 - cloudflared forwards only those paths and requires a valid Access token before a request reaches Traefik.
 - Every request carries the Access service token headers `CF-Access-Client-Id` and `CF-Access-Client-Secret`, plus the CI virtual key in `x-litellm-api-key: Bearer <key>` (see Virtual keys above).
-- The CI model is `openrouter/anthropic/claude-haiku-5.5`, an exact `model_name` through OpenRouter. It must stay exact: the `*claude*haiku*` catch-all would route the name to Anthropic subscription passthrough, which rejects a virtual key. The CI virtual key belongs to team `github-ci` with `models: ["all-team-models"]` and `object_permission: {"mcp_servers": ["no-mcp-servers"]}`; the team's
-  models and budget are set in `access-policy.yml` (see Access policy).
+- The CI models are the exact `model_name`s listed under team `github-ci` in `access-policy.yml`. A Claude model must keep its exact `openrouter/` name: the `*claude*haiku*` catch-all would route a looser name to Anthropic subscription passthrough, which rejects a virtual key. The CI virtual key belongs to team `github-ci` with `models: ["all-team-models"]` and
+  `object_permission: {"mcp_servers": ["no-mcp-servers"]}`; the team's models and budget are set in `access-policy.yml` (see Access policy).
 
 ### MCP servers
 
