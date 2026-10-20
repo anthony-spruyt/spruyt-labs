@@ -1323,10 +1323,6 @@ configMaps:
           # --------------------------------------------------------------------------
           # OpenAI: PAYG
           # --------------------------------------------------------------------------
-          - model_name: "openai/gpt-4o-mini"
-            litellm_params:
-              model: "openai/gpt-4o-mini"
-              api_key: os.environ/OPENAI_API_KEY
           - model_name: "openai/gpt-6-luna"
             litellm_params:
               model: "openai/gpt-6-luna"

@@ -41,7 +41,6 @@ teams:
   - team_id: b3dc877b-8fdc-4faa-b337-cf7466b3e53f
     team_alias: github-ci
     models:
-      - openai/gpt-4o-mini
       - openai/gpt-6-luna
       - openrouter/anthropic/claude-haiku-5.5
     max_budget: 5
