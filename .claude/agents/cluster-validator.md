@@ -61,7 +61,7 @@ Classify the change to optimize checks:
 | `helm-release`     | HelmRelease, values.yaml    | HR status, pod health, app logs       |
 | `kustomization`    | ks.yaml, kustomization.yaml | KS status, resource creation          |
 | `talos-config`     | talos/, machine configs     | Node health, system pods              |
-| `network-policy`   | CiliumNetworkPolicy         | Drops on every node (see Network drops) |
+| `network-policy`   | CiliumNetworkPolicy         | Drops on every node (see Network Drop Validation) |
 | `cronjob-workload` | HelmRelease with CronJob    | Manual test job (see CronJob section) |
 | `infrastructure`   | Storage, ingress, certs     | System services, cluster-wide health  |
 | `mixed`            | Multiple types              | All checks                            |
@@ -73,18 +73,6 @@ git fetch origin main
 git log --oneline <base>..origin/main
 git diff <base> origin/main --name-only
 ```
-
-### Network drops
-
-Each Cilium agent sees only its own node's flows and keeps seconds of history, so `ds/cilium` alone misses drops. Query every agent, and use `hubble_drop_total` in VictoriaMetrics for drops since the push:
-
-```bash
-for p in $(kubectl -n kube-system get pods -l k8s-app=cilium -o name); do
-  kubectl -n kube-system exec "$p" -c cilium-agent -- hubble observe --verdict DROPPED --last 100 --namespace <ns>
-done
-```
-
-Ignore `POLICY_DENIED` from `temporal-system` to IPs with no pod behind them: stale Temporal peers, which `CiliumPolicyDrops` also skips (see `cluster/apps/temporal-system/temporal/README.md`).
 
 ## Parallel Execution
 
@@ -230,6 +218,24 @@ _stream:{kubernetes.pod_namespace="<namespace>"} _time:15m (error OR panic OR fa
 ### Step 4: Functionality
 
 Check endpoints, ingress routes, certificates, and network policies as relevant. Check `mcp__litellm__victoriametrics-alerts` for alerts firing in the affected namespaces; a firing alert is evidence even when pods report Ready.
+
+## Network Drop Validation
+
+For drops since the push, query VictoriaMetrics with both `source="<ns>"` and `destination="<ns>"`. The counter runs from agent start, so use `increase`; its `namespace` label is always `kube-system`, so never filter on it:
+
+```promql
+sum by (source, destination, reason) (increase(hubble_drop_total{source="<ns>"}[<minutes since push>m]))
+```
+
+The metric has no port or pod. For those, read Hubble on every agent: each holds only its own node's flows, a minute or two at most, so `ds/cilium` alone misses drops.
+
+```bash
+for p in $(kubectl -n kube-system get pods -l k8s-app=cilium -o name); do
+  kubectl -n kube-system exec "$p" -c cilium-agent -- hubble observe --verdict DROPPED --last 100 --namespace <ns>
+done
+```
+
+Ignore only `POLICY_DENIED` egress from the Temporal server pods (frontend, history, matching, worker) to a pod IP with no pod behind it on ports 6933-6939: stale peers (see `cluster/apps/temporal-system/temporal/README.md`). Report any other `temporal-system` drop, including a `destination=""` row the loop can't tie to those ports.
 
 ## CronJob Validation
 
