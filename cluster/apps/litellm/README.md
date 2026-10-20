@@ -101,7 +101,7 @@ To add a server:
 
 1. Add an entry to `mcp_servers` with a fresh UUID `server_id`, `alias` equal to the key, `url`, `transport`, `auth_type`, `allowed_tools`, `disallowed_tools` (every other tool the server offers, or the drift Job opens an issue) and `available_on_public_internet: false`.
 2. For a bearer-token server, add `MCP_<NAME>_TOKEN` to `litellm-secrets`.
-3. Add an egress CNP in `litellm/app/network-policies.yaml` and, for an in-cluster server, an ingress CNP from the `litellm` namespace.
+3. Add an egress CNP in `litellm/app/network-policies.yaml` and, for an in-cluster server, an ingress CNP that matches the proxy pods in the `litellm` namespace by both `app.kubernetes.io/name: litellm` and `app.kubernetes.io/controller: litellm`.
 4. Grant the server to teams or access groups in `litellm/access-policy/access-policy.yml` (see Access policy).
 
 `.mcp.json` in the repo root holds a single `litellm` entry; every downstream server is fanned out through it.

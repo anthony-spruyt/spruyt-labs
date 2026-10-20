@@ -2,7 +2,7 @@
 
 ## Overview
 
-Gives agents n8n node documentation, template search, workflow validation and workflow management against the in-cluster n8n, as an MCP server behind the LiteLLM MCP gateway. Only the `litellm` namespace can reach it, and its only egress is the n8n API.
+Gives agents n8n node documentation, template search, workflow validation and workflow management against the in-cluster n8n, as an MCP server behind the LiteLLM MCP gateway. Only the LiteLLM proxy can reach it, and its only egress is the n8n API.
 
 ## Prerequisites
 
