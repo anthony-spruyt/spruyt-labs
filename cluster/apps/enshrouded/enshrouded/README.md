@@ -29,7 +29,22 @@ Players pick the server from the in-game Join list, or choose "Search by IPv4 / 
 
 ### Updates
 
-With `UPDATE_CHECK_PLAYERS` on, an update waits until nobody is connected. To force one: `kubectl -n enshrouded exec statefulset/enshrouded -- supervisorctl start enshrouded-force-update`.
+With `UPDATE_CHECK_PLAYERS` on, an update should wait until nobody is connected. On image 1.8.0 the player check always reads an empty server, so updates kick connected players ([mornedhels/enshrouded-server#260](https://github.com/mornedhels/enshrouded-server/issues/260); drop this note once the image with the fix from #261 is deployed).
+
+To force an update:
+
+```bash
+kubectl -n enshrouded exec statefulset/enshrouded -- supervisorctl start enshrouded-force-update
+```
+
+It deletes the steamcmd manifests in `/opt/enshrouded/server/steamapps` and runs the updater, which stops the server, re-checks every game file, downloads the latest build and starts the server again. Connected players are kicked. The saves PVC and the save zips are not touched. The server is back in about a minute; follow it with `kubectl -n enshrouded logs statefulset/enshrouded -f`.
+
+Compare the installed build with Steam's latest; they match once the update is done:
+
+```bash
+kubectl -n enshrouded exec statefulset/enshrouded -- grep '"buildid"' /opt/enshrouded/server/steamapps/appmanifest_2278520.acf
+curl -s https://api.steamcmd.net/v1/info/2278520 | jq -r '.data["2278520"].depots.branches.public.buildid'
+```
 
 ### Storage and backups
 
@@ -48,6 +63,9 @@ Two PVCs split re-downloadable game files from the world saves, so Velero only b
 2. **`state is 0x202 after update job`**
    - **Cause**: file permission or disk space problem under `/opt/enshrouded`.
    - **Fix**: see Known Issues in the image README.
+3. **Game says the server version is too old**
+   - **Cause**: the updater restarted the server, but steamcmd reported `already up to date` and installed nothing, so the server came back on the old build. Seen on the first update after a pod restart, when steamcmd's app cache (kept outside the PVCs) is empty ([mornedhels/enshrouded-server#262](https://github.com/mornedhels/enshrouded-server/issues/262)).
+   - **Fix**: compare the builds and force an update (see Updates).
 
 ## References
 
