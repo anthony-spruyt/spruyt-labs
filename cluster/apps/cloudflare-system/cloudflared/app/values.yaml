@@ -15,6 +15,11 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
     replicas: 3
+    strategy: RollingUpdate
+    rollingUpdate:
+      # No surge: tainted control-plane nodes count as empty spread domains, so a 4th pod stays Pending.
+      maxSurge: 0
+      maxUnavailable: 1
     pod:
       securityContext:
         runAsNonRoot: true
