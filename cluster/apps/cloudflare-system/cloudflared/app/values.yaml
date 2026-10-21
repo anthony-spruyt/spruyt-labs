@@ -50,20 +50,40 @@ controllers:
               secretKeyRef:
                 name: cloudflared-secrets
                 key: spruyt-labs-01-token
-        # Probes: HTTP /ready on metrics port for tunnel health
+        # Liveness uses /healthcheck: /ready fails while the edge is unreachable, so WAN outages would restart pods.
         probes:
-          liveness: &probes
+          liveness:
             enabled: true
             custom: true
             spec:
               httpGet:
-                path: /ready
+                path: /healthcheck
                 port: &port 8080
               initialDelaySeconds: 0
               periodSeconds: 10
               timeoutSeconds: 1
               failureThreshold: 3
-          readiness: *probes
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ready
+                port: *port
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 3
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthcheck
+                port: *port
+              periodSeconds: 5
+              timeoutSeconds: 1
+              failureThreshold: 12
         resources:
           requests:
             cpu: 17m
