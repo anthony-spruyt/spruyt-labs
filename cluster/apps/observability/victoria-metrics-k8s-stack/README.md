@@ -22,7 +22,7 @@ VMSingle, vmagent, vmalert, Alertmanager and Grafana for the whole cluster. The 
 
 - `NodeFilesystemSpaceFillingUp` is disabled and replaced by `vmrules/talos-node-filesystem.yaml`, which adds a `deriv() < 0` guard; the default rule's linear prediction misfires on the disk-metric jumps a Talos node restart produces.
 - `KubePersistentVolumeFillingUp` is disabled and replaced by `vmrules/kube-pv-filling-up.yaml`, a copy that excludes the `coder-workspaces` `coder-*-containers` PVCs: those Block-mode Kata volumes report RBD allocation, not filesystem use (#3547). Remove the exclusion once Kata ships Cloud Hypervisor v52 or later.
-- `kube-prometheus-general.rules` is disabled and `RecordingRulesNoData` waits 6h, because idle-cluster recording rules legitimately produce no samples and flapped the alert (#2562).
+- `kube-prometheus-general.rules` is disabled and `RecordingRulesNoData` waits 6h, because idle-cluster recording rules legitimately produce no samples and flapped the alert (#2562). Its `expr` also skips `enshrouded:*`: those vlogs rules record from event-driven log lines and are empty whenever the server is idle (#3742). Re-check the override against upstream `alerts-vmalert.yml` on chart bumps.
 
 ### Ceph Dashboard integration
 
