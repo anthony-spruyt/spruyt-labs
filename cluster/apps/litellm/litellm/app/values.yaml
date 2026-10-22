@@ -551,6 +551,7 @@ configMaps:
           enforce_fallback_model_access: true
           forward_client_headers_to_llm_api: true
           include_call_id_in_error_body: true
+          maximum_spend_logs_retention_period: 30d
           mcp_trusted_proxy_ranges:
             - "${CLUSTER_POD_CIDR_IP4}"
           # Pinned: keys get MCP access only by inheriting their team's grants
