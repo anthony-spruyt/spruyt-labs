@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ../base/compress.yaml
   - ../base/lan-ip-whitelist.yaml
-  - ../base/rate-limit.yaml
   - ./api-key-auth.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
@@ -21,13 +20,6 @@ patches:
   - target:
       kind: Middleware
       name: lan-ip-whitelist
-    patch: |
-      - op: replace
-        path: /metadata/namespace
-        value: observability
-  - target:
-      kind: Middleware
-      name: rate-limit
     patch: |
       - op: replace
         path: /metadata/namespace

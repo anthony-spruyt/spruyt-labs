@@ -7,7 +7,6 @@ resources:
   - ../base/https-proto-header.yaml
   - ../base/insecure-backend.yaml
   - ../base/lan-ip-whitelist.yaml
-  - ../base/rate-limit.yaml
   - ./certificates.yaml
   - ./ingress-routes.yaml
 patches:
@@ -28,13 +27,6 @@ patches:
   - target:
       kind: Middleware
       name: lan-ip-whitelist
-    patch: |
-      - op: replace
-        path: /metadata/namespace
-        value: rook-ceph
-  - target:
-      kind: Middleware
-      name: rate-limit
     patch: |
       - op: replace
         path: /metadata/namespace
