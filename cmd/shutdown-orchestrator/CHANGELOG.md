@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.27](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.26...shutdown-orchestrator/v1.1.27) (2026-10-22)
+
+
+### Dependencies
+
+* **deps:** update container image gcr.io/distroless/static to nonroot ([#3677](https://github.com/anthony-spruyt/spruyt-labs/issues/3677)) ([11cd83a](https://github.com/anthony-spruyt/spruyt-labs/commit/11cd83a9d65be2c0e50185c9b3fb2bde74349f3a))
+* **deps:** update container image gcr.io/distroless/static to nonroot ([#3711](https://github.com/anthony-spruyt/spruyt-labs/issues/3711)) ([b3e0356](https://github.com/anthony-spruyt/spruyt-labs/commit/b3e0356807e2523272246964e43d151078466eb2))
+* **deps:** update container image golang to v1.27.2 ([#3701](https://github.com/anthony-spruyt/spruyt-labs/issues/3701)) ([ef78a59](https://github.com/anthony-spruyt/spruyt-labs/commit/ef78a59244343dfa2197cb51cfc4c42849a1e737))
+
 ## [1.1.26](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.25...shutdown-orchestrator/v1.1.26) (2026-10-15)
 
 
