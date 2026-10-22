@@ -17,7 +17,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/unpoller/unpoller
-          tag: v5.2.7@sha256:99f452d3180c7c8fc41d11d7db7fc4ed70eeef1e2bd3dc8e9181e9aca111b2cb
+          tag: v5.7.0@sha256:5be0efc124aa58c37b3d66b0e5edf00478670f278b9206e5566c102b64c9c868
           pullPolicy: IfNotPresent
         env:
           # Env names come from the `xml` struct tags (golift.io/cnfg uses "xml"
