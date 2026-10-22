@@ -290,4 +290,7 @@ upsert_task blobstore.compact '{
   "frequency":{"schedule":"cron","cronExpression":"0 0 4 * * ?"},
   "properties":{"blobstoreName":"default","blobsOlderThan":"0"}}'
 
+echo "Acknowledging required telemetry..."
+check "$(curl -sS -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -u "$${AUTH}" -d '{"acknowledgement":true}' "$${API}/system/mandatory-telemetry-acknowledgement")"
+
 echo "Provisioning complete."
