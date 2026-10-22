@@ -73,6 +73,9 @@ expect_install() {
 }
 
 @test "kubectl installs when it is missing" {
+  # The runner image ships its own kubectl on PATH, so shadow it with one that is not found.
+  printf '#!/bin/bash\nexit 127\n' >"${BIN}/kubectl"
+  chmod +x "${BIN}/kubectl"
   expect_install kubectl
 }
 
