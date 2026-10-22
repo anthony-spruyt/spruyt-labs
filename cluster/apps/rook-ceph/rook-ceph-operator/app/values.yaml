@@ -21,7 +21,7 @@ csi:
   snapshotter:
     repository: registry.k8s.io/sig-storage/csi-snapshotter
     # renovate: depName=registry.k8s.io/sig-storage/csi-snapshotter datasource=docker versioning=docker
-    tag: v8.6.0
+    tag: v8.7.0
 enableDiscoveryDaemon: true
 monitoring:
   enabled: true
