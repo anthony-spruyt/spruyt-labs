@@ -65,7 +65,7 @@ locals {
     "CODER_AGENT_URL" : data.coder_workspace.me.access_url,
     "ENVBUILDER_GIT_URL" : local.repo_url,
     "ENVBUILDER_INIT_SCRIPT" : coder_agent.main.init_script,
-    "ENVBUILDER_FALLBACK_IMAGE" : data.coder_parameter.fallback_image.value,
+    "ENVBUILDER_EXIT_ON_BUILD_FAILURE" : "true",
     # No /repository/ segment: Nexus docker connectors serve OCI v2 at host root.
     "ENVBUILDER_CACHE_REPO" : "nexus.nexus-system.svc.cluster.local:8083/envbuilder-cache/${local.cache_key}",
     "ENVBUILDER_INSECURE" : "true",
@@ -169,15 +169,6 @@ data "coder_parameter" "containers_volume_size" {
     monotonic = "increasing"
   }
   order = 5
-}
-
-data "coder_parameter" "fallback_image" {
-  name         = "fallback_image"
-  display_name = "Fallback image"
-  description  = "Image used if the devcontainer build fails."
-  default      = "codercom/enterprise-base:ubuntu"
-  mutable      = true
-  order        = 6
 }
 
 data "coder_parameter" "devcontainer_builder" {

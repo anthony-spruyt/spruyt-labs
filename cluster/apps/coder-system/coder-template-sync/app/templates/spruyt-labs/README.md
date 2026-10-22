@@ -32,8 +32,8 @@ Workspace for working on the spruyt-labs repo against the live cluster. Unlike `
 
 ## Troubleshooting
 
-1. **Workspace starts without your tools**
-   - **Cause**: The devcontainer build failed, so the `Fallback image` parameter was started instead.
-   - **Fix**: Read the build output in the workspace logs, fix the devcontainer, then restart.
+1. **Workspace fails to start after a build error**
+   - **Cause**: The devcontainer build failed. The template sets no fallback image, so envbuilder exits with the build error rather than start an image without your tools.
+   - **Fix**: Read the build output in the workspace logs, fix the devcontainer, then restart. An apt `Remote Auto Blocked` error means Nexus timed out on its upstream; wait a minute, then restart.
 
 Cluster-side design (Kata isolation, Nexus routing, RBAC): [Coder README](https://github.com/anthony-spruyt/spruyt-labs/blob/main/cluster/apps/coder-system/coder/README.md).
