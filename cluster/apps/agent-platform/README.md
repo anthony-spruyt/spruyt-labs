@@ -5,7 +5,7 @@
 Cluster side of the `anthony-spruyt/agent-platform` service, which replaces the n8n agent workflows (#3467). One image runs as two Deployments in `agent-platform`: `web` (Intake webhooks + AgentGateway MCP) and `worker` (Temporal workflows and activities). The worker starts short-lived Claude Code pods in `agent-platform-agents`. This directory holds the namespaces, RBAC, network policies, Kyverno
 guardrails, the two HelmReleases (bjw-s app-template) and their VPAs.
 
-The pod spec for agents (env, MCP config, settings, clone, deadline) is built in code by the worker, not injected by Kyverno. None of the n8n-era agent policies (`managed-by: n8n-claude-code`) apply to these pods.
+The pod spec for agents (env, MCP config, settings, clone, deadline) is built in code by the worker, not injected by Kyverno. The runtime is the exception: it is a cluster isolation rule, so Kyverno sets `runtimeClassName: kata` on every pod in `agent-platform-agents` and each agent runs in its own Kata VM. None of the n8n-era agent policies (`managed-by: n8n-claude-code`) apply to these pods.
 
 ## Namespaces
 
@@ -64,13 +64,15 @@ DNS is allowed cluster-wide by `allow-kube-dns-egress`. Everything else is allow
 | agents              | Nexus `8081` (npm/PyPI/NuGet)                                | `nexus-system/nexus` `nexus-default`                                                                                                                 |
 | Traefik             | web `8080`                                                   | `allow-web-traefik-ingress` (this app)                                                                                                               |
 
-Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. Agent pods send telemetry only as `POST` to the OTLP ingest path on each port (Cilium L7 rules in `allow-otel-egress`). vmagent scrape rules are added when those exist.
+Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. Agent pods send telemetry only as `POST` to the OTLP ingest path on each port (Cilium L7 rules in `allow-otel-egress`), and these policies apply to Kata pods the same way. vmagent scrape rules are added when those exist.
 
 ## Kyverno Guardrails
 
-Both live in `agents/app/kyverno-policies.yaml`:
+All three live in `agents/app/kyverno-policies.yaml`:
 
 - `validate-agent-platform-pods` (ValidatingPolicy, `Deny`, on CREATE): every pod in `agent-platform-agents` must carry `managed-by: agent-platform`, and must set `activeDeadlineSeconds` between 1 and 3600. The per-run GitHub installation token expires after 1h, and the worker derives the deadline from its `expires_at`.
+- `set-agent-platform-runtime-class` (MutatingPolicy, `failurePolicy: Fail`, on CREATE): sets `runtimeClassName: kata` on every pod in `agent-platform-agents`, overwriting any value. The `kata` RuntimeClass then adds the pod overhead and the node selector for Kata-ready workers (see [kata-runtimeclass](../kube-system/kata-runtimeclass/README.md)), so the worker sets neither. A pod waits in
+  `Pending` until a Kata worker has room, and pod creation fails while the Kyverno webhook is unavailable, so no agent pod runs without Kata.
 - `cleanup-agent-platform-pods` (DeletingPolicy): every 15 minutes, deletes agent pods older than 2h in any phase, as a backstop for the worker's own delete.
 
 ## Secrets
@@ -103,5 +105,7 @@ A third gauge alert, `RenovateTriageSweeperStale` (warning), fires when `sweeper
 ## References
 
 - [#3467](https://github.com/anthony-spruyt/spruyt-labs/issues/3467) - migration plan and step order
+- [#3765](https://github.com/anthony-spruyt/spruyt-labs/issues/3765) - run agent pods in Kata VMs
 - [Kyverno ValidatingPolicy](https://kyverno.io/docs/policy-types/validating-policy/)
+- [Kyverno MutatingPolicy](https://kyverno.io/docs/policy-types/mutating-policy/)
 - [Kyverno DeletingPolicy](https://kyverno.io/docs/policy-types/deleting-policy/)
