@@ -66,7 +66,7 @@ upsert() {
 upsert apt/proxy apt-ubuntu-proxy '{
   "name":"apt-ubuntu-proxy","online":true,
   "storage":{"blobStoreName":"default","strictContentTypeValidation":true},
-  "proxy":{"remoteUrl":"http://archive.ubuntu.com/ubuntu/","contentMaxAge":1440,"metadataMaxAge":1440},
+  "proxy":{"remoteUrl":"https://mirrors.edge.kernel.org/ubuntu/","contentMaxAge":1440,"metadataMaxAge":1440},
   "negativeCache":{"enabled":true,"timeToLive":1440},
   "httpClient":{"blocked":false,"autoBlock":true},
   "apt":{"distribution":"jammy","flat":false}}'
