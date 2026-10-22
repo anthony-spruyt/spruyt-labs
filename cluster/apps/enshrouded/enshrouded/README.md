@@ -47,6 +47,23 @@ kubectl -n enshrouded exec statefulset/enshrouded -- grep '"buildid"' /opt/enshr
 curl -s https://api.steamcmd.net/v1/info/2278520 | jq -r '.data["2278520"].depots.branches.public.buildid'
 ```
 
+### CPU pinning
+
+The server runs on the performance cores only. The worker CPUs are hybrid: logical CPUs 0-7 are performance cores and 8-15 are efficiency cores. Unpinned, about half of the game thread work landed on the efficiency cores, and pinning cut the minutes with a tick of 40 ms or more from 35% to 10% with the same average load.
+
+The container `command` in `app/values.yaml` starts the image bootstrap under `taskset`, with the CPU list read from `/sys/devices/cpu_core/cpus` at container start. If that file is missing or empty it starts the bootstrap unpinned. The pin has to be there from the first process: Wine gives every thread and child process the CPU mask the first process had at startup, so pinning a running server
+leaves its new threads on every core.
+
+The `command` copies the image `CMD` (`/usr/local/etc/enshrouded/bootstrap`). An image update that changes the `CMD` must update the `command` too.
+
+To check the pin, compare the performance-core list with the CPU mask of every thread of the server process. Take the PID of the `enshrouded_server` process from the `ps` output; every thread must show the performance-core list, including threads Wine creates after a player logs in:
+
+```bash
+kubectl -n enshrouded exec statefulset/enshrouded -- cat /sys/devices/cpu_core/cpus
+kubectl -n enshrouded exec statefulset/enshrouded -- ps axww
+kubectl -n enshrouded exec statefulset/enshrouded -- sh -c 'grep -h Cpus_allowed_list /proc/<pid>/task/*/status | sort | uniq -c'
+```
+
 ### Storage and backups
 
 Two PVCs split re-downloadable game files from the world saves, so Velero only backs up what cannot be re-created. Only the saves PVC carries the Velero opt-in label.

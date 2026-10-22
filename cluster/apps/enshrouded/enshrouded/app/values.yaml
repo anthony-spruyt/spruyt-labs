@@ -37,6 +37,14 @@ controllers:
           repository: mornedhels/enshrouded-server
           tag: "1.8.0-wine@sha256:45912c59b8f0a1805b7ff73d616a379d973e6436105ca4533cf681f6096a1920"
           pullPolicy: IfNotPresent
+        # Wine gives every new thread the CPU mask its first process started with, so pin before bootstrap starts
+        command:
+          - sh
+          - -c
+          - |
+            cpus="$(cat /sys/devices/cpu_core/cpus 2>/dev/null)"
+            [ -n "$cpus" ] && exec taskset -c "$cpus" /usr/local/etc/enshrouded/bootstrap
+            exec /usr/local/etc/enshrouded/bootstrap
         env:
           TZ: ${TIMEZONE}
           SERVER_NAME: Ember Kelmire
