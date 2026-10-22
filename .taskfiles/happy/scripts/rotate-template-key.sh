@@ -21,7 +21,7 @@ server="https://${host}"
 home="$(mktemp -d)"
 trap 'rm -rf "${home}"' EXIT
 
-npm install --ignore-scripts --no-fund --no-audit --prefix "${home}/cli" "happy@${HAPPY_VERSION}" >&2
+npm install --ignore-scripts --no-fund --no-audit --cache "${home}/npm-cache" --prefix "${home}/cli" "happy@${HAPPY_VERSION}" >&2
 
 echo "Pairing ${template} against ${server}: choose the mobile app option and scan the QR code." >&2
 HAPPY_SERVER_URL="${server}" HAPPY_WEBAPP_URL="${server}" HAPPY_HOME_DIR="${home}" "${home}/cli/node_modules/.bin/happy" auth login

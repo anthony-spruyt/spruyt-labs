@@ -560,9 +560,14 @@ resource "coder_script" "happy" {
     # Scripts skip ~/.bashrc, which is what puts the safe-chain npm shim on PATH.
     npm=/home/vscode/.safe-chain/shims/npm
     [ -x "$npm" ] || npm=npm
-    # Own cache, filled only through safe-chain, so a stale shared ~/.npm entry can't break the install (#3785).
-    "$npm" ls -g --depth=0 "happy@${local.happy_version}" &>/dev/null ||
-      "$npm" install -g --no-fund --no-audit --cache /home/vscode/.cache/happy-npm "happy@${local.happy_version}"
+    # Fresh cache, so npm only sees safe-chain's filtered metadata; drop once safe-chain ignores npm's cache revalidation headers (#3785).
+    if ! "$npm" ls -g --depth=0 "happy@${local.happy_version}" &>/dev/null; then
+      cache=$(mktemp -d)
+      trap 'rm -rf "$cache"' EXIT
+      "$npm" install -g --no-fund --no-audit --cache "$cache" "happy@${local.happy_version}"
+      rm -rf "$cache"
+      trap - EXIT
+    fi
 
     # Happy reads only ~/.claude/settings.json (not project settings) and defaults to adding its co-author ad to commits.
     settings=/home/vscode/.claude/settings.json

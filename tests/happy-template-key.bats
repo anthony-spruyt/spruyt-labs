@@ -82,8 +82,11 @@ teardown() {
   [ "$(cat "${KEYS}/coder-happy-xfg.sops.yaml")" = "old" ]
 }
 
-@test "installs a pinned happy without running lifecycle scripts" {
+@test "installs a pinned happy without running lifecycle scripts, through a cache inside the temp home" {
   run bash "${SCRIPT}" xfg
   [ "${status}" -eq 0 ]
   grep -qE "^npm install --ignore-scripts .*happy@[0-9]+\.[0-9]+\.[0-9]+$" "${CALLS}"
+  prefix="$(sed -n 's/.* --prefix \([^ ]*\) happy@.*/\1/p' "${CALLS}")"
+  [ "${prefix##*/}" = "cli" ]
+  grep -qF -- " --cache ${prefix%/cli}/npm-cache " "${CALLS}"
 }
