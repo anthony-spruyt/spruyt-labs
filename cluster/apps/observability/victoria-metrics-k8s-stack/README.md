@@ -15,14 +15,16 @@ VMSingle, vmagent, vmalert, Alertmanager and Grafana for the whole cluster. The 
 ### Adding rules and dashboards
 
 - Rules: a `VMRule` file in `app/vmrules/`, listed in `app/vmrules/kustomization.yaml`.
-- LogsQL rules (VictoriaLogs): same, plus group `type: vlogs` and the label `vmalert.spruyt-labs/datasource: victorialogs`. The label routes the rule to the `victoria-logs` VMAlert (`app/vmalert-logs.yaml`) and keeps it out of the chart's vmalert, which would fail parsing LogsQL as MetricsQL. vlogs rules append `_time: <group interval>` themselves, so leave the time filter out of `expr`.
+- LogsQL rules (VictoriaLogs): same, plus group `type: vlogs` and the label `vmalert.spruyt-labs/datasource: victorialogs`. The label routes the rule to the `victoria-logs` VMAlert (`app/vmalert-logs.yaml`) and keeps it out of the chart's vmalert, which would fail parsing LogsQL as MetricsQL. vlogs rules append `_time: <group interval>` themselves, so leave the time filter out of `expr`. Each
+  evaluation queries `[ts-<group interval>, ts)`; delay it with `eval_delay` (not `eval_offset`). vmalert adds a `stats_result` label to every recorded series, which recording rules drop with `stats_result: ""`.
 - Dashboards: a JSON file in `app/dashboards/` plus a `configMapGenerator` entry with the `grafana_dashboard: "1"` label in `app/kustomization.yaml`. The Grafana sidecar picks it up; dashboards are not persisted in Grafana.
 
 ### Overridden defaults
 
 - `NodeFilesystemSpaceFillingUp` is disabled and replaced by `vmrules/talos-node-filesystem.yaml`, which adds a `deriv() < 0` guard; the default rule's linear prediction misfires on the disk-metric jumps a Talos node restart produces.
 - `KubePersistentVolumeFillingUp` is disabled and replaced by `vmrules/kube-pv-filling-up.yaml`, a copy that excludes the `coder-workspaces` `coder-*-containers` PVCs: those Block-mode Kata volumes report RBD allocation, not filesystem use (#3547). Remove the exclusion once Kata ships Cloud Hypervisor v52 or later.
-- `kube-prometheus-general.rules` is disabled and `RecordingRulesNoData` waits 6h, because idle-cluster recording rules legitimately produce no samples and flapped the alert (#2562). Its `expr` also skips `enshrouded:*`: those vlogs rules record from event-driven log lines and are empty whenever the server is idle (#3742). Re-check the override against upstream `alerts-vmalert.yml` on chart bumps.
+- `kube-prometheus-general.rules` is disabled and `RecordingRulesNoData` waits 6h, because idle-cluster recording rules legitimately produce no samples and flapped the alert (#2562). Its `expr` also skips `enshrouded:bad_performance_peak_ms:max`, which is empty whenever no warning is logged (#3742); the other `enshrouded:*` rules stay covered so a log-format change still alerts. The chart's sync
+  job fetches the upstream alert file from upstream master on every install and upgrade, so check the override against upstream master's `alerts-vmalert.yml`, not only on chart bumps.
 
 ### Ceph Dashboard integration
 

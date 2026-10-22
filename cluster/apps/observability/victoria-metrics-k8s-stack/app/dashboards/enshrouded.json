@@ -129,7 +129,7 @@
             "type": "prometheus",
             "uid": "$${datasource}"
           },
-          "expr": "enshrouded:tick_time_ms:avg{namespace=\"enshrouded\", pod=\"enshrouded-0\"}",
+          "expr": "avg_over_time(enshrouded:tick_time_ms:avg{namespace=\"enshrouded\", pod=\"enshrouded-0\"}[$__interval])",
           "legendFormat": "Average",
           "refId": "A"
         },
@@ -138,7 +138,7 @@
             "type": "prometheus",
             "uid": "$${datasource}"
           },
-          "expr": "enshrouded:tick_time_ms:max{namespace=\"enshrouded\", pod=\"enshrouded-0\"}",
+          "expr": "max_over_time(enshrouded:tick_time_ms:max{namespace=\"enshrouded\", pod=\"enshrouded-0\"}[$__interval])",
           "legendFormat": "Worst",
           "refId": "B"
         }
@@ -237,7 +237,7 @@
             "type": "prometheus",
             "uid": "$${datasource}"
           },
-          "expr": "enshrouded:updates_per_second:avg{namespace=\"enshrouded\", pod=\"enshrouded-0\"}",
+          "expr": "avg_over_time(enshrouded:updates_per_second:avg{namespace=\"enshrouded\", pod=\"enshrouded-0\"}[$__interval])",
           "legendFormat": "Updates per second",
           "refId": "A"
         }
@@ -336,7 +336,7 @@
             "type": "prometheus",
             "uid": "$${datasource}"
           },
-          "expr": "enshrouded:entities:max{namespace=\"enshrouded\", pod=\"enshrouded-0\"}",
+          "expr": "max_over_time(enshrouded:entities:max{namespace=\"enshrouded\", pod=\"enshrouded-0\"}[$__interval])",
           "legendFormat": "Entities",
           "refId": "A"
         }
@@ -350,7 +350,7 @@
         "type": "prometheus",
         "uid": "$${datasource}"
       },
-      "description": "Bad Performance warnings the server logged in each one-minute window.",
+      "description": "Bad Performance warnings the server logged in each interval shown in the title (one minute at the default 6h range).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -435,12 +435,12 @@
             "type": "prometheus",
             "uid": "$${datasource}"
           },
-          "expr": "enshrouded:bad_performance_warnings:count1m{namespace=\"enshrouded\", pod=\"enshrouded-0\"}",
-          "legendFormat": "Warnings per minute",
+          "expr": "sum_over_time(enshrouded:bad_performance_warnings:count1m{namespace=\"enshrouded\", pod=\"enshrouded-0\"}[$__interval])",
+          "legendFormat": "Warnings",
           "refId": "A"
         }
       ],
-      "title": "Bad Performance warnings",
+      "title": "Bad Performance warnings ($__interval)",
       "type": "timeseries",
       "interval": "1m"
     },
@@ -534,7 +534,7 @@
             "type": "prometheus",
             "uid": "$${datasource}"
           },
-          "expr": "enshrouded:bad_performance_peak_ms:max{namespace=\"enshrouded\", pod=\"enshrouded-0\"}",
+          "expr": "max_over_time(enshrouded:bad_performance_peak_ms:max{namespace=\"enshrouded\", pod=\"enshrouded-0\"}[$__interval])",
           "legendFormat": "Peak",
           "refId": "A"
         }

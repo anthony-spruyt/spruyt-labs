@@ -43,8 +43,8 @@ defaultRules:
     RecordingRulesNoData:
       spec:
         for: 6h
-        # enshrouded:* rules record from event-driven logs and are empty by design while the server is idle. See #3742.
-        expr: 'sum(vmalert_recording_rules_last_evaluation_samples{recording!~"enshrouded:.*"}) without(id) < 1'
+        # enshrouded:bad_performance_peak_ms:max is empty whenever no warning is logged. See #3742.
+        expr: 'sum(vmalert_recording_rules_last_evaluation_samples{recording!="enshrouded:bad_performance_peak_ms:max"}) without(id) < 1'
   groups:
     # count:up0 is count(up == 0), which is an empty vector whenever every scrape target is
     # healthy, so it trips RecordingRulesNoData permanently. Neither count:up0 nor count:up1
