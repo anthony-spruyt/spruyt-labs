@@ -77,11 +77,23 @@ tlsStore:
     defaultCertificate:
       secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
 deployment:
+  replicas: 2
   additionalVolumes:
     - name: traefik-api-key-auth-plugin
       image:
         reference: ghcr.io/anthony-spruyt/traefik-api-key-auth:1.0.1@sha256:75c99966fb4e2bd019c2136ab3f9e77c7f918b15d7f081a32d9db6f048c17a3a
         pullPolicy: IfNotPresent
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: traefik
+        app.kubernetes.io/instance: traefik-traefik
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
 experimental:
   localPlugins:
     traefik-api-key-auth:
