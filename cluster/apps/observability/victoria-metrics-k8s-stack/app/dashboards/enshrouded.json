@@ -40,7 +40,7 @@
         "type": "prometheus",
         "uid": "$${datasource}"
       },
-      "description": "Average and worst update time per one-minute window from the server Stats log line. The dashed line is the 16.7 ms tick budget. Gaps mean the server logged no Stats line, which happens while no player is connected.",
+      "description": "Average and worst update time in each interval (one minute at the default 6h range) from the server Stats log line. The dashed line is the 16.7 ms tick budget. Gaps mean the server logged no Stats line, which happens while no player is connected.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -449,7 +449,7 @@
         "type": "prometheus",
         "uid": "$${datasource}"
       },
-      "description": "Highest peak reported by a Bad Performance warning in each one-minute window. Shown only for windows that had a warning.",
+      "description": "Highest peak reported by a Bad Performance warning in each interval (one minute at the default 6h range). Shown only for intervals that had a warning.",
       "fieldConfig": {
         "defaults": {
           "color": {
