@@ -19,3 +19,4 @@ resources:
   - ./unifi.yaml
   - ./thunderbolt-ring-errors.yaml
   - ./kube-pv-filling-up.yaml
+  - ./enshrouded.yaml

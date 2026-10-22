@@ -214,5 +214,12 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  - name: grafana-dashboard-enshrouded
+    namespace: observability
+    files:
+      - dashboards/enshrouded.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml

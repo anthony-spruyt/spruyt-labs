@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: enshrouded
+  namespace: observability
+  labels:
+    vmalert.spruyt-labs/datasource: victorialogs
+spec:
+  groups:
+    - name: enshrouded-server-performance
+      type: vlogs
+      interval: 1m
+      eval_delay: 30s
+      rules:
+        # stats_result: "" drops the label vmalert adds to every vlogs result
+        - record: enshrouded:tick_time_ms:avg
+          labels:
+            stats_result: ""
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"} "[ecss] Stats:"
+            | extract "Avg:<v>ms"
+            | replace (",", "") at v
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) avg(v) as tick_time_ms
+
+        - record: enshrouded:tick_time_ms:max
+          labels:
+            stats_result: ""
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"} "[ecss] Stats:"
+            | extract "Max:<v>ms"
+            | replace (",", "") at v
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) max(v) as tick_time_ms
+
+        - record: enshrouded:updates_per_second:avg
+          labels:
+            stats_result: ""
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"} "[ecss] Stats:"
+            | extract "Upd:<updates> "
+            | extract "Time:<window_ms>ms"
+            | replace (",", "") at updates
+            | replace (",", "") at window_ms
+            | math updates / window_ms * 1000 as updates_per_second
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) avg(updates_per_second) as updates_per_second
+
+        - record: enshrouded:entities:max
+          labels:
+            stats_result: ""
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"} "[ecss] Stats:"
+            | extract "Ent:<v> "
+            | replace (",", "") at v
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) max(v) as entities
+
+        # Counts over every pod log line so a window with no warnings records 0, not a gap
+        - record: enshrouded:bad_performance_warnings:count1m
+          labels:
+            stats_result: ""
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"}
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) count() if ("[server] Bad Performance") as warnings
+
+        - record: enshrouded:bad_performance_peak_ms:max
+          labels:
+            stats_result: ""
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"} "[server] Bad Performance"
+            | extract "peak: <peak_us> us)"
+            | replace (",", "") at peak_us
+            | math peak_us / 1000 as peak_ms
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) max(peak_ms) as peak_ms
