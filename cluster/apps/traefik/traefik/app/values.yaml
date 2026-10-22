@@ -78,6 +78,10 @@ tlsStore:
       secretName: "wildcard-${EXTERNAL_DOMAIN/./-}-tls"
 deployment:
   replicas: 2
+  lifecycle:
+    preStop:
+      sleep:
+        seconds: 5
   additionalVolumes:
     - name: traefik-api-key-auth-plugin
       image:
@@ -87,6 +91,8 @@ topologySpreadConstraints:
   - maxSkew: 1
     topologyKey: kubernetes.io/hostname
     whenUnsatisfiable: DoNotSchedule
+    matchLabelKeys:
+      - pod-template-hash
     labelSelector:
       matchLabels:
         app.kubernetes.io/name: traefik
