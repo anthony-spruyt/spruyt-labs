@@ -68,6 +68,7 @@
       "Read(~/.password-store/**/*)",
       "Read(~/.claude/.credentials.json)",
       "Read(~/.secrets/**)",
+      "AskUserQuestion",
       "Read(~/.terraform.d/**)"
     ]
   },
