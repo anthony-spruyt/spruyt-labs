@@ -56,7 +56,7 @@ Consequence: the user in `nexus-admin` is **not** `admin`, and changing `nexus-a
 ### Provisioning Job
 
 `nexus-provision-repos` (`app/provision.sh`) upserts every repo, the cleanup policy and tasks (see [Cleanup](#cleanup)), the `anonymous-extras` role (`nx-metrics-all`, `nx-healthcheck-read`, so vmagent can scrape anonymously), the `envbuilder-cache-writer` role and the client users. It is GET-merge-PUT safe and re-runs whenever `provision.sh` changes (hashed ConfigMap +
-`kustomize.toolkit.fluxcd.io/force: "Enabled"`). It also resets each client user's password from `nexus-clients` on every run.
+`kustomize.toolkit.fluxcd.io/force: "Enabled"`). It also resets each client user's password from `nexus-clients` on every run, and acknowledges Sonatype's required base telemetry (3.97.0+); Nexus turns read-only if its daily telemetry upload to Sonatype fails for 10 days.
 
 ### Cleanup
 
