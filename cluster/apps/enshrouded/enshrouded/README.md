@@ -26,7 +26,7 @@ The game settings are the `SERVER_GS_*` variables in `app/values.yaml`. Every ro
 
 ### Joining
 
-Players pick the server from the in-game Join list, or choose "Search by IPv4 / Domain" and enter `enshrouded.${EXTERNAL_DOMAIN}`, then the role password.
+Players pick the server from the in-game Join list, or choose "Search by IPv4 / Domain" and enter `enshrouded.${EXTERNAL_DOMAIN}`, then the role password. Players on the home LAN connect directly; everyone else joins through Steam's relays.
 
 ### Updates
 
@@ -67,6 +67,9 @@ Two PVCs split re-downloadable game files from the world saves, so Velero only b
 3. **Game says the server version is too old**
    - **Cause**: the updater restarted the server, but steamcmd reported `already up to date` and installed nothing, so the server came back on the old build. Seen on the first update after a pod restart, when steamcmd's app cache (kept outside the PVCs) is empty ([mornedhels/enshrouded-server#262](https://github.com/mornedhels/enshrouded-server/issues/262)).
    - **Fix**: compare the builds and force an update (see Updates).
+4. **A LAN player goes through the relay**
+   - **Cause**: the PC's Steam IP-sharing setting does not allow the direct connection, or the PC is on a network other than the LAN.
+   - **Fix**: check both: try the Steam IP-sharing setting that always shares the IP, and confirm the PC is on the LAN network.
 
 ## References
 

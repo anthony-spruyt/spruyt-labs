@@ -36,3 +36,22 @@ spec:
             - 169.254.0.0/16
             - 100.64.0.0/10
             - ${GATEWAY_PUBLIC_IP4}/32
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Egress only: the server opens the direct path to LAN players and their replies return on that flow
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-enshrouded-lan-direct-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: enshrouded
+  egress:
+    - toCIDR:
+        - ${LAN_CIDR_IP4}
+      toPorts:
+        - ports:
+            - port: "32768"
+              endPort: 65535
+              protocol: UDP
