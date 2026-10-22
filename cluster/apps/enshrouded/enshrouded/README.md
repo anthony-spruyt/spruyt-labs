@@ -8,7 +8,7 @@ The server is IPv4 only, UDP only, and has no web UI or HTTP endpoint. Cloudflar
 
 ## Prerequisites
 
-- **Router port forward**: UDP 15637 to the Service's LoadBalancer IP (`ENSHROUDED_IP4`). It lives on the router, not in this repo; remote players cannot join without it.
+- **Router port forward**: none. Players join through Steam's relays, so the server needs no inbound port from the internet. Forward UDP 15637 to the Service's LoadBalancer IP (`ENSHROUDED_IP4`) on the router only if a remote player can't connect through the relays.
 - **DNS**: `enshrouded.${EXTERNAL_DOMAIN}` resolves through the Technitium record that external-dns writes from the Service annotation on the LAN, and through the DNS-only Cloudflare record in `infra/terraform/cloudflare/dns.tf` outside it.
 - **Secret**: `enshrouded-secrets` (`app/enshrouded-secrets.sops.yaml`) holds one password per role, read with `secretKeyRef` in `app/values.yaml`.
 
