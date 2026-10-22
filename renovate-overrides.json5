@@ -86,6 +86,16 @@
       "allowedVersions": "!/^2\\.39\\./"
     },
     {
+      "description": "Skip mcp-victoriametrics v1.120.1, a mistyped tag holding v1.20.1 code. Ref #3776",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/victoriametrics/mcp-victoriametrics"
+      ],
+      "allowedVersions": "!/^v?1\\.120\\.1$/"
+    },
+    {
       "description": "Fetch mcp-header-proxy release notes from its own repo. Ref #3274",
       "matchDatasources": [
         "docker"
