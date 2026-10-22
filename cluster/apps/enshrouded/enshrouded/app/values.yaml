@@ -35,8 +35,7 @@ controllers:
       app:
         image:
           repository: mornedhels/enshrouded-server
-          # 1.8.0 is the Proton build (same digest as 1.8.0-proton)
-          tag: "1.8.0@sha256:689dcb30037b0c63e6929b2fe5951eaf8eca52a43792b2764440baeb012b2aa1"
+          tag: "1.8.0-wine@sha256:45912c59b8f0a1805b7ff73d616a379d973e6436105ca4533cf681f6096a1920"
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}

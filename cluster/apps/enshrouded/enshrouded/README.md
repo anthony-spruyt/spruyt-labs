@@ -2,7 +2,8 @@
 
 ## Overview
 
-Enshrouded 1.0 dedicated server (Steam app 2278520), run with the [`mornedhels/enshrouded-server`](https://github.com/mornedhels/enshrouded-server) image. The image runs the Windows server under Proton and handles the steamcmd download, scheduled updates and save backups. Swap to a native Linux server once Keen ships one.
+Enshrouded 1.0 dedicated server (Steam app 2278520), run with the [`mornedhels/enshrouded-server`](https://github.com/mornedhels/enshrouded-server) image. The image runs the Windows server under Wine (the `-wine` tag) and handles the steamcmd download, scheduled updates and save backups. It is the Wine build because on the Proton build the server never offers players a direct connection, so even
+LAN players go through Steam's relays ([mornedhels/enshrouded-server#202](https://github.com/mornedhels/enshrouded-server/issues/202)). Swap to a native Linux server once Keen ships one.
 
 The server is IPv4 only, UDP only, and has no web UI or HTTP endpoint. Cloudflare Tunnel cannot carry UDP, so players reach it through a `LoadBalancer` Service instead of Traefik.
 
