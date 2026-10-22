@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/sirkirby/unifi-network-mcp
-          tag: 0.33.0@sha256:1135662e79759beb907697ccb7656eab0de9ca3beefb09d730cd3ed8bc1f3cf5
+          tag: 0.39.3@sha256:46dd60f81049480fdd0238df6bdd8846f9263f5f7f95bbbdd86cc71989428314
           pullPolicy: IfNotPresent
         env:
           - name: HOME
