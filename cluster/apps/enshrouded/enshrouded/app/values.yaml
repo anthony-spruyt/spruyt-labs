@@ -35,7 +35,7 @@ controllers:
       app:
         image:
           repository: mornedhels/enshrouded-server
-          tag: "1.8.0-wine@sha256:45912c59b8f0a1805b7ff73d616a379d973e6436105ca4533cf681f6096a1920"
+          tag: "1.8.1-wine@sha256:002a8ac3387eddc5151b18ab5e7c02f9382f8e941dcfc75e56fa5134bd18f283"
           pullPolicy: IfNotPresent
         # Wine gives every new thread the CPU mask its first process started with, so pin before bootstrap starts
         command:
