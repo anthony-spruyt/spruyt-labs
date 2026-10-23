@@ -8,8 +8,8 @@ metadata:
 spec:
   ref:
     # https://rook.github.io/docs/rook/v1.18/Upgrade/rook-upgrade/#supported-versions
-    tag: v1.20.6
-    digest: sha256:65d00e031fcd247a96113032ce83113bd379a06fe2f5a39108529242d41550d3
+    tag: 1.21.0
+    digest: sha256:8fac9a99643cdda8d6fb616cf3760a6988e90fc229e1a7c2cbeb9b29a84ad625
   url: oci://ghcr.io/rook/rook-ceph-cluster
   secretRef:
     name: image-pull-secrets
