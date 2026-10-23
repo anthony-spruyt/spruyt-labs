@@ -16,7 +16,6 @@ defaultPodOptions:
       type: RuntimeDefault
 controllers:
   agent-platform-worker:
-    replicas: 0
     annotations:
       reloader.stakater.com/auto: "true"
     serviceAccount:
