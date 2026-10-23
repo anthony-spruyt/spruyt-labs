@@ -70,7 +70,8 @@ Policies in `agent-platform-agents` select every pod in the namespace, and agent
 
 All three live in `agents/app/kyverno-policies.yaml`:
 
-- `validate-agent-platform-pods` (ValidatingPolicy, `Deny`, on CREATE): every pod in `agent-platform-agents` must carry `managed-by: agent-platform`, and must set `activeDeadlineSeconds` between 1 and 3600. The per-run GitHub installation token expires after 1h, and the worker derives the deadline from its `expires_at`.
+- `validate-agent-platform-pods` (ValidatingPolicy, `Deny`, on CREATE): every pod in `agent-platform-agents` must carry `managed-by: agent-platform`, must set `activeDeadlineSeconds` between 1 and 3600, and must run with `runtimeClassName: kata`. Validation sees the pod after the MutatingPolicy below has set the runtime, so the Kata check only fails if that policy is missing or changed. The
+  per-run GitHub installation token expires after 1h, and the worker derives the deadline from its `expires_at`.
 - `set-agent-platform-runtime-class` (MutatingPolicy, `failurePolicy: Fail`, on CREATE): sets `runtimeClassName: kata` on every pod in `agent-platform-agents`, overwriting any value. The `kata` RuntimeClass then adds the pod overhead and the node selector for Kata-ready workers (see [kata-runtimeclass](../kube-system/kata-runtimeclass/README.md)), so the worker sets neither. A pod waits in
   `Pending` until a Kata worker has room, and pod creation fails while the Kyverno webhook is unavailable, so no agent pod runs without Kata.
 - `cleanup-agent-platform-pods` (DeletingPolicy): every 15 minutes, deletes agent pods older than 2h in any phase, as a backstop for the worker's own delete.

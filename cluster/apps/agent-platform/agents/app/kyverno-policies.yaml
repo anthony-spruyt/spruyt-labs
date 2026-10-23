@@ -10,9 +10,10 @@ metadata:
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Pods in agent-platform-agents must carry managed-by: agent-platform and
-      set activeDeadlineSeconds between 1 and 3600. The per-run GitHub token
-      expires after 1h, so an agent pod must not outlive it.
+      Pods in agent-platform-agents must carry managed-by: agent-platform, set
+      activeDeadlineSeconds between 1 and 3600, and run with runtimeClassName
+      kata. The per-run GitHub token expires after 1h, so an agent pod must not
+      outlive it.
 spec:
   validationActions: [Deny]
   evaluation:
@@ -32,6 +33,8 @@ spec:
       message: "Pods in agent-platform-agents must be labelled managed-by: agent-platform"
     - expression: "object.spec.?activeDeadlineSeconds.orValue(0) >= 1 && object.spec.?activeDeadlineSeconds.orValue(0) <= 3600"
       message: "Agent pods must set activeDeadlineSeconds between 1 and 3600 (the agent token lifetime)"
+    - expression: "object.spec.?runtimeClassName.orValue('') == 'kata'"
+      message: "Agent pods must run with runtimeClassName: kata"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/policies.kyverno.io/mutatingpolicy_v1.json
 apiVersion: policies.kyverno.io/v1
