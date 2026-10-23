@@ -86,6 +86,18 @@
       "allowedVersions": "!/^2\\.39\\./"
     },
     {
+      // Ceph tags x.0.z dev and x.1.z release candidates with no prerelease marker; x.2.z is stable.
+      // versioning, not allowedVersions: the image-age preset owns allowedVersions and a later one replaces it.
+      "description": "Only offer stable Ceph releases. Ref #3809",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "quay.io/ceph/ceph"
+      ],
+      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>2)\\.(?<patch>\\d+)$"
+    },
+    {
       "description": "Fetch mcp-header-proxy release notes from its own repo. Ref #3274",
       "matchDatasources": [
         "docker"
