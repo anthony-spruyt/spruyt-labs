@@ -84,7 +84,7 @@ jobs:
       contents: "read"
     env:
       # renovate: datasource=github-releases depName=kubernetes/kubernetes
-      KUBERNETES_VERSION: "1.36.4"
+      KUBERNETES_VERSION: "1.37.1"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
