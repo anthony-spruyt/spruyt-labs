@@ -80,7 +80,7 @@ spec:
                   spec:
                     containers:
                       - name: mcp-header-proxy
-                        image: ghcr.io/anthony-spruyt/mcp-header-proxy:1.0.1@sha256:861ac31b0f71885848192b6d28c094e0ec0fe555b1292731d82f689d1ebac0bb
+                        image: ghcr.io/anthony-spruyt/mcp-header-proxy:1.0.2@sha256:98dce9cdece2bf7f92c0b22d698b881f249f9c992e69dea57d58906cd173ef8e
                         env:
                           - name: UPSTREAM_URL
                             value: http://localhost:5678
