@@ -7,6 +7,8 @@ on:
     branches:
       - "main"
   workflow_dispatch: {}
+  schedule:
+    - cron: "23 */6 * * *"
 concurrency:
   group: "release-please-${{ github.ref }}"
   cancel-in-progress: false
@@ -19,9 +21,24 @@ jobs:
     secrets:
       RELEASE_PLEASE_APP_CLIENT_ID: "${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}"
       RELEASE_PLEASE_APP_PRIVATE_KEY: "${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}"
-  images:
+    if: "github.ref_type == 'branch'"
+  recover:
     needs: "release"
-    if: "needs.release.outputs.release-created == 'true'"
+    if: "!cancelled()"
+    permissions:
+      contents: "read"
+      actions: "write"
+    uses: "anthony-spruyt/repo-operator/.github/workflows/_release-recover.yaml@6364775b2e73a9cd1bf3cb639a6c8c12a5cda41b"
+    with:
+      releases: "${{ needs.release.outputs.releases }}"
+    secrets:
+      RELEASE_PLEASE_APP_CLIENT_ID: "${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}"
+      RELEASE_PLEASE_APP_PRIVATE_KEY: "${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}"
+  images:
+    needs:
+      - "release"
+      - "recover"
+    if: "!cancelled() && (needs.release.outputs.release-created == 'true' || needs.recover.outputs.release-created == 'true')"
     permissions:
       contents: "write"
       packages: "write"
@@ -29,7 +46,7 @@ jobs:
       attestations: "write"
     uses: "anthony-spruyt/repo-operator/.github/workflows/_release-images.yaml@6364775b2e73a9cd1bf3cb639a6c8c12a5cda41b"
     with:
-      releases: "${{ needs.release.outputs.releases }}"
+      releases: "${{ needs.recover.outputs.releases || needs.release.outputs.releases }}"
       language: "none"
       dockerhub-namespace: "aspruyt"
     secrets:
