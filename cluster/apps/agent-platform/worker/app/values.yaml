@@ -65,7 +65,7 @@ controllers:
           AgentPlatform__Role: Worker
           ASPNETCORE_HTTP_PORTS: "8080"
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/claude-agent-read
-          AgentPods__Image: "ghcr.io/anthony-spruyt/claude-agent-read:1.1.4@sha256:1c9acf6c78d1c3c40abdd62a10c44e3d3736559d475c5a21f19faf228046e6eb"
+          AgentPods__Image: "ghcr.io/anthony-spruyt/claude-agent-read:1.1.6@sha256:920bb6ee5061ba13e9a9830c4d94d8a6cad86b06626289e8823a00145a131540"
           AgentPods__MaxConcurrentActivities: "1"
           AgentPods__Model: opus
           AgentPrompts__Directory: /etc/agent-platform/prompts
