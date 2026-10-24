@@ -20,7 +20,7 @@ jobs:
       bats: "${{ steps.filter.outputs.bats }}"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -86,7 +86,7 @@ jobs:
       KUBERNETES_VERSION: "1.36.4"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -123,7 +123,7 @@ jobs:
       contents: "read"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -241,7 +241,7 @@ jobs:
       contents: "read"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -280,7 +280,7 @@ jobs:
           - "infra/terraform/cloudflare"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@766304fb089600d37bc7a191eeb9befb32799b5a # main
         with:
           allowed-endpoints: >-
             api.github.com:443
