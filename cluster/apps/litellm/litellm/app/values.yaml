@@ -380,7 +380,7 @@ controllers:
       llm-tool-guard:
         image:
           repository: ghcr.io/anthony-spruyt/llm-tool-guard
-          tag: "1.5.0@sha256:3d493b0ac22cc9680395cc561fe139257da515e34ff53b73a94b514109154a5e"
+          tag: "1.5.1@sha256:76d49ba7a9a62ad56e6c0ab66c572e869473cef32862ccf69580709b52028c26"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
