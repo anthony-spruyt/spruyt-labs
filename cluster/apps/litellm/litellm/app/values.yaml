@@ -1456,7 +1456,7 @@ persistence:
     type: image
     image:
       repository: ghcr.io/anthony-spruyt/llm-tool-guard-model
-      tag: 1.0.3@sha256:9c78688db30b9297ec2573f0487944c6c1f9a09a82896a14bd46905cbfabf1ce
+      tag: 1.0.4@sha256:fb98de5210e692bd6494fe18a48391dfdf1557c24fbb0489e58f7a4938dfa0e1
     pullPolicy: IfNotPresent
     advancedMounts:
       llm-tool-guard:
