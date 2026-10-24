@@ -25,7 +25,7 @@ controllers:
             type: RuntimeDefault
         image:
           repository: ghcr.io/anthony-spruyt/blog
-          tag: 1.4.0@sha256:b4b9d6b37a2637274e4fc48c5e5239fab8778dcfdc1365cde3ed332f937fe392
+          tag: 1.4.1@sha256:3d0583594a13cc32688fc05fe7acf88fe51a5d08eea996733908d23672a212f8
           pullPolicy: IfNotPresent
         resources:
           requests:
