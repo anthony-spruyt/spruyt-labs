@@ -90,9 +90,9 @@ LiteLLM exposes the domain tools directly by name, plus `unifi_get_support_bundl
    - **Symptom**: an expected tool does not appear in the LiteLLM tool list
    - **Resolution**: check whether the tool is in `disallowed_tools` under `mcp_servers.unifi` in `values.yaml`. If the site now has that hardware or feature (for example a guest network or hotspot), move it to `allowed_tools`. Policy gates never hide tools.
 
-7. **Tool calls time out; pod logs show `Connection attempt N failed: RequestError`**
+7. **Tool calls fail; pod logs show `Connection attempt N failed: RequestError`**
 
-   - **Symptom**: the pod is Ready and serves MCP, but every tool call times out. Logs read `Pre-login detection inconclusive` then `RequestError`. The app logs `Tool functionality may be impaired` and serves anyway, so this does not crash-loop.
+   - **Symptom**: the pod is Ready and serves MCP, but every tool call returns a connection error. Logs read `Pre-login detection inconclusive` then `RequestError`. The app logs `Failed to connect to the Unifi controller at startup` and serves anyway, so this does not crash-loop.
    - **Resolution**: TCP to the controller is being dropped before it arrives. The controller sits behind a zone-based firewall policy on the gateway, and the allow rule for the cluster network is **order-sensitive** — a broader block policy with a lower rule ID is evaluated first and silently drops the SYN.
    - **Rule ordering**: the allow rule must sit **above** that block. A rule in the wrong position looks correct in the UI and reports zero hits.
    - **Diagnosis**: ICMP reaching the controller while every TCP port reads `filtered` is the signature — ICMP is permitted by a separate, higher-ordered rule. Confirm with `tcpdump` on the controller host: if the SYN never arrives but the echo request does, the drop is on the gateway, not the host. Checking the rule's hit counter is faster than either.
