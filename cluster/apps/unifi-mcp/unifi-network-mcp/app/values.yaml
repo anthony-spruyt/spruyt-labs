@@ -118,7 +118,7 @@ controllers:
             spec:
               tcpSocket:
                 port: 3000
-              failureThreshold: 90
+              failureThreshold: 30
               periodSeconds: 5
 persistence:
   tmp:
