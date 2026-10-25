@@ -917,11 +917,13 @@ configMaps:
               - unifi_create_ap_group
               - unifi_create_backup
               - unifi_create_client_group
+              - unifi_create_content_filter
               - unifi_create_dns_record
               - unifi_create_dynamic_dns
               - unifi_create_firewall_group
               - unifi_create_firewall_policy
               - unifi_create_firewall_zone
+              - unifi_create_nat_rule
               - unifi_create_network
               - unifi_create_oon_policy
               - unifi_create_port_forward
@@ -943,6 +945,7 @@ configMaps:
               - unifi_delete_firewall_group
               - unifi_delete_firewall_policy
               - unifi_delete_firewall_zone
+              - unifi_delete_nat_rule
               - unifi_delete_network
               - unifi_delete_oon_policy
               - unifi_delete_port_forward
@@ -976,9 +979,12 @@ configMaps:
               - unifi_get_firewall_policy_ordering
               - unifi_get_gateway_settings
               - unifi_get_gateway_stats
+              - unifi_get_incident_evidence
               - unifi_get_ips_events
               - unifi_get_lldp_neighbors
+              - unifi_get_mdns_settings
               - unifi_get_mgmt_settings
+              - unifi_get_nat_rule
               - unifi_get_network_details
               - unifi_get_network_health
               - unifi_get_network_stats
@@ -998,6 +1004,8 @@ configMaps:
               - unifi_get_switch_capabilities
               - unifi_get_switch_ports
               - unifi_get_system_info
+              - unifi_get_threat_management_settings
+              - unifi_get_threat_posture
               - unifi_get_top_clients
               - unifi_get_traffic_flow_statistics
               - unifi_get_traffic_flows
@@ -1025,6 +1033,7 @@ configMaps:
               - unifi_list_firewall_groups
               - unifi_list_firewall_policies
               - unifi_list_firewall_zones
+              - unifi_list_nat_rules
               - unifi_list_networks
               - unifi_list_oon_policies
               - unifi_list_port_forwards
@@ -1045,6 +1054,7 @@ configMaps:
               - unifi_rename_client
               - unifi_rename_device
               - unifi_reorder_firewall_policies
+              - unifi_set_client_fixed_ap
               - unifi_set_client_ip_settings
               - unifi_set_device_led
               - unifi_set_jumbo_frames
@@ -1052,6 +1062,7 @@ configMaps:
               - unifi_set_switch_port_profile
               - unifi_toggle_device
               - unifi_toggle_firewall_policy
+              - unifi_toggle_nat_rule
               - unifi_toggle_oon_policy
               - unifi_toggle_port_forward
               - unifi_toggle_qos_rule_enabled
@@ -1072,6 +1083,8 @@ configMaps:
               - unifi_update_firewall_policy
               - unifi_update_firewall_zone
               - unifi_update_gateway_settings
+              - unifi_update_mdns_settings
+              - unifi_update_nat_rule
               - unifi_update_network
               - unifi_update_oon_policy
               - unifi_update_port_forward
@@ -1080,9 +1093,11 @@ configMaps:
               - unifi_update_route
               - unifi_update_snmp_settings
               - unifi_update_switch_stp
+              - unifi_update_threat_management_settings
               - unifi_update_traffic_route
               - unifi_update_usergroup
               - unifi_update_vpn_client_state
+              - unifi_update_vpn_server_alternate_address
               - unifi_update_vpn_server_state
               - unifi_update_wlan
               - unifi_upgrade_device

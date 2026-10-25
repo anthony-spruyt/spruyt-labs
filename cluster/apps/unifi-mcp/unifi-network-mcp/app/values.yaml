@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/sirkirby/unifi-network-mcp
-          tag: 0.33.0@sha256:1135662e79759beb907697ccb7656eab0de9ca3beefb09d730cd3ed8bc1f3cf5
+          tag: 0.38.5@sha256:3ad5b6fce2268b1a9063a1fa57e61ed3c517ac1f40a59a4eb0c677852a0e2040
           pullPolicy: IfNotPresent
         env:
           - name: HOME
@@ -118,10 +118,7 @@ controllers:
             spec:
               tcpSocket:
                 port: 3000
-              # The app connects to the controller before binding the listener,
-              # retrying 3x for ~156s when unreachable. A budget under that kills
-              # the pod moments before it would have become ready.
-              failureThreshold: 90
+              failureThreshold: 30
               periodSeconds: 5
 persistence:
   tmp:
