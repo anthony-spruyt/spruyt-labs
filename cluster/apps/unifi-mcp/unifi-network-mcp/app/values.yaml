@@ -35,8 +35,6 @@ controllers:
           - name: UNIFI_MCP_PORT
             value: "3000"
           # Default is localhost,127.0.0.1 — rejects the Host header LiteLLM sends.
-          # Entries MUST carry the :3000 port suffix. Upstream docs claim bare hostnames
-          # normalise to host:*, but verified against 0.32.6 they return 421.
           - name: UNIFI_MCP_ALLOWED_HOSTS
             value: "unifi-network-mcp.unifi-mcp.svc:3000,unifi-network-mcp.unifi-mcp.svc.${CLUSTER_DOMAIN}:3000,unifi-network-mcp:3000,localhost:3000,127.0.0.1:3000"
           - name: UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION

@@ -62,8 +62,7 @@ LiteLLM exposes the domain tools directly by name, plus `unifi_get_support_bundl
 1. **421 Misdirected Request / "Invalid Host header"**
 
    - **Symptom**: a 421 from the MCP endpoint; pod logs show `mcp.server.transport_security - WARNING - Invalid Host header: <name>`
-   - **Resolution**: the Host header LiteLLM sends must appear in `UNIFI_MCP_ALLOWED_HOSTS` in `values.yaml`, **with the `:3000` port suffix**. Upstream docs say bare hostnames are normalised to `host:*`; verified against image `0.32.6` that is not true — a bare entry is rejected with 421 while the `host:3000` form is accepted. If the entry list ever needs to match an unknown port,
-     `UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION=false` disables the check entirely, but prefer listing the exact `host:port`.
+   - **Resolution**: the Host header LiteLLM sends must appear in `UNIFI_MCP_ALLOWED_HOSTS` in `values.yaml`. A bare `host` entry matches that host with or without a port; a `host:3000` entry matches only `host:3000`.
 
 2. **Connection refused despite a Ready pod**
 
