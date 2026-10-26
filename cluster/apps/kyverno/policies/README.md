@@ -58,8 +58,8 @@ When LiteLLM pods cannot be admitted and a revert of the policy commit cannot la
 
 1. Stop Flux from recreating the policy: `flux suspend kustomization kyverno-policies -n flux-system`
 2. Remove the policy: `kubectl delete imagevalidatingpolicy verify-litellm-image`
-3. Land the fix on `main`, then `flux resume kustomization kyverno-policies -n flux-system`. Flux recreates the policy from `main`.
-4. Restart LiteLLM and check the pods: `kubectl rollout restart deployment/litellm -n litellm`, then `kubectl get pods -n litellm`. Repeated denials make the ReplicaSet back off, so it does not retry promptly on its own. Run this right after step 2 if service cannot wait for step 3.
+3. Restart LiteLLM and check the pods: `kubectl rollout restart deployment/litellm -n litellm`, then `kubectl get pods -n litellm`. Repeated denials make the ReplicaSet back off, so it does not retry promptly on its own.
+4. Land the fix on `main`, then `flux resume kustomization kyverno-policies -n flux-system`. Flux recreates the policy from `main`.
 
 ### Rotating the LiteLLM cosign key
 
@@ -80,7 +80,7 @@ both keys in this order so the pinned image always verifies:
 
 3. In one commit, remove the old attestor and its call in the expression, and rename `cosignNext` to `cosign` in the attestor and the expression, so the next rotation starts from the same names.
 
-When upstream revokes a key instead of rotating it, do not overlap the keys: replace the key data of the `cosign` attestor in one commit and leave the expression as it is. New LiteLLM pods are denied until the bump to an image signed with the new key lands, so merge it straight after.
+When upstream revokes a key instead of rotating it, do not overlap the keys: once the litellm-middleware PR has merged and the spruyt-labs Renovate bump PR is open, replace the key data of the `cosign` attestor in one commit and leave the expression as it is. New LiteLLM pods are denied until the bump lands, so merge it straight after.
 
 ## Troubleshooting
 
