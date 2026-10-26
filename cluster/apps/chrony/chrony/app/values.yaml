@@ -36,7 +36,7 @@ controllers:
               - ALL
         image:
           repository: ghcr.io/anthony-spruyt/chrony
-          tag: "5.0.7@sha256:22f17abcb569671239842121d10795e0c6ef1d9d1b0c695fde53fade510fa123"
+          tag: "5.0.8@sha256:9da6d03ea9f68cc673edaefb0a4903e51fae9f3607538cef9da43a4ec60b3b99"
           pullPolicy: IfNotPresent
         ports:
           - containerPort: 1123
