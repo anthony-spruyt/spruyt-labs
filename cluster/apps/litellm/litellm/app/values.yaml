@@ -1351,6 +1351,13 @@ configMaps:
               model: "text-embedding-3-small"
               api_key: os.environ/OPENAI_API_KEY
           # --------------------------------------------------------------------------
+          # TypeSafe: PAYG
+          # --------------------------------------------------------------------------
+          - model_name: "jev-1.14.0"
+            litellm_params:
+              model: "typesafe/jev-1.14.0"
+              api_key: os.environ/TYPESAFE_API_KEY
+          # --------------------------------------------------------------------------
           # Auto router: TypeSafe Jev classifier
           # --------------------------------------------------------------------------
           - model_name: "jev-router"
