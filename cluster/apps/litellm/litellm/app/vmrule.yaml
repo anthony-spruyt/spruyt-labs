@@ -34,4 +34,4 @@ spec:
             severity: warning
           annotations:
             summary: "llm-tool-guard has had no Jev answer in 6 hours"
-            description: "Jev questions failed in the last 6 hours and none were answered, so flagged tool output keeps the warning notice. Check that the LiteLLM TypeSafe route and the llm-tool-guard virtual key work."
+            description: "Jev questions failed in the last 6 hours and none were answered, so flagged tool output keeps the warning notice. Check the LiteLLM /v1/systemone route, the JEV_MODEL deployment in model_list and the llm-tool-guard virtual key."
