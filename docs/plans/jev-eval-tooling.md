@@ -3,6 +3,7 @@
 ## Status
 
 - **Design:** owner-reviewed 2026-10-19 after two spec reviews and a spike that passed (cost $0.83). The xfg reviewers feature (§10 step 2) stays marked "needs owner OK" until the owner confirms it.
+- **Open:** how an eval run gets its model id now that the prod pin is worker config in spruyt-labs, not agent-platform code: which id a `pull_request` run uses, and how a model-upgrade run compares the old id with the new one (§7, §9).
 - **Prereq:** [agent-platform#117](https://github.com/anthony-spruyt/agent-platform/pull/117), the release-notes detector (`ReleaseNotesDetector`, "the code detector" below). It is in a final fix round for changelog-format coverage. §10 step 7 starts after it merges.
 - **Next steps (§10 step numbers):**
   - Steps 3, 4 and 6 can start now. Step 6 adds the `eval` `reviewers` and `preventSelfReview` only once step 2's xfg release is in repo-operator; until then the owner sets them by hand (step 5.3).
@@ -21,9 +22,11 @@ Test Jev prompts against historic Renovate PRs, so a new prompt's performance is
 
 ## 2. Current setup (verified)
 
-- `JevClient.cs`: model is the const `jev-latest` (:21). It caps the body and diff at 32 KB each (:23-25) and loads the questions from embedded resources through a static Lazy (:29-33), so they can't be injected. It sends `{state:{pr_body, pr_diff, current_date}, model, questions}` with state first (:35-71), POSTs to `typesafe/v1/systemone` on LiteLLM (:73), and ignores the `model` field in the
-  response (:143-162).
-- `jev-latest` is an alias that moves (it is `jev-1.13.0` today; jev-1.14.0 has been in preview since Oct 14). The TypeSafe docs describe no prompt caching. Price is $0.042/MTok input and output is free. The rate limit is per organization, shared with prod; its exact figure is unverified.
+- `JevClient.cs`: path and model are options, `LiteLlm:JevPath` (default `v1/systemone`, relative to `LiteLlm:BaseUrl`) and `LiteLlm:JevModel` (default `jev-1.14.0`), both validated at startup ([agent-platform#157](https://github.com/anthony-spruyt/agent-platform/pull/157)). It caps the body and diff at 32 KB each (:21-23) and loads the questions from embedded resources through a static Lazy (:27-31), so they can't be injected. It sends `{state:{pr_body, pr_diff, current_date}, model, questions}` with state first (:33-69), POSTs to `JevPath` on LiteLLM (:71), and ignores the `model` field in the
+  response (:141-160).
+- The prod pin is config: `LiteLlm__JevModel: jev-1.14.0` in `cluster/apps/agent-platform/worker/app/values.yaml` ([#3886](https://github.com/anthony-spruyt/spruyt-labs/issues/3886)).
+- Jev callers (the triage worker and the llm-tool-guard scanner) use LiteLLM's native `/v1/systemone` route, not the `/typesafe` pass-through. The route resolves `model` against `model_list`, so each Jev version used needs a deployment (`jev-1.14.0` -> `typesafe/jev-1.14.0`, `cluster/apps/litellm/litellm/app/values.yaml:1356-1358`), and the caller's key and team model lists must allow it.
+- `jev-latest` is an alias that moves; it has resolved to `jev-1.14.0` since about Oct 22 (spend logs). Prod no longer sends it. The TypeSafe docs describe no prompt caching. Price is $0.042/MTok input and output is free. The rate limit is per organization, shared with prod; its exact figure is unverified.
 - `changelog` is a single bare line. `breaking` and `bump_type` have full rubrics. `JevCiQuestions.json` has `ci_failure`.
 - `TriageRules.cs:42-43` sets the cut-offs at breaking 0.66 and changelog 0.7. In `DecidePatchOrMinor`, a changelog score >= 0.7 means Approve "changelog-present". §8 allows zero false positives on `changelog` for a question change, and no new false positives for other trigger PRs.
 - `run_steps` holds 126 `jev`, 1 `jev-changelog` and 11 `ci-classify` steps (live). `input`, `prompt_hash` and `model` are NULL on all of them; only the scores and decision are kept. The 127 answers cover 125 PRs in 9 repos. Scores are bimodal: 100 at or above 0.7, 27 below.
@@ -105,10 +108,10 @@ Prompt cache layout (owner rule, layout my call):
 
 ## 7. Eval runner and metrics
 
-- Prod change, test-first: a `JevClient` overload that takes the questions JSON, model id, time, base URL and auth headers (CI uses `x-litellm-api-key` plus the Access headers; prod sends Bearer, `JevClient.cs:77`). It returns the answers plus `response.model`. The static Lazy stays the default.
-- Prod pins `JevClient.Model` to `jev-1.13.0` (§10 step 7.1), replacing `jev-latest`. Prod then no longer follows new Jev versions on its own; an upgrade is a one-line PR that the eval measures.
-- Each runner build uses its own `JevClient.Model`, so a pin change shows as an old-vs-new delta. `current_date` is frozen to the run time for recorded cases and to `created_at` for the rest (my call). The run fails if `response.model` doesn't match the pin.
-- The TypeSafe limit is shared with prod triage and jev-router (`cluster/apps/litellm/litellm/app/values.yaml:1255-1270`). The runner uses concurrency 4, paces itself to 10 req/s, honours `retry-after` on 429/529 with capped backoff (up to 5 tries), and counts Jev unreachable only after the retries run out. LiteLLM's budget-exceeded error is its own failure, "eval budget exhausted".
+- Prod change, test-first: a `JevClient` overload that takes the questions JSON, model id, time, base URL and auth headers (CI uses `x-litellm-api-key` plus the Access headers; prod sends Bearer, `JevClient.cs:75`). It returns the answers plus `response.model`. The static Lazy stays the default. Model and path are options now (`LiteLlm:JevModel`, `LiteLlm:JevPath`, §2); the overload still takes the model id as an argument, so the runner sets it per run.
+- Prod does not follow new Jev versions on its own. The pin is `LiteLlm__JevModel` in the worker values (§2), so a model upgrade is a config change there, not a code PR.
+- The runner takes the model id as input. Before changing the worker's `LiteLlm__JevModel`, run the eval with the new id. A new id needs a `model_list` deployment and a `jev-eval` team model entry (§10 step 4), rolled out together. `current_date` is frozen to the run time for recorded cases and to `created_at` for the rest (my call). The run fails if `response.model` doesn't match the id it sent.
+- The TypeSafe limit is shared with prod triage, the llm-tool-guard scanner and jev-router (`cluster/apps/litellm/litellm/app/values.yaml:1363-1378`). The runner uses concurrency 4, paces itself to 10 req/s, honours `retry-after` on 429/529 with capped backoff (up to 5 tries), and counts Jev unreachable only after the retries run out. LiteLLM's budget-exceeded error is its own failure, "eval budget exhausted".
 - Each case goes through the prod path: the head-ref term gate first (`RenovateTriageActivities.cs:109-111`; cases it stops skip Jev), then `ReleaseNotesDetector` and `TriageRules.DecideFromJev`, and on `no-changelog`, triage step 2: Jev on the body joined with the stored notes (`"\n\n---\n\n"`, as `JevBody` does) and the detector on those notes. So end verdicts are measured as well as raw scores.
 - Report, to `$GITHUB_STEP_SUMMARY` and a JSON artifact, after the §8 header:
   - `changelog` and `breaking`: TP, FP, FN and TN at the cut-off; precision, recall and F1; old, new and delta; by `dev`/`test` and by stratum.
@@ -135,7 +138,7 @@ Prompt cache layout (owner rule, layout my call):
 
 The run stops as soon as the result is decided, and cancels calls in flight (one CancellationToken).
 
-1. Canary: one Jev call first checks auth, the model pin and the budget. Any failure stops the run before the fan-out.
+1. Canary: one Jev call first checks auth, the model id and the budget. Any failure stops the run before the fan-out.
 2. Old is reused: every run uploads its scores as an artifact `eval-scores-<key>`, where the key hashes the Jev files, the model, the runner/scoring version and the dataset. Old first looks for an artifact with base's key from a run whose head commit is in main's history (for example, the merged PR's own "new" scores), and calls Jev only if there is none (90-day retention). Fix pushes on the same
    PR therefore pay only for new.
 3. Likeliest-FP cases first: new runs the labelled negatives first, ordered by FP likelihood (old score near or above the cut-off, then the hard-negative strata). For a question change, the first FP fails the run at once and reports that case.
@@ -162,8 +165,8 @@ The run stops as soon as the result is decided, and cancels calls in flight (one
   - Only the owner's approval starts the `eval` job. Every run waits for it, after the owner reads the diff. The paths filter only decides whether a run is needed.
   - The `eval` environment uses required reviewers only, with no custom deployment protection rules. Its only required reviewer is the owner's user account, with `prevent_self_review: true`. The `guard` job (job 2) checks the reviewer list and `prevent_self_review`. Agents act as a GitHub App installation and are not reviewers, so only the owner approves eval runs.
   - With `prevent_self_review`, the owner can't approve a run they started, so an agent starts dispatches and re-runs.
-  - Only the eval token passes Access on `/typesafe/v1/systemone`, and the eval key can call only that route (§10 steps 3 and 4).
-- Fail rule: the job fails below the bar, and also when Jev is unreachable, the pin doesn't match or the eval budget is exhausted, because an unmeasured prompt must not pass. A failure fails `repo`, which blocks `image` (`ci.yaml:34`) and the required `summary / Check Results`.
+  - Only the eval token passes Access on `/v1/systemone`, and the eval key can call only that route (§10 steps 3 and 4).
+- Fail rule: the job fails below the bar, and also when Jev is unreachable, the model id doesn't match or the eval budget is exhausted, because an unmeasured prompt must not pass. A failure fails `repo`, which blocks `image` (`ci.yaml:34`) and the required `summary / Check Results`.
 - Approvals per PR:
   - A new push cancels the previous run, a waiting approval included (`ci.yaml:13-15`), so only the last push needs one. Status checks aren't strict (repo-operator `src/groups.yaml:778`, the agent-platform block), so a moving main doesn't re-run it.
   - A typical Jev PR costs 1 approval once the PR is final, plus 1 per round that fixes a failed eval. A dispatch costs 1. Renovate PRs that touch a trigger path (action pins in the two workflows, EvalData packages) cost 1; other Renovate and xfg PRs cost none.
@@ -182,21 +185,21 @@ The run stops as soon as the result is decided, and cancels calls in flight (one
    - An absent `reviewers` (or `preventSelfReview`) is unmanaged, unlike an absent `deploymentBranchPolicy`, which `diff.ts:96-147` manages. The sync leaves the existing value, and the PUT (`:67-77`) echoes the reviewers and `prevent_self_review` that `list` read, so a policy change keeps them.
    - Tests, including one that proves xfg `integration`'s hand-set reviewers survive a sync, and docs, then a release. repo-operator picks it up through Renovate.
 3. spruyt-labs `infra/terraform/cloudflare/`:
-   - `access.tf`: service token `agent_platform_eval`, a `non_identity` policy for it, and Access app `litellm_eval` on `${litellm_host}/typesafe/v1/systemone` with only that policy and `service_auth_401_redirect = true`, as on the host app (`:34`). In Access the more specific path wins and inherits nothing from the host app (Cloudflare app-path docs), so only the eval token passes on that path.
+   - `access.tf`: service token `agent_platform_eval`, a `non_identity` policy for it, and Access app `litellm_eval` on `${litellm_host}/v1/systemone` with only that policy and `service_auth_401_redirect = true`, as on the host app (`:34`). In Access the more specific path wins and inherits nothing from the host app (Cloudflare app-path docs), so only the eval token passes on that path.
      The `litellm` app keeps only `litellm_ci`.
-   - `tunnel.tf`: a second litellm route for `^/typesafe/v1/systemone$` whose `aud_tag` is the eval app alone, ahead of the CI route. `tunnel_hostnames` (`:74-76`) is keyed by subdomain, so it is built from the distinct subdomains. `depends_on` (`:108-112`) adds the eval app.
+   - `tunnel.tf`: a second litellm route for `^/v1/systemone$` whose `aud_tag` is the eval app alone, ahead of the CI route. `tunnel_hostnames` (`:74-76`) is keyed by subdomain, so it is built from the distinct subdomains. `depends_on` (`:108-112`) adds the eval app.
    - `rulesets.tf`: a new `litellm_eval_paths`, joined to the CI paths in the block rule (`:95-97`).
    - The eval key's `rpm_limit` caps its request rate (§10 step 4).
    - `outputs.tf`: `agent_platform_eval_access_client_id` and `agent_platform_eval_access_client_secret` (sensitive), like `:11-20`. Update README `:41-44`.
    - The workspace has no auto-apply, so the run is confirmed once the plan shows only these changes.
 4. spruyt-labs `cluster/apps/litellm/litellm/access-policy/`:
-   - `access-policy.yml` gets team `jev-eval`: a new UUID, `models: [jev-latest, jev-1.13.0]`, `max_budget: 20`, `budget_duration: 30d`. CI needs only the Jev models; labelling and tuning run locally on the devcontainer key.
-     - Model lists: `/typesafe` checks the body's `model` against the key's and the team's lists. It passes on `all-proxy-models`, `*`, an empty list, `jev-*` or the exact name, but not `typesafe/*` (spike). A pin change adds its new id here in the same rollout.
-     - Budget: pass-through spend is checked against the team's `max_budget` before each call and recorded after it at the `typesafe/<model>` price (spike), so the team budget caps the eval's spend.
+   - `access-policy.yml` gets team `jev-eval`: a new UUID, `models: [jev-1.14.0]`, `max_budget: 20`, `budget_duration: 30d`. CI needs only the Jev models; labelling and tuning run locally on the devcontainer key.
+     - Model lists: measured on `/typesafe`, the pass-through checks the body's `model` against the key's and the team's lists. It passes on `all-proxy-models`, `*`, an empty list, `jev-*` or the exact name, but not `typesafe/*` (spike). `/v1/systemone` resolves `model` against `model_list`, so each id also needs its deployment. Re-check the list matching on `/v1/systemone` in this step. A new Jev id adds its `model_list` deployment and its entry here in the same rollout.
+     - Budget: measured on `/typesafe`, pass-through spend is checked against the team's `max_budget` before each call and recorded after it at the `typesafe/<model>` price (spike). The team budget is meant to cap the eval's spend; re-check in this step that `/v1/systemone` records spend at the deployment's price.
    - It also gets a `keys` section matched by `key_alias`, because route limits exist per key only (spike). The Job sets `team_id`, `allowed_routes`, `rpm_limit`, the budget and "no MCP servers". It never creates, reads or prints a key value. It skips an alias that doesn't exist yet with a warning and never fails on it. After an update it reads `/key/info` for the alias and logs the team, routes,
      `rpm_limit` and budget.
-     - `agent-platform-eval`: team `jev-eval`, `allowed_routes: ["/typesafe/v1/systemone"]`, `rpm_limit: 900`. The spike peaked at 17 req/s; the runner paces itself to 10 req/s (600 a minute).
-     - `github-ci`: `allowed_routes: ["/v1/chat/completions"]`. No key except the eval key lists any route under `/typesafe`, and every key lists exact routes, not route groups such as `llm_api_routes`.
+     - `agent-platform-eval`: team `jev-eval`, `allowed_routes: ["/v1/systemone"]`, `rpm_limit: 900`. The spike peaked at 17 req/s; the runner paces itself to 10 req/s (600 a minute).
+     - `github-ci`: `allowed_routes: ["/v1/chat/completions"]`. No key except the eval key lists `/v1/systemone`, and every key lists exact routes, not route groups such as `llm_api_routes`.
    - LiteLLM matches routes exactly or by `/` prefix for every role (`route_checks.py:94-210,587-610`), and only a proxy admin may set them (`key_mgmt.py:919-960`), so the Job makes these calls as admin.
    - `reconcile.py` and `test_reconcile.py` plan and apply keys through `/key/list?key_alias=` and `/key/update`, test-first. The litellm Terraform provider has a key resource, but TFC can't reach the in-cluster admin API, and the Job already owns teams.
    - Update `cluster/apps/litellm/README.md:22,82-90,121`. Run qa-validator before the commit and cluster-validator after the push.
@@ -214,10 +217,10 @@ The run stops as soon as the result is decided, and cancels calls in flight (one
      - `.mergify.yml` var `gateFilesExtra: 'eval/renovate-triage/labels\.jsonl$|'`, as repo-operator sets for itself (`:232-234`), so a label change needs the owner's approval.
    - Update `docs/ci.md:154-161`.
 7. agent-platform, after `ReleaseNotesDetector` lands:
-   1. the `JevClient` overload, and the prod pin to `jev-1.13.0`
+   1. the `JevClient` overload. Path and model are already options ([agent-platform#157](https://github.com/anthony-spruyt/agent-platform/pull/157)); the prod pin is worker config (§7).
    2. golden set recording (§12), early so live data builds up
    3. `tools/AgentPlatform.EvalData` and the committed dataset and labels
-   4. the eval runner and the offline test. The runner's first call checks that the eval credentials are accepted only on `/typesafe/v1/systemone`: `/v1/chat/completions` answers 401 or 403 with no `x-litellm-*` header.
+   4. the eval runner and the offline test. The runner's first call checks that the eval credentials are accepted only on `/v1/systemone`: `/v1/chat/completions` answers 401 or 403 with no `x-litellm-*` header.
    5. `eval.yaml`, `eval-drift.yaml` and the `ci-repo.yaml` job, then one dispatch run as the end-to-end check
 8. agent-platform: rewrite and calibrate the `changelog` question locally on `dev`, then pass the gate on `test` in CI.
 9. spruyt-labs issue [#3467](https://github.com/anthony-spruyt/spruyt-labs/issues/3467): fix the line that says CI can't reach LiteLLM/Jev (about line 289), and tick off step 8.
@@ -228,9 +231,9 @@ The spike checks that the labels, the negatives in particular, are accurate enou
 
 The spike used the gate bodies only, needed no fetch and was budgeted under $5 (it cost $0.83):
 
-1. Jev variance: the current questions 3 times on 50 cases with `jev-1.13.0` and frozen dates. The 50 hold all 19 recorded scores between 0.70 and 0.79, and the rest are likely negatives. Measure the per-case spread, cut-off crossings and the request rate at concurrency 4.
+1. Jev variance: the current questions 3 times on 50 cases with `jev-1.13.0` on `/typesafe` and frozen dates. The 50 hold all 19 recorded scores between 0.70 and 0.79, and the rest are likely negatives. Measure the per-case spread, cut-off crossings and the request rate at concurrency 4.
 2. Agreement: Haiku and Opus label the same 50 with the draft rubric. Measure kappa per question, and confirm `cache_read_input_tokens` > 0.
-3. Route: the route works, and model lists, route limits and team budget behave as §10 step 4 states.
+3. Route: the `/typesafe` route works, and model lists, route limits and team budget behave as §10 step 4 states.
 
 Go: kappa >= 0.8 on `changelog`, cut-off crossings at or under 2 of 50, and a working route. Otherwise, revise the rubric or the repeat count before building.
 
@@ -238,8 +241,8 @@ Results: the spike passed.
 
 - Agreement: `changelog` kappa, Haiku vs Opus, was 1.000 (the go criterion, at least 0.8). `breaking` kappa was 0.79, below 0.8, so the §6 step 2 dispute path applies to `breaking` too: Opus labels every disputed `breaking` case, and every Haiku/Opus disagreement goes on the owner's list.
 - Caching: prompt caching hit on 49 of 49 calls per model.
-- Variance: median spread 0.01; 1 of 50 cases crossed 0.7 between runs (the go criterion, at most 2). The request rate peaked at 17 req/s.
-- Route: model lists apply to `/typesafe`, `allowed_routes` is per key, and pass-through spend counts against the team budget (§10 step 4).
+- Variance: median spread 0.01; 1 of 50 cases crossed 0.7 between runs (the go criterion, at most 2). The request rate peaked at 17 req/s. Measured on `jev-1.13.0` and `/typesafe`; re-check on `jev-1.14.0` and `/v1/systemone` in step 7.5.
+- Route: measured on `/typesafe`, model lists apply, `allowed_routes` is per key, and pass-through spend counts against the team budget (§10 step 4). Re-check on `/v1/systemone` in step 4.
 - Cost: $0.83.
 - Calibration input: the 3 breaking positives scored 0.25 at most on `breaking` ([spruyt-labs#3531](https://github.com/anthony-spruyt/spruyt-labs/pull/3531) at 0.14), against the 0.66 cut-off. The `breaking` question is a likely second rewrite target after `changelog`.
 
