@@ -45,9 +45,10 @@ Strips `imagePullSecrets` from pods pulling from GHCR or Docker Hub. Registry cr
 
 ### verify-litellm-image
 
-`ImageValidatingPolicy` in Deny mode. Pods in `litellm` may only run `ghcr.io/berriai/litellm*` images whose cosign signature verifies against upstream BerriAI's public key. It runs at pod admission (CREATE and UPDATE) on its own webhook, scoped to the `litellm` namespace. The key sits inline in the manifest and is also committed in litellm-middleware as `cosign/litellm.pub`, where CI verifies the pinned image against it.
+`ghcr.io/berriai/litellm*` images in `litellm` pods must carry a cosign signature that verifies against upstream BerriAI's public key (Deny mode). The key is inline in the manifest and also committed in litellm-middleware as `cosign/litellm.pub`, where CI verifies the pinned image against it.
 
-The admission controller looks up signatures on `ghcr.io` and `pkg-containers.githubusercontent.com` and fetches Sigstore TUF metadata from `tuf-repo-cdn.sigstore.dev`; `allow-image-verification-egress` in [kyverno](../kyverno/README.md) allows exactly those hosts. The `LiteLLMImageSignatureRejected` and `LiteLLMImageCheckUnavailable` alerts (`verify-litellm-image-vmrule.yaml`) are critical and route through Alertmanager.
+The admission controller looks up signatures on `ghcr.io` and `pkg-containers.githubusercontent.com` and fetches Sigstore TUF metadata from `tuf-repo-cdn.sigstore.dev`; `allow-image-verification-egress` in [network-policies.yaml](../kyverno/app/network-policies.yaml) allows exactly those hosts. The `LiteLLMImageSignatureRejected` and `LiteLLMImageCheckUnavailable` alerts
+(`verify-litellm-image-vmrule.yaml`) are critical and route through Alertmanager.
 
 ## Operations
 
@@ -58,21 +59,36 @@ When LiteLLM pods cannot be admitted and a revert of the policy commit cannot la
 1. Stop Flux from recreating the policy: `flux suspend kustomization kyverno-policies -n flux-system`
 2. Remove the policy: `kubectl delete imagevalidatingpolicy verify-litellm-image`
 3. Land the fix on `main`, then `flux resume kustomization kyverno-policies -n flux-system`. Flux recreates the policy from `main`.
+4. Restart LiteLLM and check the pods: `kubectl rollout restart deployment/litellm -n litellm`, then `kubectl get pods -n litellm`. Repeated denials make the ReplicaSet back off, so it does not retry promptly on its own. Run this right after step 2 if service cannot wait for step 3.
 
 ### Rotating the LiteLLM cosign key
 
-The key lives in two places: `spec.attestors[].cosign.key.data` in `verify-litellm-image.yaml`, and `cosign/litellm.pub` in litellm-middleware. Change them in this order so the pinned image always verifies:
+The key lives in two places: `spec.attestors[].cosign.key.data` in `verify-litellm-image.yaml`, and `cosign/litellm.pub` in litellm-middleware. `attestors` is a CEL map: name attestors without hyphens so `attestors.<name>` parses, and never leave an expression naming a removed attestor: it still compiles, but the lookup errors at admission and denies the pod unless another `||` call passes. Change
+both keys in this order so the pinned image always verifies:
 
-1. Add the new key as a second attestor in `verify-litellm-image.yaml` and list it next to `attestors.cosign` in the validation expression. An image signed with either key passes.
-2. Merge the LiteLLM bump to an image signed with the new key. litellm-middleware replaces `cosign/litellm.pub` in the same PR as the pin it verifies.
-3. Drop the old key: remove the old attestor from `verify-litellm-image.yaml`.
+1. Add the new key to `verify-litellm-image.yaml` as a second attestor named `cosignNext` and replace the validation expression with one call per attestor, joined with `||`, current key first. One call per attestor because a single call with both attestors caches a success only when every attestor verifies. Wait for Flux to reconcile `kyverno-policies`.
+
+   ```text
+   images.containers.map(image, verifyImageSignatures(image, [attestors.cosign]) > 0 || verifyImageSignatures(image, [attestors.cosignNext]) > 0).all(e, e)
+   ```
+
+2. Once step 1 has reconciled:
+
+   1. Merge the litellm-middleware PR (the pin and `cosign/litellm.pub` in one PR).
+   2. Merge the spruyt-labs Renovate bump.
+   3. Confirm the pods run the new digest.
+
+3. In one commit, remove the old attestor and its call in the expression, and rename `cosignNext` to `cosign` in the attestor and the expression, so the next rotation starts from the same names.
+
+When upstream revokes a key instead of rotating it, do not overlap the keys: replace the key data of the `cosign` attestor in one commit and leave the expression as it is. New LiteLLM pods are denied until the bump to an image signed with the new key lands, so merge it straight after.
 
 ## Troubleshooting
 
 1. **Policy update rejected with an immutable-field error**
    - **Fix**: Delete the ClusterPolicy and let Flux recreate it.
 2. **LiteLLM pods denied although the pinned image is signed**
-   - **Cause**: The signature or Sigstore lookup failed, usually egress from the admission controller to `ghcr.io`, `pkg-containers.githubusercontent.com` or `tuf-repo-cdn.sigstore.dev`. The admission controller logs and the `LiteLLMImageCheckUnavailable` alert show which.
+   - **Cause**: A lookup failed, usually egress from the admission controller to `ghcr.io`, `pkg-containers.githubusercontent.com` or `tuf-repo-cdn.sigstore.dev`. A failed signature or Sigstore (TUF) fetch counts as zero verified keys and fires `LiteLLMImageSignatureRejected`. Of the lookups, only a failed image manifest or config fetch, or a webhook timeout, fires `LiteLLMImageCheckUnavailable`.
+     The admission controller logs show which.
    - **Fix**: Repair `allow-image-verification-egress` and let Flux reconcile. If service cannot wait, follow [Restoring LiteLLM admission](#restoring-litellm-admission).
 
 ## References

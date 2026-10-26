@@ -10,8 +10,8 @@ metadata:
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Pods in the litellm namespace may only run ghcr.io/berriai/litellm*
-      images whose cosign signature verifies against the upstream BerriAI
+      ghcr.io/berriai/litellm* images in pods in the litellm namespace must
+      carry a cosign signature that verifies against the upstream BerriAI
       public key. The same key is committed in litellm-middleware at
       cosign/litellm.pub, where CI checks the pinned image against it.
 spec:
@@ -21,7 +21,7 @@ spec:
     background:
       enabled: false
   webhookConfiguration:
-    # Setting it moves the policy onto its own webhook, which carries the namespaceSelector below
+    # The VMRule matches this policy's finegrained webhook name, which exists only while timeoutSeconds is set
     timeoutSeconds: 15
   matchConstraints:
     resourceRules:

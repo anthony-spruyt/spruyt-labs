@@ -27,4 +27,4 @@ spec:
             severity: critical
           annotations:
             summary: "The LiteLLM image signature check could not run"
-            description: "verify-litellm-image errored or timed out in the last 10 minutes, so LiteLLM pods are denied. Check the Kyverno admission controller logs and its egress to ghcr.io and tuf-repo-cdn.sigstore.dev. Steps to restore service are in cluster/apps/kyverno/policies/README.md."
+            description: "verify-litellm-image errored or timed out in the last 10 minutes, so LiteLLM pods are denied. Check the Kyverno admission controller logs and its egress to ghcr.io, pkg-containers.githubusercontent.com and tuf-repo-cdn.sigstore.dev. Steps to restore service are in cluster/apps/kyverno/policies/README.md."
