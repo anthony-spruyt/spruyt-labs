@@ -556,6 +556,9 @@ configMaps:
             - "${CLUSTER_POD_CIDR_IP4}"
           # Pinned: keys get MCP access only by inheriting their team's grants
           require_key_mcp_access_defined: false
+          spend_logs_metadata_fields:
+            exclude:
+              - model_map_information
           store_model_in_db: true
           store_prompts_in_spend_logs: true
           supported_db_objects:
