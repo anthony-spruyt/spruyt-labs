@@ -38,6 +38,28 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Signature lookups for the verify-litellm-image policy: ghcr.io redirects blob reads to pkg-containers.githubusercontent.com,
+# tuf-repo-cdn.sigstore.dev serves the Sigstore TUF root. DNS comes from the clusterwide allow-kube-dns-egress.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-image-verification-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/component: admission-controller
+  egress:
+    - toFQDNs:
+        - matchName: ghcr.io
+        - matchName: pkg-containers.githubusercontent.com
+        - matchName: tuf-repo-cdn.sigstore.dev
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Metrics ingress from vmagent for all controllers
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

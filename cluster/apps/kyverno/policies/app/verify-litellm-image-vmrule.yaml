@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: verify-litellm-image
+spec:
+  groups:
+    - name: verify-litellm-image
+      rules:
+        - alert: LiteLLMImageSignatureRejected
+          # increase_pure counts the first sample of a new series, so the first denial ever still fires
+          expr: |
+            sum(increase_pure(kyverno_image_validating_policy_results_total{policy_name="verify-litellm-image",result="fail"}[10m])) > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: "A LiteLLM pod was denied: its image signature did not verify"
+            description: "verify-litellm-image denied a pod in the litellm namespace in the last 10 minutes because the image signature did not verify or could not be fetched. Check the pinned image in cluster/apps/litellm/litellm/app/values.yaml and the Kyverno admission controller logs. Steps to restore service are in cluster/apps/kyverno/policies/README.md."
+        - alert: LiteLLMImageCheckUnavailable
+          # The webhook-rejection series counts timeouts and call errors Kyverno never records itself; error_type excludes ordinary denials
+          expr: |
+            sum(increase_pure(kyverno_image_validating_policy_results_total{policy_name="verify-litellm-image",result="error"}[10m])) > 0
+            or
+            sum(increase_pure(apiserver_admission_webhook_rejection_count{name="ivpol.validate.kyverno.svc-fail-finegrained-verify-litellm-image",error_type="calling_webhook_error"}[10m])) > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: "The LiteLLM image signature check could not run"
+            description: "verify-litellm-image errored or timed out in the last 10 minutes, so LiteLLM pods are denied. Check the Kyverno admission controller logs and its egress to ghcr.io and tuf-repo-cdn.sigstore.dev. Steps to restore service are in cluster/apps/kyverno/policies/README.md."

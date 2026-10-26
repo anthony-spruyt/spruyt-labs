@@ -12,3 +12,5 @@ resources:
   - ./remove-image-pull-secrets.yaml
   - ./topology-spread-policy.yaml
   - ./validate-agent-deadline.yaml
+  - ./verify-litellm-image.yaml
+  - ./verify-litellm-image-vmrule.yaml

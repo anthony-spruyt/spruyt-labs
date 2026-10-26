@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/policies.kyverno.io/imagevalidatingpolicy_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-litellm-image
+  annotations:
+    policies.kyverno.io/title: Verify LiteLLM Image Signatures
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Pods in the litellm namespace may only run ghcr.io/berriai/litellm*
+      images whose cosign signature verifies against the upstream BerriAI
+      public key. The same key is committed in litellm-middleware at
+      cosign/litellm.pub, where CI checks the pinned image against it.
+spec:
+  validationActions: [Deny]
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: false
+  webhookConfiguration:
+    # Setting it moves the policy onto its own webhook, which carries the namespaceSelector below
+    timeoutSeconds: 15
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: [litellm]
+  autogen:
+    podControllers:
+      # Pods only: the default autogen would send every ReplicaSet scale update through the registry check
+      controllers: []
+  validationConfigurations:
+    # Images are digest-pinned; leaving the default on adds a second, mutating webhook
+    mutateDigest: false
+  matchImageReferences:
+    - glob: ghcr.io/berriai/litellm*
+  attestors:
+    - name: cosign
+      cosign:
+        key:
+          data: |
+            -----BEGIN PUBLIC KEY-----
+            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEG06dpKM+vEDnmp2zcjyXgVCXxzRg
+            JA5H2LnmwBKQafZGka6OOrWujCEWATQewiAgyD4WQdJ0pvU9RC4mvNAjvQ==
+            -----END PUBLIC KEY-----
+  validations:
+    - expression: >-
+        images.containers.map(image, verifyImageSignatures(image, [attestors.cosign])).all(e, e > 0)
+      message: "LiteLLM images must carry a cosign signature that verifies against the upstream BerriAI public key"
