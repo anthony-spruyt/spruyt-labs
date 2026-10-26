@@ -25,7 +25,7 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/agent-platform
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
-          tag: "1.18.0@sha256:a73e9aa4cc545dd5653b09ff0f2d53445cdf0cc63a97907a0bf39a9ee2fafc3e"
+          tag: "1.19.0@sha256:25f49090c69e2211c2fd176cadb8dac4b49560353f781d1336c0d0e5a101502f"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Migrate
@@ -59,7 +59,7 @@ controllers:
         image:
           repository: ghcr.io/anthony-spruyt/agent-platform
           # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
-          tag: "1.18.0@sha256:a73e9aa4cc545dd5653b09ff0f2d53445cdf0cc63a97907a0bf39a9ee2fafc3e"
+          tag: "1.19.0@sha256:25f49090c69e2211c2fd176cadb8dac4b49560353f781d1336c0d0e5a101502f"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Worker
@@ -97,6 +97,8 @@ controllers:
               secretKeyRef:
                 name: worker-credentials
                 key: litellm-virtual-key
+          LiteLlm__JevPath: v1/systemone
+          LiteLlm__JevModel: jev-1.14.0
           RenovateTriage__Mode: Live
           RenovateTriage__Claude__MaxPerHour: "4"
           RenovateTriage__Claude__MaxPerDay: "16"
