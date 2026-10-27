@@ -14,5 +14,11 @@ configMapGenerator:
     namespace: enshrouded
     files:
       - values.yaml
+  - name: enshrouded-livemap-script
+    namespace: enshrouded
+    options:
+      disableNameSuffixHash: true
+    files:
+      - livemap-install.sh
 configurations:
   - ./kustomizeconfig.yaml

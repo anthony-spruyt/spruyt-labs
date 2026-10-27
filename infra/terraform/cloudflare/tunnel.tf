@@ -15,6 +15,11 @@ locals {
       origin_request = { http2_origin = true, origin_server_name = "code.${var.zone_name}" }
     },
     {
+      subdomain      = "enshrouded-map"
+      service        = local.traefik_service
+      origin_request = { http2_origin = true, origin_server_name = "enshrouded-map.${var.zone_name}" }
+    },
+    {
       subdomain      = "flux-webhook"
       service        = "http://webhook-receiver.flux-system.svc.cluster.local"
       origin_request = {}

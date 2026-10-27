@@ -5,7 +5,7 @@
 Enshrouded 1.0 dedicated server (Steam app 2278520), run with the [`mornedhels/enshrouded-server`](https://github.com/mornedhels/enshrouded-server) image. The image runs the Windows server under Wine (the `-wine` tag) and handles the steamcmd download, scheduled updates and save backups. It is the Wine build because on the Proton build the server never offers players a direct connection, so even
 LAN players go through Steam's relays ([mornedhels/enshrouded-server#202](https://github.com/mornedhels/enshrouded-server/issues/202)). Swap to a native Linux server once Keen ships one.
 
-The server is IPv4 only, UDP only, and has no web UI or HTTP endpoint. Cloudflare Tunnel cannot carry UDP, so players reach it through a `LoadBalancer` Service instead of Traefik.
+The game server is IPv4 only and UDP only. Cloudflare Tunnel cannot carry UDP, so players reach it through a `LoadBalancer` Service instead of Traefik. The only HTTP endpoint is the live map (see Live map), which has its own Service and route.
 
 ## Prerequisites
 
@@ -27,6 +27,32 @@ The game settings are the `SERVER_GS_*` variables in `app/values.yaml`. Every ro
 ### Joining
 
 Players pick the server from the in-game Join list, or choose "Search by IPv4 / Domain" and enter `enshrouded.${EXTERNAL_DOMAIN}`, then the role password. Players on the home LAN connect directly; everyone else joins through Steam's relays.
+
+### Live map
+
+`https://enshrouded-map.${EXTERNAL_DOMAIN}` shows online players, deaths, Flame Altars, fog, weather and time. It is [oggii/enshrouded-livemap](https://github.com/oggii/enshrouded-livemap): a DLL the game loads in place of the system `iphlpapi.dll`, which serves the map over HTTP from inside the game process on TCP 15637. Every request needs the `?key=` from `livemap.ini`. When a player joins, the
+game announces the link with the key in chat.
+
+Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunnel route is in `infra/terraform/cloudflare/tunnel.tf` (it goes live once the Terraform Cloud run is applied). Outside the LAN only visitors in Australia can open it, and the map serves at most 32 open pages at once.
+
+The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. The hook is `app/livemap-install.sh`, mounted from a ConfigMap at `/opt/livemap`:
+
+- It downloads the release for `LIVEMAP_VERSION`, checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
+- It rewrites `livemap.ini` on every start and keeps the existing `Key=`. Without a key it makes a new one.
+- It always exits 0 and is capped at 300 s, so a map problem never stops the server from starting. `WINEDLLOVERRIDES=iphlpapi=n,b` is what makes Wine load the DLL.
+
+The DLL, `livemap.ini` and `livemap.log` live on the game PVC under `/opt/enshrouded/server`. The `livemap/` folder is a subPath of the saves PVC, so Velero backs up the map history (`deaths.json`, `finds.json`, `explored.json`, `discovered.json`, `objects.json`).
+
+Renovate moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together. A download or hash failure keeps the last good install and logs one line in the pod log. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
+
+To change the key, delete the `Key=` line and restart the pod. The hook makes a new key and the old links stop working. Rebuilding the game PVC does the same.
+
+```bash
+kubectl -n enshrouded exec statefulset/enshrouded -- sed -i '/^Key=/d' /opt/enshrouded/server/livemap.ini
+kubectl -n enshrouded rollout restart statefulset/enshrouded
+```
+
+To roll back, revert the commit that added the map. Removing only `WINEDLLOVERRIDES` also works: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the 70m HelmRelease timeout, so don't wait for it.
 
 ### Updates
 

@@ -173,6 +173,12 @@ controllers:
           SERVER_GS_CURSE_MODIFIER: Normal # chance of being cursed, Easy disables curses
           # SERVER_GS_CURSE_MODIFIER: Easy
           # SERVER_GS_CURSE_MODIFIER: Hard
+          WINEDLLOVERRIDES: "iphlpapi=n,b"
+          BOOTSTRAP_HOOK: "timeout 300 bash /opt/livemap/livemap-install.sh || true"
+          LIVEMAP_PUBLIC_URL: https://enshrouded-map.${EXTERNAL_DOMAIN}
+          # renovate: depName=oggii/enshrouded-livemap datasource=github-release-attachments digest=sha256
+          LIVEMAP_VERSION: "v1.7.0"
+          LIVEMAP_SHA256: "edb1c346b3d245307239de8b2561713c04d2b49170011b98f3e718c760d325b9"
         resources:
           requests:
             cpu: 3000m
@@ -200,6 +206,9 @@ controllers:
           - name: game
             containerPort: 15637
             protocol: UDP
+          - name: map
+            containerPort: 15637
+            protocol: TCP
         probes:
           # First start downloads the game via steamcmd: allow up to 60 minutes
           startup:
@@ -252,9 +261,21 @@ persistence:
       enshrouded:
         app:
           - path: /opt/enshrouded-saves
+          - path: /opt/enshrouded/server/livemap
+            subPath: livemap
+  livemap-script:
+    type: configMap
+    name: enshrouded-livemap-script
+    defaultMode: 0755
+    advancedMounts:
+      enshrouded:
+        app:
+          - path: /opt/livemap
+            readOnly: true
 service:
   game:
     controller: enshrouded
+    forceRename: enshrouded
     type: LoadBalancer
     annotations:
       lbipam.cilium.io/ips: "${ENSHROUDED_IP4}"
@@ -264,3 +285,10 @@ service:
       game:
         port: 15637
         protocol: UDP
+  map:
+    controller: enshrouded
+    type: ClusterIP
+    ports:
+      map:
+        port: 15637
+        protocol: TCP

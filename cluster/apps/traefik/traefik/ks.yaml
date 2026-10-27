@@ -33,6 +33,7 @@ spec:
     - name: brave-search-mcp
     - name: coder
     - name: crafty-controller
+    - name: enshrouded
     - name: foundryvtt
     - name: happy-server
     - name: headlamp

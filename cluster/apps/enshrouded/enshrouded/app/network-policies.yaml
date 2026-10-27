@@ -17,6 +17,25 @@ spec:
               protocol: UDP
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-traefik-livemap-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: enshrouded
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "15637"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Egress to public internet addresses only, on any port: Steam uses wide port ranges
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
