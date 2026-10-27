@@ -30,8 +30,8 @@ Players pick the server from the in-game Join list, or choose "Search by IPv4 / 
 
 ### Live map
 
-`https://enshrouded-map.${EXTERNAL_DOMAIN}` shows online players, deaths, Flame Altars, fog, weather and time. It is [oggii/enshrouded-livemap](https://github.com/oggii/enshrouded-livemap): a DLL the game loads in place of the system `iphlpapi.dll`, which serves the map over HTTP from inside the game process on TCP 15637. Every request needs the `?key=` from `livemap.ini`. When a player joins, the
-game announces the link with the key in chat.
+`https://enshrouded-map.${EXTERNAL_DOMAIN}` shows online players, Flame Altars, fog, weather and time. It is [oggii/enshrouded-livemap](https://github.com/oggii/enshrouded-livemap): a DLL the game loads in place of the system `iphlpapi.dll`, which serves the map over HTTP from inside the game process on TCP 15637. Every request needs the `?key=` from `livemap.ini`. When a player joins, the game
+announces the link with the key in chat.
 
 Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunnel route is in `infra/terraform/cloudflare/tunnel.tf`. Outside the LAN only visitors in Australia can open it, and the map serves at most 32 open pages at once.
 
