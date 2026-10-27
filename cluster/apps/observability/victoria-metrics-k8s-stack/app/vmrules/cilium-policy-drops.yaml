@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
-# Requires Cilium hubble.metrics.enabled with sourceContext/destinationContext labels
+# Requires the Cilium hubble drop metric (hubble.metrics.dynamic) with sourceContext/destinationContext labels
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMRule
 metadata:
@@ -16,11 +16,6 @@ spec:
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED", source!~"csi-addons-system|github-system|spegel"}[5m])
             ) > 0
-            # After a rollout Temporal keeps probing dead peers' pod IPs, which have no identity
-            unless on (source, destination)
-            sum by (source, destination) (
-              rate(hubble_drop_total{reason="POLICY_DENIED", source="temporal-system", destination=""}[5m])
-            )
           for: 10m
           labels:
             severity: warning
@@ -36,11 +31,6 @@ spec:
             sum by (source, destination) (
               rate(hubble_drop_total{reason="POLICY_DENIED", source!~"csi-addons-system|github-system|spegel"}[5m])
             ) > 10
-            # After a rollout Temporal keeps probing dead peers' pod IPs, which have no identity
-            unless on (source, destination)
-            sum by (source, destination) (
-              rate(hubble_drop_total{reason="POLICY_DENIED", source="temporal-system", destination=""}[5m])
-            )
           for: 5m
           labels:
             severity: critical
