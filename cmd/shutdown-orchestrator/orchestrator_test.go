@@ -6,6 +6,7 @@ import (
   "fmt"
   "io"
   "log/slog"
+  "slices"
   "strings"
   "sync"
   "testing"
@@ -675,16 +676,10 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
   }
 
   calls := kube.getCalls()
-  firstScale := -1
-  firstExec := -1
-  for i, c := range calls {
-    if strings.HasPrefix(c, "ScaleDeployment:") && strings.Contains(c, ":1") && firstScale == -1 {
-      firstScale = i
-    }
-    if c == "ExecInDeployment" && firstExec == -1 {
-      firstExec = i
-    }
-  }
+  firstScale := slices.IndexFunc(calls, func(c string) bool {
+    return strings.HasPrefix(c, "ScaleDeployment:") && strings.Contains(c, ":1")
+  })
+  firstExec := slices.Index(calls, "ExecInDeployment")
   if firstScale == -1 {
     t.Fatal("no scale-up calls found in recovery")
   }
@@ -695,13 +690,7 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
     t.Errorf("scale-up (idx %d) must precede tools wait (idx %d) in RecoverFromZero", firstScale, firstExec)
   }
 
-  hasCNPGWake := false
-  for _, c := range calls {
-    if c == "SetCNPGHibernation:false" {
-      hasCNPGWake = true
-    }
-  }
-  if !hasCNPGWake {
+  if !slices.Contains(calls, "SetCNPGHibernation:false") {
     t.Error("RecoverFromZero should include CNPG wake")
   }
 }
