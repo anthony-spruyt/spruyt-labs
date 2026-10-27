@@ -22,7 +22,17 @@ Workspaces get `HAPPY_SERVER_URL` from the Coder templates, which derive it from
 
 ### Master secret
 
-`HANDY_MASTER_SECRET` signs every client token. External Secrets generates it once (`master-secret-eso.yaml`, `CreatedOnce`, `Orphan`). Deleting the `happy-server-master-secret` Secret generates a new one, which logs out every device and workspace.
+`HANDY_MASTER_SECRET` signs every client token. External Secrets generates it once (`master-secret-eso.yaml`, `CreatedOnce`, `Orphan`, immutable).
+
+To rotate it, delete the Secret and its ExternalSecret, let Flux recreate the ExternalSecret, then restart the pod. External Secrets does not regenerate a deleted Secret on its own, and Reloader does not fire on a recreated one. A new secret logs out every device and workspace.
+
+```bash
+kubectl -n happy-system delete secret happy-server-master-secret
+kubectl -n happy-system delete externalsecret happy-server-master-secret
+flux reconcile kustomization happy-server -n flux-system
+kubectl -n happy-system wait --for=condition=Ready externalsecret/happy-server-master-secret --timeout=2m
+kubectl -n happy-system rollout restart deployment/happy-server
+```
 
 ### Signup
 
