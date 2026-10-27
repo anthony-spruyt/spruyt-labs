@@ -33,7 +33,7 @@ Players pick the server from the in-game Join list, or choose "Search by IPv4 / 
 `https://enshrouded-map.${EXTERNAL_DOMAIN}` shows online players, deaths, Flame Altars, fog, weather and time. It is [oggii/enshrouded-livemap](https://github.com/oggii/enshrouded-livemap): a DLL the game loads in place of the system `iphlpapi.dll`, which serves the map over HTTP from inside the game process on TCP 15637. Every request needs the `?key=` from `livemap.ini`. When a player joins, the
 game announces the link with the key in chat.
 
-Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunnel route is in `infra/terraform/cloudflare/tunnel.tf` (it goes live once the Terraform Cloud run is applied). Outside the LAN only visitors in Australia can open it, and the map serves at most 32 open pages at once.
+Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunnel route is in `infra/terraform/cloudflare/tunnel.tf`. Outside the LAN only visitors in Australia can open it, and the map serves at most 32 open pages at once.
 
 The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. The hook is `app/livemap-install.sh`, mounted from a ConfigMap at `/opt/livemap`:
 
@@ -41,7 +41,7 @@ The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. T
 - It rewrites `livemap.ini` on every start and keeps the existing `Key=`. Without a key it makes a new one.
 - It always exits 0 and is capped at 300 s, so a map problem never stops the server from starting. `WINEDLLOVERRIDES=iphlpapi=n,b` is what makes Wine load the DLL.
 
-The DLL, `livemap.ini` and `livemap.log` live on the game PVC under `/opt/enshrouded/server`. The `livemap/` folder is a subPath of the saves PVC, so Velero backs up the map history (`deaths.json`, `finds.json`, `explored.json`, `discovered.json`, `objects.json`).
+The DLL, `livemap.ini` and `livemap.log` live on the game PVC under `/opt/enshrouded/server`. The `livemap/` folder is a subPath of the saves PVC, so Velero backs up the map history (`finds.json`, `discovered.json`, `explored.json`).
 
 Renovate moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together. A download or hash failure keeps the last good install and logs one line in the pod log. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
 
@@ -52,7 +52,7 @@ kubectl -n enshrouded exec statefulset/enshrouded -- sed -i '/^Key=/d' /opt/ensh
 kubectl -n enshrouded rollout restart statefulset/enshrouded
 ```
 
-To roll back, revert the commit that added the map. Removing only `WINEDLLOVERRIDES` also works: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the 70m HelmRelease timeout, so don't wait for it.
+To roll back, revert every commit that references #3892 (`git log --grep '#3892'`): reverting the script without its tests fails the bats job. Removing only `WINEDLLOVERRIDES` also works: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the 70m HelmRelease timeout, so don't wait for it.
 
 ### Updates
 

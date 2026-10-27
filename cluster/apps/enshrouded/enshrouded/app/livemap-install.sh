@@ -31,7 +31,7 @@ install_release() {
     return
   }
   ver=$(printf '%s' "$LIVEMAP_VERSION" | sed 's/^v//')
-  curl -fsSL --connect-timeout 10 --max-time 120 --retry 2 \
+  curl -fsSL --connect-timeout 10 --max-time 80 --retry 2 \
     -o "$tmp/release.zip" \
     "https://github.com/oggii/enshrouded-livemap/releases/download/$LIVEMAP_VERSION/EnshroudedLiveMap-$ver.zip" 2>/dev/null
   rc=$?
@@ -41,7 +41,8 @@ install_release() {
     log "sha256 mismatch for $LIVEMAP_VERSION, keeping installed files"
   elif ! python3 -I -m zipfile -e "$tmp/release.zip" "$tmp/x" ||
     ! mkdir -p "$root/livemap" ||
-    ! cp -f "$tmp/x/iphlpapi.dll" "$root/" ||
+    ! cp -f "$tmp/x/iphlpapi.dll" "$root/iphlpapi.dll.new" ||
+    ! mv -f "$root/iphlpapi.dll.new" "$root/iphlpapi.dll" ||
     ! cp -R "$tmp/x/livemap/." "$root/livemap/" ||
     ! echo "$LIVEMAP_SHA256" >"$marker"; then
     log "install of $LIVEMAP_VERSION failed, will retry on the next start"

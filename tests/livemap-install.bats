@@ -79,6 +79,17 @@ teardown() {
   grep -q 'github.com/oggii/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
 }
 
+@test "the worst-case download time leaves 30 s of the 300 s hook timeout" {
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  local max retry
+  max="$(grep -o -e '--max-time [0-9]*' "${CALLS}" | cut -d' ' -f2)"
+  retry="$(grep -o -e '--retry [0-9]*' "${CALLS}" | cut -d' ' -f2)"
+  [ -n "${max}" ]
+  [ -n "${retry}" ]
+  [ $(((retry + 1) * max + (1 << retry) - 1)) -le 270 ]
+}
+
 @test "writes livemap.ini with the livemap section, every setting and a 16 character key" {
   run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
@@ -138,6 +149,29 @@ PY
   [ "$(curl_calls)" -eq 2 ]
 }
 
+@test "a missing index.html forces a reinstall" {
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  rm "${LIVEMAP_ROOT}/livemap/index.html"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(<"${LIVEMAP_ROOT}/livemap/index.html")" = "index-v1" ]
+  [ "$(curl_calls)" -eq 2 ]
+}
+
+@test "a reinstall swaps the DLL in by rename and leaves a copy the server has open untouched" {
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  make_zip v2
+  exec {held}<"${LIVEMAP_ROOT}/iphlpapi.dll"
+  run env FAKE_ZIP="${WORK}/release-v2.zip" LIVEMAP_VERSION=v2.0.0 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v2" ]
+  [ "$(cat <&"${held}")" = "dll-v1" ]
+  exec {held}<&-
+  [ ! -e "${LIVEMAP_ROOT}/iphlpapi.dll.new" ]
+}
+
 @test "history files survive a reinstall" {
   run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
@@ -175,6 +209,7 @@ PY
   make_zip v2
   run env FAKE_CURL_EXIT=22 LIVEMAP_VERSION=v9.9.9 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
+  [[ "${output}" == *"livemap-install: download of v9.9.9 failed (curl exit 22), keeping installed files"* ]]
   [ "$(curl_calls)" -eq 2 ]
   [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v1" ]
   [ "$(<"${LIVEMAP_ROOT}/livemap/index.html")" = "index-v1" ]
