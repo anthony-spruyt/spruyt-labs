@@ -236,7 +236,7 @@ for p in $(kubectl -n kube-system get pods -l k8s-app=cilium -o name); do
 done
 ```
 
-Ignore only `POLICY_DENIED` egress from the Temporal server pods (frontend, history, matching, worker) to a pod IP with no pod behind it on ports 6933-6939: stale peers (see `cluster/apps/temporal-system/temporal/README.md`). Report any other `temporal-system` drop, including a `destination=""` row the loop can't tie to those ports.
+Ignore `POLICY_DENIED` egress from the Temporal server pods (frontend, history, matching, worker) on ports 6933-6939 unless the destination is a Temporal server pod: stale peers (see `cluster/apps/temporal-system/temporal/README.md`). The Hubble drop metric already leaves them out, but the loop above still lists them. Report any other `temporal-system` drop, including any `temporal-system` row in the metric.
 
 ## CronJob Validation
 
