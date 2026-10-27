@@ -24,7 +24,7 @@ WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o 
 
 # Get schematic from a live worker node (see Schematic Discovery)
 WORKER_IP=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-SCHEMATIC=$(talosctl get extensions -n "${WORKER_IP}" 2>/dev/null | grep schematic | awk '{print $NF}')
+SCHEMATIC=$(talosctl get extensions -n "${WORKER_IP:?}" 2>/dev/null | grep schematic | awk '{print $NF}')
 
 echo "Worker nodes: ${WORKER_NODES}"
 echo "Schematic: ${SCHEMATIC}"

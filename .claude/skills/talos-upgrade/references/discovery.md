@@ -16,7 +16,7 @@ kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.ite
 # Get talosctl endpoints
 talosctl config info
 
-# Get cluster VIP endpoint
+# Endpoints only: the control plane node IPs, not the VIP
 talosctl config info | grep -i endpoint
 ```
 

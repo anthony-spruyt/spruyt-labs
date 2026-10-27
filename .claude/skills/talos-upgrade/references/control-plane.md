@@ -28,7 +28,7 @@ CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpat
 
 # Get schematic from the live control plane node (see Schematic Discovery)
 CP_IP=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-SCHEMATIC=$(talosctl get extensions -n "${CP_IP}" 2>/dev/null | grep schematic | awk '{print $NF}')
+SCHEMATIC=$(talosctl get extensions -n "${CP_IP:?}" 2>/dev/null | grep schematic | awk '{print $NF}')
 
 echo "CP nodes: ${CP_NODES}"
 echo "Schematic: ${SCHEMATIC}"
