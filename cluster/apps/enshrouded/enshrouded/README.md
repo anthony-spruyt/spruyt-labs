@@ -62,8 +62,6 @@ To roll back, revert every commit that references #3892 (`git log --grep '#3892'
 
 ### Updates
 
-With `UPDATE_CHECK_PLAYERS` on, an update should wait until nobody is connected. On image 1.8.0 the player check always reads an empty server, so updates kick connected players ([mornedhels/enshrouded-server#260](https://github.com/mornedhels/enshrouded-server/issues/260); drop this note once the image with the fix from #261 is deployed).
-
 To force an update:
 
 ```bash
