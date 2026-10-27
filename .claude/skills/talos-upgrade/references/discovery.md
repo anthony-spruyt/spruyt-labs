@@ -1,6 +1,6 @@
 # Discovery
 
-Commands for cluster topology, schematics and versions, plus the node lookups Phase 3 uses (Step 3.1 and Step 3.4).
+Commands for cluster topology, schematics and versions. The Phase 3 node lookups (Step 3.1 and Step 3.4) are in [control-plane.md](control-plane.md).
 
 ## Cluster Topology Discovery
 
@@ -57,25 +57,4 @@ grep "^talosVersion:" talos/topf.yaml
 talosctl version --nodes <node-ip> --short
 
 # If PR provided, read PR diff and grep for talosVersion
-```
-
-## Step 3.1: Control plane node info
-
-```bash
-# Get control plane node IPs
-CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
-
-# Get cluster endpoint
-ENDPOINT=$(talosctl config info | grep -i endpoint | awk '{print $2}')
-
-# Get schematic from the live control plane node (see Schematic Discovery)
-SCHEMATIC=$(talosctl get extensions -n "${CP_IP}" 2>/dev/null | grep schematic | awk '{print $NF}')
-```
-
-## Step 3.4: Node name from IP
-
-Sets `NODE_NAME` for the `kubectl wait` in Step 3.4:
-
-```bash
-NODE_NAME=$(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}' | awk -v ip="<node-ip>" '$2==ip {print $1}')
 ```

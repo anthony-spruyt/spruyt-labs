@@ -13,7 +13,7 @@ diff <(talosctl -n <node-ip> read /usr/local/share/kata-containers/configuration
 
 1. Replace the patch's `contents` with the new extension file, keeping `page_reporting.page_reporting_order=4 sysctl.vm.compaction_proactiveness=50` appended to `kernel_params`, `default_memory = 1024`, `reclaim_guest_freed_memory = true` and the patch's comments.
 2. Do not apply it now (rule 10). The Phase 8 apply ships it; until then Kata pods may fail to start on upgraded workers.
-3. Before Phase 8, land it on main: run qa-validator with the upgrade issue number and the patch file, commit with `Ref #<issue>`, push, then continue at Phase 8. The apply ships the working tree, and nodes must not run config that isn't on main.
+3. Before Phase 8, land it by the landing rule in the skill. The apply ships the working tree, and nodes must not run config that isn't on main: the Phase 8 clean-checkout gate stops the apply until the patch is on main.
 
 ## Phase 8: Kata smoke test
 
@@ -25,4 +25,4 @@ kubectl run kata-smoke -n default --rm -i --restart=Never --image=busybox:1.37 -
   -- uname -r
 ```
 
-**Good:** prints a kernel without the `-talos` suffix (the Kata guest kernel, not the host's). A stuck `ContainerCreating` or sandbox error means the Kata config is broken: run the Step 4.4a diff again, fix the patch, re-apply.
+**Good:** prints a kernel without the `-talos` suffix (the Kata guest kernel, not the host's). A stuck `ContainerCreating` or sandbox error means the Kata config is broken: run the Step 4.4a diff again, fix the patch and land it, then repeat the Phase 8 clean-checkout gate, diff and apply.

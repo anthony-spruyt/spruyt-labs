@@ -1,8 +1,10 @@
 # Issue and Outcome Templates
 
+The issue is public. In every template posted there, name nodes by hostname, and strip IPs and network details from any command output first: `talosctl etcd status` and talosctl dial errors print node IPs.
+
 ## Issue body
 
-Fill the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form), with one `## <field label>` heading per form field to match the form layout, using these upgrade-specific values:
+Create the issue with title `chore(talos): upgrade Talos v<current> to v<target>` and label `infra`. Fill the body from the fields of `.github/ISSUE_TEMPLATE/infra.yml` (the infra form), with one `## <field label>` heading per form field to match the form layout, using these upgrade-specific values:
 
 - Why: upgrade Talos Linux across all cluster nodes; Renovate PR, security patches or feature requirements; link the Renovate PR, if any
 - What: Talos (machine configs, upgrades) on all control plane and worker nodes, with these steps (plain numbered list):
@@ -43,7 +45,7 @@ Post progress updates as issue comments. Example body:
 [Which check failed]
 
 ### Evidence
-[Command output showing failure]
+[Command output showing failure, node names only, IPs stripped]
 
 ### Required Action
 [What needs to be fixed before upgrade can proceed]
@@ -58,7 +60,7 @@ Post progress updates as issue comments. Example body:
 Ceph is not ready - cannot proceed with worker upgrade.
 
 ### Current Ceph Status
-[ceph status and ceph health detail output]
+[ceph status and ceph health detail output, IPs stripped]
 
 ### Required Action
 Wait for Ceph to be ready before upgrading next worker.
@@ -130,7 +132,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 - **Error**: <error description>
 
 ### Evidence
-[Command output showing failure]
+[Command output showing failure, node names only, IPs stripped]
 
 ### Rollback Status
 - **Rolled back**: <yes/no/partial>
@@ -143,8 +145,17 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 ## PARTIAL
 
+Put the question first, with at most 2 options and a recommendation. Pick the options that fit from: **Wait** (Ceph is recovering: wait for HEALTH_OK), **Resume** (the issue is resolved: continue with the remaining nodes), **Rollback** (a critical issue: roll back all nodes).
+
 ```text
 ## UPGRADE PARTIAL - INTERVENTION REQUIRED
+
+### Question
+[The decision needed, with the context to answer it]
+
+### Options
+1. **<option>** (recommended): <why>
+2. **<option>**: <why>
 
 ### Progress
 - **Upgraded**: <list of upgraded nodes>
@@ -154,12 +165,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 ### Blocked On
 [Why upgrade cannot continue]
 
-### Options
-1. **Wait**: If Ceph is recovering, wait for HEALTH_OK
-2. **Resume**: If issue resolved, continue with remaining nodes
-3. **Rollback**: If critical issue, rollback all nodes
-
 ### Current State
-[kubectl get nodes output]
+[kubectl get nodes output, IPs stripped]
 [ceph status if relevant]
 ```

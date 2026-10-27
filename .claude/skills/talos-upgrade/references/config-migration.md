@@ -28,7 +28,7 @@ Every node must validate. A conflict error names both the v1alpha1 path and the 
 
 ## Step 2b.3: Land the migration on main before upgrading
 
-Do not begin Phase 3 with an unmerged migration — a node that reboots into the new version generates against the new contract and needs the migrated patches already on main. The patches need qa-validator before they commit: run it with the upgrade issue number and the changed patch files, commit with `Ref #<issue>`, push to main, then continue at Step 2b.3. No node has changed yet, so the pause is safe.
+Do not begin Phase 3 with an unmerged migration — a node that reboots into the new version generates against the new contract and needs the migrated patches already on main. Land the changed patch files by the landing rule in the skill. Then, in the checkout that runs `task talos:*`, now pulled to the new `origin/main`, run the diff below.
 
 **The new documents cannot be applied yet, and that is expected.** `apply` generates against each node's running version, so while every node is still on the old release the guards take their old-version branch and `topf apply` emits the *old* config form. The migrated documents only reach a node after that node is running the new version. With the pin still on the old version, the diff should be empty:
 
