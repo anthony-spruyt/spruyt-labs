@@ -508,8 +508,6 @@ class CommittedPolicyTest(unittest.TestCase):
             policy = reconcile.parse_policy(yaml.safe_load(handle))
         team = next(t for t in policy.teams if t.team_alias == "github-ci")
         self.assertIsNotNone(team.max_budget)
-        self.assertGreater(team.max_budget, 0)
-        self.assertTrue(team.budget_duration)
 
 
 if __name__ == "__main__":

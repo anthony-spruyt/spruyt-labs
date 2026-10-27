@@ -388,7 +388,6 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
     t.Fatal("Shutdown() should return error when Ceph scale-down fails")
   }
 
-  // Node shutdown must still run despite the Ceph phase error.
   talosCalls := talos.getCalls()
   if len(talosCalls) == 0 {
     t.Error("node shutdown should still run after Ceph phase failure")
@@ -661,8 +660,7 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
   talos := &orchestratorMockTalos{}
   orch := newTestOrchestrator(kube, talos)
 
-  // Simulate runMonitor order:
-  // 1. Check if Ceph scaled down
+  // Mirrors runMonitor: RecoverFromZero, not Recover, when Ceph is at zero
   cephDown, err := orch.IsCephScaledDown(context.Background())
   if err != nil {
     t.Fatalf("IsCephScaledDown error: %v", err)
@@ -671,13 +669,11 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
     t.Fatal("expected Ceph to be detected as scaled down")
   }
 
-  // 2. RecoverFromZero (not Recover!)
   err = orch.RecoverFromZero(context.Background())
   if err != nil {
     t.Fatalf("RecoverFromZero error: %v", err)
   }
 
-  // 3. Verify recovery call order: scale-up before exec (tools wait)
   calls := kube.getCalls()
   firstScale := -1
   firstExec := -1
@@ -699,7 +695,6 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
     t.Errorf("scale-up (idx %d) must precede tools wait (idx %d) in RecoverFromZero", firstScale, firstExec)
   }
 
-  // 4. Verify CNPG wake was called during RecoverFromZero
   hasCNPGWake := false
   for _, c := range calls {
     if c == "SetCNPGHibernation:false" {
@@ -733,7 +728,6 @@ func TestRunMonitorStartupOrderCephRunning(t *testing.T) {
     t.Fatal("Ceph should not be detected as scaled down when running normally")
   }
 
-  // NeedsRecovery also returns false
   needs, err := orch.NeedsRecovery(context.Background())
   if err != nil {
     t.Fatalf("NeedsRecovery error: %v", err)

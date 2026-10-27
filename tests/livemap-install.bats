@@ -7,6 +7,7 @@ APP="${REPO_ROOT}/cluster/apps/enshrouded/enshrouded/app"
 SCRIPT="${APP}/livemap-install.sh"
 VALUES="${APP}/values.yaml"
 POLICIES="${APP}/network-policies.yaml"
+INGRESS_ROUTES="${REPO_ROOT}/cluster/apps/traefik/traefik/ingress/enshrouded/ingress-routes.yaml"
 WRONG_SHA="0000000000000000000000000000000000000000000000000000000000000000"
 
 make_zip() {
@@ -30,7 +31,7 @@ print(c["livemap"][sys.argv[2]])' "${LIVEMAP_ROOT}/livemap.ini" "$1"
 }
 
 manifest_map_ports() {
-  python3 -I - "${VALUES}" "${POLICIES}" <<'PY'
+  python3 -I - "${VALUES}" "${POLICIES}" "${INGRESS_ROUTES}" <<'PY'
 import sys
 import yaml
 
@@ -38,6 +39,8 @@ with open(sys.argv[1]) as f:
     values = yaml.safe_load(f)
 with open(sys.argv[2]) as f:
     policies = list(yaml.safe_load_all(f))
+with open(sys.argv[3]) as f:
+    routes = list(yaml.safe_load_all(f))
 
 container = next(
     p["containerPort"]
@@ -53,7 +56,14 @@ allowed = [
     for p in to["ports"]
     if p["protocol"] == "TCP"
 ]
-for port in [container, service, *allowed]:
+routed = [
+    svc["port"]
+    for d in routes
+    for route in d["spec"]["routes"]
+    for svc in route["services"]
+    if svc["name"] == "enshrouded-map"
+]
+for port in [container, service, *allowed, *routed]:
     print(port)
 PY
 }
@@ -142,11 +152,13 @@ teardown() {
   first="$(ini_get key)"
   [ "$(ini_get publicurl)" = "${LIVEMAP_PUBLIC_URL}" ]
   port="$(ini_get port)"
-  mapfile -t declared < <(manifest_map_ports)
-  [ "${#declared[@]}" -eq 3 ]
-  [ "${declared[0]}" = "${port}" ]
-  [ "${declared[1]}" = "${port}" ]
-  [ "${declared[2]}" = "${port}" ]
+  run manifest_map_ports
+  echo "${output}"
+  [ "${status}" -eq 0 ]
+  [ "${#lines[@]}" -eq 4 ]
+  for declared in "${lines[@]}"; do
+    [ "${declared}" = "${port}" ]
+  done
   rm "${LIVEMAP_ROOT}/livemap.ini"
   run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
@@ -311,7 +323,10 @@ teardown() {
   run env LIVEMAP_KEY="envkey4567" bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
   [ "$(ini_get key)" = "envkey4567" ]
-  [ "$(ini_get port)" = "15637" ]
+  run manifest_map_ports
+  echo "${output}"
+  [ "${status}" -eq 0 ]
+  [ "$(ini_get port)" = "${lines[0]}" ]
 }
 
 @test "a LIVEMAP_KEY of 3 and of 64 characters is accepted" {
