@@ -33,6 +33,14 @@
     "source=${localEnv:HOME}/.secrets/talosconfig,target=/home/vscode/.secrets/talosconfig,type=bind"
   ],
   "features": {
+    "ghcr.io/devcontainers-extra/features/actionlint": {
+      "version": "v1.7.12"
+    },
+    "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
+      "jqVersion": "1.8.2",
+      "yqVersion": "4.54.1",
+      "gojqVersion": "0.12.19"
+    },
     "ghcr.io/devcontainers/features/go": {
       "version": "1.27.3"
     },
@@ -44,11 +52,6 @@
     },
     "ghcr.io/devcontainers-extra/features/sops": {
       "version": "3.13.3"
-    },
-    "ghcr.io/eitsupi/devcontainer-features/jq-likes": {
-      "jqVersion": "1.8.1",
-      "yqVersion": "4.54.1",
-      "gojqVersion": "0.12.19"
     }
   },
   "initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/initialize.sh",
