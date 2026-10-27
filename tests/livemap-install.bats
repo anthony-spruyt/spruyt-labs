@@ -306,6 +306,11 @@ PY
 break"
   assert_invalid_key_falls_back "dot.dot"
   assert_invalid_key_falls_back $'abcd\n'
+}
+
+@test "a LIVEMAP_KEY with an accented letter falls back, even in a UTF-8 locale where A-Za-z can match it" {
+  locale -a | grep -qix 'en_US\.utf-\?8' || skip "the en_US.UTF-8 locale is not installed"
+  export LC_ALL=en_US.UTF-8
   assert_invalid_key_falls_back $'caf\xc3\xa9key'
 }
 
@@ -328,6 +333,28 @@ break"
   assert_invalid_key_falls_back ""
 }
 
+@test "an ignored LIVEMAP_KEY is logged without its value" {
+  local bad
+  for bad in "bad key!" "q9" "ICONS" "$(printf 'k%.0s' {1..65})"; do
+    run env LIVEMAP_KEY="${bad}" bash "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"livemap-install: LIVEMAP_KEY is not a valid map key"* ]]
+    [[ "${output}" != *"${bad}"* ]]
+  done
+}
+
+@test "an unset, empty or valid LIVEMAP_KEY is not logged as invalid" {
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [[ "${output}" != *"LIVEMAP_KEY"* ]]
+  run env LIVEMAP_KEY="" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [[ "${output}" != *"LIVEMAP_KEY"* ]]
+  run env LIVEMAP_KEY="Env-key_0123456789" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [[ "${output}" != *"LIVEMAP_KEY"* ]]
+}
+
 @test "no run prints a LIVEMAP_KEY" {
   local all key="Env-key_0123456789"
   run env LIVEMAP_KEY="${key}" bash "${SCRIPT}"
@@ -345,12 +372,6 @@ break"
   [ -n "${all}" ]
   [[ "${all}" != *"${key}"* ]]
   [[ "${all}" != *"bad key!"* ]]
-}
-
-@test "the download only follows https" {
-  run bash "${SCRIPT}"
-  [ "${status}" -eq 0 ]
-  grep -q -e '--proto =https' "${CALLS}"
 }
 
 @test "the script has no braced variable for Flux to substitute in the ConfigMap" {

@@ -83,6 +83,9 @@ write_ini() {
   if key_ok "$LIVEMAP_KEY"; then
     key=$LIVEMAP_KEY
   else
+    if [ -n "$LIVEMAP_KEY" ]; then
+      log "LIVEMAP_KEY is not a valid map key (3-64 letters, digits, - or _, not a reserved word), ignoring it"
+    fi
     key=$(existing_key)
   fi
   if [ -z "$key" ]; then
