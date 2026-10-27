@@ -2,9 +2,11 @@ package main
 
 import (
   "context"
+  "errors"
   "fmt"
   "io"
   "log/slog"
+  "slices"
   "strings"
   "sync"
   "testing"
@@ -31,6 +33,7 @@ type orchestratorMockKube struct {
   isCephNooutResult  bool
   isCephNooutErr     error
   deploymentReplicas map[string]int32
+  replicasErr        error
   scaleErr           error
 
   // Node config
@@ -61,7 +64,6 @@ func (m *orchestratorMockKube) GetCNPGClusters(ctx context.Context) ([]clients.C
   if m.getClustersErr != nil {
     return nil, m.getClustersErr
   }
-  // Return clusters with current hibernation state
   m.mu.Lock()
   result := make([]clients.CNPGCluster, len(m.clusters))
   for i, c := range m.clusters {
@@ -82,7 +84,6 @@ func (m *orchestratorMockKube) SetCNPGHibernation(ctx context.Context, ns, name 
   } else {
     m.record("SetCNPGHibernation:false")
   }
-  // Track state change
   m.mu.Lock()
   if m.hibernationState == nil {
     m.hibernationState = make(map[string]bool)
@@ -149,6 +150,9 @@ func (m *orchestratorMockKube) IsCephNooutSet(ctx context.Context) (bool, error)
 
 func (m *orchestratorMockKube) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
   m.record("GetDeploymentReplicas:" + name)
+  if m.replicasErr != nil {
+    return 0, m.replicasErr
+  }
   if m.deploymentReplicas != nil {
     if r, ok := m.deploymentReplicas[ns+"/"+name]; ok {
       return r, nil
@@ -262,7 +266,6 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: noout → cordon → ceph scale down
   cephNooutIdx := -1
   cordonIdx := -1
   cephScaleIdx := -1
@@ -294,7 +297,6 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
     t.Errorf("cordon (idx %d) should come before Ceph scale down (idx %d)", cordonIdx, cephScaleIdx)
   }
 
-  // Verify talos shutdown was called
   talosCalls := talos.getCalls()
   if len(talosCalls) == 0 {
     t.Fatal("node shutdown was not called via Talos")
@@ -321,7 +323,6 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: wait for tools pod -> Ceph scale up -> Ceph health wait -> Ceph unset noout -> CNPG cleanup
   toolsIdx := -1
   scaleUpIdx := -1
   healthWaitIdx := -1
@@ -388,7 +389,6 @@ func TestOrchestratorPhaseTimeout(t *testing.T) {
     t.Fatal("Shutdown() should return error when Ceph scale-down fails")
   }
 
-  // Node shutdown must still run despite the Ceph phase error.
   talosCalls := talos.getCalls()
   if len(talosCalls) == 0 {
     t.Error("node shutdown should still run after Ceph phase failure")
@@ -450,7 +450,6 @@ func TestOrchestratorTestMode(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify shutdown sets noout and recovery unsets noout, in order.
   setNooutIdx := -1
   unsetNooutIdx := -1
 
@@ -521,7 +520,6 @@ func TestOrchestratorRecoverFromZero(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify order: ScaleUp happens BEFORE WaitForToolsPod (ExecInDeployment)
   firstScaleIdx := -1
   firstExecIdx := -1
   for i, c := range calls {
@@ -543,7 +541,6 @@ func TestOrchestratorRecoverFromZero(t *testing.T) {
     t.Errorf("ScaleUp (idx %d) must happen BEFORE WaitForToolsPod (idx %d)", firstScaleIdx, firstExecIdx)
   }
 
-  // Verify CNPG wake also runs
   hasWake := false
   for _, c := range calls {
     if c == "SetCNPGHibernation:false" {
@@ -591,7 +588,6 @@ func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
     t.Fatal("RecoverFromZero should return error when ScaleUp fails")
   }
 
-  // WaitForToolsPod (ExecInDeployment) should NOT be called after ScaleUp fails
   calls := kube.getCalls()
   for _, c := range calls {
     if c == "ExecInDeployment" {
@@ -665,8 +661,7 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
   talos := &orchestratorMockTalos{}
   orch := newTestOrchestrator(kube, talos)
 
-  // Simulate runMonitor order:
-  // 1. Check if Ceph scaled down
+  // Mirrors runMonitor: RecoverFromZero, not Recover, when Ceph is at zero
   cephDown, err := orch.IsCephScaledDown(context.Background())
   if err != nil {
     t.Fatalf("IsCephScaledDown error: %v", err)
@@ -675,24 +670,16 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
     t.Fatal("expected Ceph to be detected as scaled down")
   }
 
-  // 2. RecoverFromZero (not Recover!)
   err = orch.RecoverFromZero(context.Background())
   if err != nil {
     t.Fatalf("RecoverFromZero error: %v", err)
   }
 
-  // 3. Verify recovery call order: scale-up before exec (tools wait)
   calls := kube.getCalls()
-  firstScale := -1
-  firstExec := -1
-  for i, c := range calls {
-    if strings.HasPrefix(c, "ScaleDeployment:") && strings.Contains(c, ":1") && firstScale == -1 {
-      firstScale = i
-    }
-    if c == "ExecInDeployment" && firstExec == -1 {
-      firstExec = i
-    }
-  }
+  firstScale := slices.IndexFunc(calls, func(c string) bool {
+    return strings.HasPrefix(c, "ScaleDeployment:") && strings.Contains(c, ":1")
+  })
+  firstExec := slices.Index(calls, "ExecInDeployment")
   if firstScale == -1 {
     t.Fatal("no scale-up calls found in recovery")
   }
@@ -703,14 +690,7 @@ func TestRunMonitorStartupOrderCephAtZero(t *testing.T) {
     t.Errorf("scale-up (idx %d) must precede tools wait (idx %d) in RecoverFromZero", firstScale, firstExec)
   }
 
-  // 4. Verify CNPG wake was called during RecoverFromZero
-  hasCNPGWake := false
-  for _, c := range calls {
-    if c == "SetCNPGHibernation:false" {
-      hasCNPGWake = true
-    }
-  }
-  if !hasCNPGWake {
+  if !slices.Contains(calls, "SetCNPGHibernation:false") {
     t.Error("RecoverFromZero should include CNPG wake")
   }
 }
@@ -737,7 +717,6 @@ func TestRunMonitorStartupOrderCephRunning(t *testing.T) {
     t.Fatal("Ceph should not be detected as scaled down when running normally")
   }
 
-  // NeedsRecovery also returns false
   needs, err := orch.NeedsRecovery(context.Background())
   if err != nil {
     t.Fatalf("NeedsRecovery error: %v", err)
@@ -766,22 +745,20 @@ func TestOrchestratorNeedsRecoveryCephExecFails(t *testing.T) {
 }
 
 func TestOrchestratorIsCephScaledDownError(t *testing.T) {
+  replicasErr := errors.New("apiserver unavailable")
   kube := &orchestratorMockKube{
     clusters:    []clients.CNPGCluster{},
     toolsExists: true,
-    nodes: []clients.Node{
-      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
-    },
+    replicasErr: replicasErr,
   }
   talos := &orchestratorMockTalos{}
   orch := newTestOrchestrator(kube, talos)
 
-  // Normal case: no error, returns false
   scaled, err := orch.IsCephScaledDown(context.Background())
-  if err != nil {
-    t.Fatalf("unexpected error: %v", err)
+  if !errors.Is(err, replicasErr) {
+    t.Fatalf("IsCephScaledDown() error = %v, want it to wrap %v", err, replicasErr)
   }
   if scaled {
-    t.Error("should return false when all deployments running")
+    t.Error("IsCephScaledDown() = true, want false when the replicas check fails")
   }
 }

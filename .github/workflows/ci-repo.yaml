@@ -74,8 +74,11 @@ jobs:
               - 'cluster/apps/litellm/litellm/access-policy/**'
               # Script asserted by tests/litellm-mcp-tool-drift.bats
               - 'cluster/apps/litellm/litellm/mcp-tool-drift/**'
-              # Script asserted by tests/livemap-install.bats
+              # Script, values, network policy and Traefik route asserted by tests/livemap-install.bats
               - 'cluster/apps/enshrouded/enshrouded/app/livemap-install.sh'
+              - 'cluster/apps/enshrouded/enshrouded/app/values.yaml'
+              - 'cluster/apps/enshrouded/enshrouded/app/network-policies.yaml'
+              - 'cluster/apps/traefik/traefik/ingress/enshrouded/ingress-routes.yaml'
   kubeconform:
     name: "kubeconform"
     needs: "changes"
