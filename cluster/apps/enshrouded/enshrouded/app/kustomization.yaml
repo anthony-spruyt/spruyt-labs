@@ -6,6 +6,7 @@ namespace: enshrouded
 resources:
   - ./persistent-volume-claim.yaml
   - ./enshrouded-secrets.sops.yaml
+  - ./livemap-key-eso.yaml
   - ./release.yaml
   - ./network-policies.yaml
   - ./vpa.yaml

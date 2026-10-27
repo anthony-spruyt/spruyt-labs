@@ -31,7 +31,7 @@ install_release() {
     return
   }
   ver=$(printf '%s' "$LIVEMAP_VERSION" | sed 's/^v//')
-  curl -fsSL --connect-timeout 10 --max-time 80 --retry 2 \
+  curl -fsSL --proto '=https' --connect-timeout 10 --max-time 80 --retry 2 \
     -o "$tmp/release.zip" \
     "https://github.com/oggii/enshrouded-livemap/releases/download/$LIVEMAP_VERSION/EnshroudedLiveMap-$ver.zip" 2>/dev/null
   rc=$?
@@ -64,13 +64,27 @@ existing_key() {
     }'
 }
 
+# Same rule as key_ok in upstream src/link.cpp
+key_ok() {
+  local LC_ALL=C lower
+  [[ $1 =~ ^[A-Za-z0-9_-]{3,64}$ ]] || return 1
+  lower=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
+  case $lower in
+  state | events | finds | icons | index | livemap) return 1 ;;
+  esac
+}
+
 new_key() {
   LC_ALL=C tr -dc 'abcdefghjkmnpqrstuvwxyz23456789' </dev/urandom | head -c 16
 }
 
 write_ini() {
   local key
-  key=$(existing_key)
+  if key_ok "$LIVEMAP_KEY"; then
+    key=$LIVEMAP_KEY
+  else
+    key=$(existing_key)
+  fi
   if [ -z "$key" ]; then
     key=$(new_key)
   fi

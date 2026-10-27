@@ -179,6 +179,11 @@ controllers:
           # renovate: depName=oggii/enshrouded-livemap datasource=github-release-attachments digest=sha256
           LIVEMAP_VERSION: "v1.7.0"
           LIVEMAP_SHA256: "edb1c346b3d245307239de8b2561713c04d2b49170011b98f3e718c760d325b9"
+          LIVEMAP_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: enshrouded-livemap-key
+                key: LIVEMAP_KEY
         resources:
           requests:
             cpu: 3000m

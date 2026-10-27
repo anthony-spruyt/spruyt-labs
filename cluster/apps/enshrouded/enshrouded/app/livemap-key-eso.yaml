@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/generators.external-secrets.io/password_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: enshrouded-livemap-key
+spec:
+  length: 16
+  digits: 4
+  symbols: 0
+  noUpper: true
+  allowRepeat: true
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/external-secrets.io/externalsecret_v1.json
+# Generated once: a new key breaks every shared map link.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: enshrouded-livemap-key
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: enshrouded-livemap-key
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      data:
+        LIVEMAP_KEY: "{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: enshrouded-livemap-key

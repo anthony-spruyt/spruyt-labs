@@ -38,17 +38,22 @@ Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunn
 The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. The hook is `app/livemap-install.sh`, mounted from a ConfigMap at `/opt/livemap`:
 
 - It downloads the release for `LIVEMAP_VERSION`, checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
-- It rewrites `livemap.ini` on every start and keeps the existing `Key=`. Without a key it makes a new one.
+- It rewrites `livemap.ini` on every start. `Key=` is `LIVEMAP_KEY`, the key from the Secret `enshrouded-livemap-key`. If `LIVEMAP_KEY` is empty or the map would reject it, the hook keeps the existing `Key=`, or makes a new one when there is none. The Secret is required: while it is missing the pod stays in `CreateContainerConfigError`.
 - It always exits 0 and is capped at 300 s, so a map problem never stops the server from starting. `WINEDLLOVERRIDES=iphlpapi=n,b` is what makes Wine load the DLL.
 
 The DLL, `livemap.ini` and `livemap.log` live on the game PVC under `/opt/enshrouded/server`. The `livemap/` folder is a subPath of the saves PVC, so Velero backs up the map history (`finds.json`, `discovered.json`, `explored.json`).
 
 Renovate moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together. A download or hash failure keeps the last good install and logs one line in the pod log. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
 
-To change the key, delete the `Key=` line and restart the pod. The hook makes a new key and the old links stop working. Rebuilding the game PVC does the same.
+The key is the Secret `enshrouded-livemap-key`, which External Secrets generates once (`app/livemap-key-eso.yaml`: `CreatedOnce`, `Orphan`, immutable). It stays the same when the game PVC is rebuilt and changes only when you rotate it. Share the link once in the friends' group chat so it's clickable.
+
+To rotate the key, delete the Secret and its ExternalSecret, let Flux recreate the ExternalSecret, then restart the pod. External Secrets does not regenerate a deleted Secret on its own, and Reloader does not fire on a recreated one. Every shared link stops working.
 
 ```bash
-kubectl -n enshrouded exec statefulset/enshrouded -- sed -i '/^Key=/d' /opt/enshrouded/server/livemap.ini
+kubectl -n enshrouded delete secret enshrouded-livemap-key
+kubectl -n enshrouded delete externalsecret enshrouded-livemap-key
+flux reconcile kustomization enshrouded -n flux-system
+kubectl -n enshrouded wait --for=condition=Ready externalsecret/enshrouded-livemap-key --timeout=2m
 kubectl -n enshrouded rollout restart statefulset/enshrouded
 ```
 

@@ -30,6 +30,17 @@ curl_calls() {
   wc -l <"${CALLS}"
 }
 
+assert_invalid_key_falls_back() {
+  printf '[livemap]\nKey=kept-key-1234\n' >"${LIVEMAP_ROOT}/livemap.ini"
+  run env LIVEMAP_KEY="$1" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(ini_get key)" = "kept-key-1234" ]
+  rm "${LIVEMAP_ROOT}/livemap.ini"
+  run env LIVEMAP_KEY="$1" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [[ "$(ini_get key)" =~ ^[abcdefghjkmnpqrstuvwxyz23456789]{16}$ ]]
+}
+
 setup() {
   WORK="$(mktemp -d)"
   BIN="${WORK}/bin"
@@ -57,6 +68,7 @@ EOF
   LIVEMAP_SHA256="$(sha_of v1)"
   export LIVEMAP_SHA256
   export LIVEMAP_PUBLIC_URL="https://enshrouded-map.example.test"
+  unset LIVEMAP_KEY
 }
 
 teardown() {
@@ -261,4 +273,87 @@ PY
   [ "${status}" -eq 0 ]
   [ "$(wc -l <"${log}")" -eq 5000 ]
   [ "$(head -n1 "${log}")" = "1" ]
+}
+
+@test "writes the key from LIVEMAP_KEY" {
+  run env LIVEMAP_KEY="Env-key_0123456789" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(ini_get key)" = "Env-key_0123456789" ]
+}
+
+@test "a LIVEMAP_KEY replaces a different key already in livemap.ini" {
+  printf '[livemap]\nKey=old-key-1234\nPort=auto\n' >"${LIVEMAP_ROOT}/livemap.ini"
+  run env LIVEMAP_KEY="envkey4567" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(ini_get key)" = "envkey4567" ]
+  [ "$(ini_get port)" = "15637" ]
+}
+
+@test "a LIVEMAP_KEY of 3 and of 64 characters is accepted" {
+  run env LIVEMAP_KEY="a-_" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(ini_get key)" = "a-_" ]
+  local long
+  long="$(printf 'k%.0s' {1..64})"
+  run env LIVEMAP_KEY="${long}" bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(ini_get key)" = "${long}" ]
+}
+
+@test "a LIVEMAP_KEY with a character outside letters, digits, - and _ falls back to the old behaviour" {
+  assert_invalid_key_falls_back "bad key!"
+  assert_invalid_key_falls_back "line
+break"
+  assert_invalid_key_falls_back "dot.dot"
+  assert_invalid_key_falls_back $'abcd\n'
+  assert_invalid_key_falls_back $'caf\xc3\xa9key'
+}
+
+@test "a LIVEMAP_KEY shorter than 3 characters falls back to the old behaviour" {
+  assert_invalid_key_falls_back "ab"
+}
+
+@test "a LIVEMAP_KEY longer than 64 characters falls back to the old behaviour" {
+  assert_invalid_key_falls_back "$(printf 'k%.0s' {1..65})"
+}
+
+@test "a reserved LIVEMAP_KEY falls back to the old behaviour, whatever its case" {
+  local word
+  for word in state events finds icons index livemap State EVENTS Finds iCoNs INDEX LiveMap; do
+    assert_invalid_key_falls_back "${word}"
+  done
+}
+
+@test "an empty LIVEMAP_KEY falls back to the old behaviour" {
+  assert_invalid_key_falls_back ""
+}
+
+@test "no run prints a LIVEMAP_KEY" {
+  local all key="Env-key_0123456789"
+  run env LIVEMAP_KEY="${key}" bash "${SCRIPT}"
+  all="${output}"
+  [ "$(ini_get key)" = "${key}" ]
+  run env LIVEMAP_KEY="${key}" bash "${SCRIPT}"
+  all+="${output}"
+  make_zip v2
+  run env LIVEMAP_KEY="${key}" LIVEMAP_VERSION=v2.0.0 LIVEMAP_SHA256="${WRONG_SHA}" bash "${SCRIPT}"
+  all+="${output}"
+  run env LIVEMAP_KEY="${key}" FAKE_CURL_EXIT=22 LIVEMAP_VERSION=v9.9.9 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
+  all+="${output}"
+  run env LIVEMAP_KEY="bad key!" bash "${SCRIPT}"
+  all+="${output}"
+  [ -n "${all}" ]
+  [[ "${all}" != *"${key}"* ]]
+  [[ "${all}" != *"bad key!"* ]]
+}
+
+@test "the download only follows https" {
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  grep -q -e '--proto =https' "${CALLS}"
+}
+
+@test "the script has no braced variable for Flux to substitute in the ConfigMap" {
+  run grep -c -F '${' "${SCRIPT}"
+  [ "${output}" = "0" ]
 }
