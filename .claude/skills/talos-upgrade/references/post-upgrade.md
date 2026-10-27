@@ -6,7 +6,7 @@
 
 ```bash
 # Parallel Group 1 - Version verification
-talosctl version --short
+talosctl version --nodes "$(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' | tr ' ' ',')" --short
 kubectl get nodes -o wide
 
 # Parallel Group 2 - Cluster health

@@ -23,12 +23,16 @@ Get the schematic from a live worker node, as in [Schematic Discovery](discovery
 WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
 
 # Get schematic from a live worker node (see Schematic Discovery)
+WORKER_IP=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 SCHEMATIC=$(talosctl get extensions -n "${WORKER_IP}" 2>/dev/null | grep schematic | awk '{print $NF}')
+
+echo "Worker nodes: ${WORKER_NODES}"
+echo "Schematic: ${SCHEMATIC}"
 ```
 
 ## Step 4.3: Execute upgrade
 
-Default drain is fine when the Phase 1 PDB survey came back clean:
+Default drain is fine when the Phase 1 PDB survey came back clean. `<cp-node-ip>` is any control plane node IP (`CP_NODES` in Step 3.1):
 
 ```bash
 talosctl upgrade \

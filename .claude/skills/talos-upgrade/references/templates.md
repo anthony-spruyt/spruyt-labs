@@ -145,7 +145,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
 
 ## PARTIAL
 
-Put the question first, with at most 2 options and a recommendation. Pick the options that fit from: **Wait** (Ceph is recovering: wait for HEALTH_OK), **Resume** (the issue is resolved: continue with the remaining nodes), **Rollback** (a critical issue: roll back all nodes).
+Put the question first, with at most 2 options and a recommendation. Pick the options that fit, such as **Wait** (Ceph is recovering: wait for HEALTH_OK), **Resume** (the issue is resolved: continue with the remaining nodes), **Rollback** (a critical issue: roll back all nodes).
 
 ```text
 ## UPGRADE PARTIAL - INTERVENTION REQUIRED
@@ -164,6 +164,9 @@ Put the question first, with at most 2 options and a recommendation. Pick the op
 
 ### Blocked On
 [Why upgrade cannot continue]
+
+### Required Actions
+1. [Steps left to finish the upgrade, in order]
 
 ### Current State
 [kubectl get nodes output, IPs stripped]

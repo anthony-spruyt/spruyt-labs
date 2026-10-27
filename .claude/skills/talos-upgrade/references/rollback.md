@@ -16,13 +16,13 @@ talosctl upgrade \
 
 ## Worker Rollback
 
-If a worker upgrade fails:
+If a worker upgrade fails (`<cp-node-ip>` is any control plane node IP, as in Step 4.3):
 
 ```bash
 # Downgrade to previous version
 talosctl upgrade \
   --nodes <failed-node-ip> \
-  --endpoints <cluster-endpoint> \
+  --endpoints <cp-node-ip> \
   --image factory.talos.dev/metal-installer-secureboot/<schematic>:<previous-version>
 ```
 
