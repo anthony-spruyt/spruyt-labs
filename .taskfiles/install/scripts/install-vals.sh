@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=helmfile/vals datasource=github-releases
-VERSION="v0.47.0"
+VERSION="v0.50.0"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
