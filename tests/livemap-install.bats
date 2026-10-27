@@ -3,7 +3,10 @@
 # The live map install hook keeps the last good install, never prints the key and always exits 0. Ref #3892
 
 REPO_ROOT="${BATS_TEST_DIRNAME}/.."
-SCRIPT="${REPO_ROOT}/cluster/apps/enshrouded/enshrouded/app/livemap-install.sh"
+APP="${REPO_ROOT}/cluster/apps/enshrouded/enshrouded/app"
+SCRIPT="${APP}/livemap-install.sh"
+VALUES="${APP}/values.yaml"
+POLICIES="${APP}/network-policies.yaml"
 WRONG_SHA="0000000000000000000000000000000000000000000000000000000000000000"
 
 make_zip() {
@@ -24,6 +27,35 @@ ini_get() {
 c = configparser.ConfigParser()
 c.read(sys.argv[1])
 print(c["livemap"][sys.argv[2]])' "${LIVEMAP_ROOT}/livemap.ini" "$1"
+}
+
+manifest_map_ports() {
+  python3 -I - "${VALUES}" "${POLICIES}" <<'PY'
+import sys
+import yaml
+
+with open(sys.argv[1]) as f:
+    values = yaml.safe_load(f)
+with open(sys.argv[2]) as f:
+    policies = list(yaml.safe_load_all(f))
+
+container = next(
+    p["containerPort"]
+    for p in values["controllers"]["enshrouded"]["containers"]["app"]["ports"]
+    if p["name"] == "map"
+)
+service = values["service"]["map"]["ports"]["map"]["port"]
+policy = next(d for d in policies if d["metadata"]["name"] == "allow-traefik-livemap-ingress")
+allowed = [
+    p["port"]
+    for rule in policy["spec"]["ingress"]
+    for to in rule["toPorts"]
+    for p in to["ports"]
+    if p["protocol"] == "TCP"
+]
+for port in [container, service, *allowed]:
+    print(port)
+PY
 }
 
 curl_calls() {
@@ -102,33 +134,26 @@ teardown() {
   [ $(((retry + 1) * max + (1 << retry) - 1)) -le 270 ]
 }
 
-@test "writes livemap.ini with the livemap section, every setting and a 16 character key" {
+@test "writes livemap.ini with the livemap section, the public URL, the port the pod serves the map on and a random 16 character key" {
+  local first second port declared
   run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
   [ "$(head -n1 "${LIVEMAP_ROOT}/livemap.ini")" = "[livemap]" ]
-  python3 -I - "${LIVEMAP_ROOT}/livemap.ini" <<'PY'
-import configparser, re, sys
-
-c = configparser.ConfigParser()
-c.read(sys.argv[1])
-assert c.sections() == ["livemap"], c.sections()
-s = c["livemap"]
-want = {
-    "enabled": "1",
-    "port": "15637",
-    "bind": "0.0.0.0",
-    "publicurl": "https://enshrouded-map.example.test",
-    "detectpublicaddress": "0",
-    "announceinchat": "1",
-    "updatems": "250",
-    "log": "1",
-    "logdiagnostics": "0",
-}
-for k, v in want.items():
-    assert s[k] == v, k
-assert set(s.keys()) == set(want) | {"key"}, sorted(s.keys())
-assert re.fullmatch(r"[abcdefghjkmnpqrstuvwxyz23456789]{16}", s["key"]), "key is not 16 characters from the alphabet"
-PY
+  first="$(ini_get key)"
+  [ "$(ini_get publicurl)" = "${LIVEMAP_PUBLIC_URL}" ]
+  port="$(ini_get port)"
+  mapfile -t declared < <(manifest_map_ports)
+  [ "${#declared[@]}" -eq 3 ]
+  [ "${declared[0]}" = "${port}" ]
+  [ "${declared[1]}" = "${port}" ]
+  [ "${declared[2]}" = "${port}" ]
+  rm "${LIVEMAP_ROOT}/livemap.ini"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  second="$(ini_get key)"
+  [[ "${first}" =~ ^[abcdefghjkmnpqrstuvwxyz23456789]{16}$ ]]
+  [[ "${second}" =~ ^[abcdefghjkmnpqrstuvwxyz23456789]{16}$ ]]
+  [ "${first}" != "${second}" ]
 }
 
 @test "a second run keeps the key and does not download again" {

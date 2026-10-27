@@ -2,6 +2,7 @@ package main
 
 import (
   "context"
+  "errors"
   "fmt"
   "io"
   "log/slog"
@@ -31,6 +32,7 @@ type orchestratorMockKube struct {
   isCephNooutResult  bool
   isCephNooutErr     error
   deploymentReplicas map[string]int32
+  replicasErr        error
   scaleErr           error
 
   // Node config
@@ -61,7 +63,6 @@ func (m *orchestratorMockKube) GetCNPGClusters(ctx context.Context) ([]clients.C
   if m.getClustersErr != nil {
     return nil, m.getClustersErr
   }
-  // Return clusters with current hibernation state
   m.mu.Lock()
   result := make([]clients.CNPGCluster, len(m.clusters))
   for i, c := range m.clusters {
@@ -82,7 +83,6 @@ func (m *orchestratorMockKube) SetCNPGHibernation(ctx context.Context, ns, name 
   } else {
     m.record("SetCNPGHibernation:false")
   }
-  // Track state change
   m.mu.Lock()
   if m.hibernationState == nil {
     m.hibernationState = make(map[string]bool)
@@ -149,6 +149,9 @@ func (m *orchestratorMockKube) IsCephNooutSet(ctx context.Context) (bool, error)
 
 func (m *orchestratorMockKube) GetDeploymentReplicas(ctx context.Context, ns, name string) (int32, error) {
   m.record("GetDeploymentReplicas:" + name)
+  if m.replicasErr != nil {
+    return 0, m.replicasErr
+  }
   if m.deploymentReplicas != nil {
     if r, ok := m.deploymentReplicas[ns+"/"+name]; ok {
       return r, nil
@@ -262,7 +265,6 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: noout → cordon → ceph scale down
   cephNooutIdx := -1
   cordonIdx := -1
   cephScaleIdx := -1
@@ -294,7 +296,6 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
     t.Errorf("cordon (idx %d) should come before Ceph scale down (idx %d)", cordonIdx, cephScaleIdx)
   }
 
-  // Verify talos shutdown was called
   talosCalls := talos.getCalls()
   if len(talosCalls) == 0 {
     t.Fatal("node shutdown was not called via Talos")
@@ -321,7 +322,6 @@ func TestOrchestratorRecoverySequence(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify ordering: wait for tools pod -> Ceph scale up -> Ceph health wait -> Ceph unset noout -> CNPG cleanup
   toolsIdx := -1
   scaleUpIdx := -1
   healthWaitIdx := -1
@@ -450,7 +450,6 @@ func TestOrchestratorTestMode(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify shutdown sets noout and recovery unsets noout, in order.
   setNooutIdx := -1
   unsetNooutIdx := -1
 
@@ -521,7 +520,6 @@ func TestOrchestratorRecoverFromZero(t *testing.T) {
 
   calls := kube.getCalls()
 
-  // Verify order: ScaleUp happens BEFORE WaitForToolsPod (ExecInDeployment)
   firstScaleIdx := -1
   firstExecIdx := -1
   for i, c := range calls {
@@ -543,7 +541,6 @@ func TestOrchestratorRecoverFromZero(t *testing.T) {
     t.Errorf("ScaleUp (idx %d) must happen BEFORE WaitForToolsPod (idx %d)", firstScaleIdx, firstExecIdx)
   }
 
-  // Verify CNPG wake also runs
   hasWake := false
   for _, c := range calls {
     if c == "SetCNPGHibernation:false" {
@@ -591,7 +588,6 @@ func TestOrchestratorRecoverFromZeroScaleUpFails(t *testing.T) {
     t.Fatal("RecoverFromZero should return error when ScaleUp fails")
   }
 
-  // WaitForToolsPod (ExecInDeployment) should NOT be called after ScaleUp fails
   calls := kube.getCalls()
   for _, c := range calls {
     if c == "ExecInDeployment" {
@@ -766,22 +762,20 @@ func TestOrchestratorNeedsRecoveryCephExecFails(t *testing.T) {
 }
 
 func TestOrchestratorIsCephScaledDownError(t *testing.T) {
+  replicasErr := errors.New("apiserver unavailable")
   kube := &orchestratorMockKube{
     clusters:    []clients.CNPGCluster{},
     toolsExists: true,
-    nodes: []clients.Node{
-      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
-    },
+    replicasErr: replicasErr,
   }
   talos := &orchestratorMockTalos{}
   orch := newTestOrchestrator(kube, talos)
 
-  // Normal case: no error, returns false
   scaled, err := orch.IsCephScaledDown(context.Background())
-  if err != nil {
-    t.Fatalf("unexpected error: %v", err)
+  if !errors.Is(err, replicasErr) {
+    t.Fatalf("IsCephScaledDown() error = %v, want it to wrap %v", err, replicasErr)
   }
   if scaled {
-    t.Error("should return false when all deployments running")
+    t.Error("IsCephScaledDown() = true, want false when the replicas check fails")
   }
 }
