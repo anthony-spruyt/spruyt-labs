@@ -4,6 +4,8 @@ Skip entirely for patch upgrades. For a minor upgrade the machine config has to 
 
 **Render and apply do not use the same version contract.** `task talos:render` generates against `talosVersion` in `topf.yaml`. `task talos:apply` asks each node for its **running** version and generates against that contract. During an upgrade window the two disagree, so a clean render is not evidence that an apply will succeed. Gate patches on the node's version with a guard such as `{{- if semverCompare ">=X.Y.0-0" (default .TalosVersion .Node.RuntimeData.TalosVersion) }}`, so one patch set serves both contracts.
 
+Do Steps 2b.1 to 2b.3 in the `workspace.sh` clone that lands the migration; the checkout that runs `task talos:*` only pulls and diffs.
+
 ## Step 2b.1: Render against the target contract
 
 Set `talosVersion: <target-version>` in `talos/topf.yaml`, then:

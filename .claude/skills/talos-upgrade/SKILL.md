@@ -61,7 +61,7 @@ Keep `$` plus a digit out of this file: it is an argument placeholder, even in c
 Read [references/pre-upgrade.md](references/pre-upgrade.md) now for Groups 1 to 3 and the installer images. **Run ALL checks. BLOCK if any fail.**
 
 - **Group 4, PDB survey (do NOT skip):** [references/worker-drain.md](references/worker-drain.md). A CNPG primary-role PDB means `--drain=false` in Phase 4; `rook-ceph-osd-host-<node>` is expected; `rook-ceph-mon-pdb` at `ALLOWED 0` means a mon is already down: STOP, investigate first
-- **Pre-flight drift check (before any node changes):** [references/drift-check.md](references/drift-check.md). If the pin already reached main, skip the apply and record applyable drift for Phase 8; otherwise apply only **applyable** drift. Anything else: PRE-UPGRADE BLOCKED
+- **Pre-flight drift check (before any node changes):** pass the clean-checkout gate first, then [references/drift-check.md](references/drift-check.md). If the pin already reached main, skip the apply and record applyable drift for Phase 8; otherwise apply only **applyable** drift. Anything else: PRE-UPGRADE BLOCKED
 
 **Pre-upgrade checklist (all must pass):**
 
