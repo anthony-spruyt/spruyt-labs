@@ -74,6 +74,8 @@ jobs:
               - 'cluster/apps/litellm/litellm/access-policy/**'
               # Script asserted by tests/litellm-mcp-tool-drift.bats
               - 'cluster/apps/litellm/litellm/mcp-tool-drift/**'
+              # Script asserted by tests/livemap-install.bats
+              - 'cluster/apps/enshrouded/enshrouded/app/livemap-install.sh'
   kubeconform:
     name: "kubeconform"
     needs: "changes"
