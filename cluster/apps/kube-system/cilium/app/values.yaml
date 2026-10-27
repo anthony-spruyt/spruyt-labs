@@ -6,79 +6,51 @@ upgradeCompatibility: "1.18"
 priorityClassName: system-node-critical
 debug:
   enabled: false
-rollOutCiliumPods: true # Roll out cilium agent pods automatically when configmap is updated.
-# localRedirectPolicies:
-#   enabled: true # Enable local redirect policies.
-#   addressMatcherCIDRs: null # Limit the allowed addresses in Address Matcher rule of Local Redirect Policies to the given CIDRs. @schema@ type: [null, array] @schema@
+rollOutCiliumPods: true
 kubeProxyReplacement: true
-k8sServicePort: 7445 # 6443 # 7445 -> kube prism if not using native routing mode but encapsulated
-k8sServiceHost: localhost # ${KUBEAPI_VIP} # localhost -> kube prism if not using native routing mode but encapsulated
-kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256 # healthz server bind address for the kube-proxy replacement. To enable set the value to '0.0.0.0:10256' for all ipv4 addresses and this '[::]:10256' for all ipv6 addresses. By default it is disabled.
-k8s: # Configure Kubernetes specific configuration
-  requireIPv4PodCIDR: true # requireIPv4PodCIDR enables waiting for Kubernetes to provide the PodCIDR range via the Kubernetes node resource
-# Allows to explicitly specify the IPv4 CIDR for native routing. When specified, Cilium assumes networking for this CIDR is preconfigured and
-# hands traffic destined for that range to the Linux network stack without applying any SNAT. Generally speaking, specifying a native routing
-# CIDR implies that Cilium can depend on the underlying networking stack to route packets to their destination. To offer a concrete example,
-# if Cilium is configured to use direct routing and the Kubernetes CIDR is included in the native routing CIDR, the user must configure the
-# routes to reach pods, either manually or by setting the auto-direct-node-routes flag.
-routingMode: native # Enable native-routing mode or tunneling mode. Possible values: - "" - native - tunnel
-autoDirectNodeRoutes: true # Enable installation of PodCIDR routes between worker nodes if worker nodes share a common L2 network segment.
-ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}" # Maintain native routing CIDR for direct routing
+k8sServicePort: 7445 # KubePrism
+k8sServiceHost: localhost # KubePrism
+kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
+k8s:
+  requireIPv4PodCIDR: true
+routingMode: native
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: "${CLUSTER_NODE_CIDR_IP4}"
 bpf:
-  masquerade: true # Enable native IP masquerade support in eBPF for native routing
+  masquerade: true
   # Reduce aggregation for better drop visibility (default: medium)
   monitorAggregation: low
   monitorInterval: "1s"
   events:
     policyVerdict:
       enabled: true # Record policy verdicts to see which policy caused drops
-  # datapathMode: netkit # Mode for Pod devices for the core datapath (veth, netkit, netkit-l2)
-  # preallocateMaps: true # Enables pre-allocation of eBPF map values. This increases memory usage but can reduce latency.
-  # tproxy: true # Configure the eBPF-based TPROXY (beta) to reduce reliance on iptables rules for implementing Layer 7 policy.
-  # # Control to use a distributed per-CPU backend memory for the core BPF LRU maps which Cilium uses. This improves performance significantly,
-  # # but it is also recommended to increase BPF map sizing along with that.
-  # distributedLRU:
-  #   enabled: true # Enable distributed LRU backend memory. For compatibility with existing installations it is off by default.
-  # mapDynamicSizeRatio: 0.08 # Configure auto-sizing for all BPF maps based on available memory. ref: https://docs.cilium.io/en/stable/network/ebpf/maps/
 enableIPv4Masquerade: true
-ipMasqAgent: # Configure the eBPF-based ip-masq-agent
-  enabled: true # Enable IP masquerading agent for external connectivity
+ipMasqAgent:
+  enabled: true
   config:
     nonMasqueradeCIDRs:
       - ${CLUSTER_SVC_CIDR_IP4}
       - ${CLUSTER_POD_CIDR_IP4}
       - ${CLUSTER_NODE_CIDR_IP4}
-    # masqLinkLocal: false
-    # masqLinkLocalIPv6: false
-bgpControlPlane: # This feature set enables virtual BGP routers to be created via BGP CRDs.
-  enabled: true # Enables the BGP control plane.
+bgpControlPlane:
+  enabled: true
 gatewayAPI:
-  enabled: true # Enable support for Gateway API in cilium This will automatically set enable-envoy-config as well.
+  enabled: true
   # Enable ALPN for all listeners configured with Gateway API. ALPN will attempt HTTP/2, then HTTP 1.1.
   # Note that this will also enable appProtocol support, and services that wish to use HTTP/2 will need to indicate that via their appProtocol.
   enableAlpn: true
-  enableAppProtocol: true # Enable Backend Protocol selection support (GEP-1911) for Gateway API via appProtocol.
+  enableAppProtocol: true
 envoy:
   rollOutPods: true # Envoy reads its bootstrap config (cluster options below) only at start.
   maxRequestsPerConnection: 1 # Pooled upstream connections outlive short-lived client pods; their closing packets then drop as world.
-cgroup: # Configure cgroup related configuration
+cgroup:
   autoMount:
-    # Enable auto mount of cgroup2 filesystem. When autoMount is enabled, cgroup2 filesystem is mounted at cgroup.hostRoot path on the
-    # underlying host and inside the cilium agent pod. If users disable autoMount, it's expected that users have mounted cgroup2 filesystem
-    # at the specified cgroup.hostRoot volume, and then the volume will be mounted inside the cilium agent pod at the same path.
-    enabled: false # Configure cgroup root where cgroup2 filesystem is mounted on the host (see also: cgroup.autoMount)
+    enabled: false
   hostRoot: /sys/fs/cgroup # https://www.talos.dev/v1.11/kubernetes-guides/network/deploying-cilium/
-# Enable bandwidth manager to optimize TCP and UDP workloads and allow for rate-limiting traffic from individual Pods with EDT
-# (Earliest Departure Time) through the "kubernetes.io/egress-bandwidth" Pod annotation.
-# bandwidthManager:
-#   enabled: true # Enable bandwidth manager infrastructure (also prerequirement for BBR)
-#   bbr: true # Activate BBR TCP congestion control for Pods
-# enableIPv4BIGTCP: true # Enables IPv4 BIG TCP support which increases maximum IPv4 GSO/GRO limits for nodes and pods
-# bpfClockProbe: true # Enable BPF clock source probing for more efficient tick retrieval.
 ipam:
-  mode: kubernetes # Configure IP Address Management mode. ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
+  mode: kubernetes
 operator:
-  rollOutPods: true # Roll out cilium-operator pods automatically when configmap is updated.
+  rollOutPods: true
   priorityClassName: system-node-critical
   resources:
     limits:
@@ -128,14 +100,40 @@ hubble:
     dashboards:
       enabled: true
       namespace: observability
-    enabled:
-      - dns:query;ignoreAAAA
-      # Drop metrics with workload context for policy debugging (removed pod for lower cardinality)
-      - drop:sourceContext=namespace|workload;destinationContext=namespace|workload
-      # Removed: tcp, flow, port-distribution, http (high cardinality, not used in alerts/dashboards)
-      - icmp
     enableOpenMetrics: true
     port: 9966
+    # Only the dynamic config takes excludeFilters, and the agent rejects it next to a static hubble.metrics.enabled list.
+    # Not enabled: tcp, flow, port-distribution, http (high cardinality, not used in alerts/dashboards).
+    dynamic:
+      enabled: true
+      config:
+        createConfigMap: true
+        content:
+          - name: dns
+            contextOptions:
+              - name: query
+              - name: ignoreAAAA
+          # Workload context without pod keeps cardinality low.
+          - name: drop
+            contextOptions:
+              - name: sourceContext
+                values: [namespace, workload]
+              - name: destinationContext
+                values: [namespace, workload]
+            excludeFilters:
+              # Temporal re-dials dead peers on its membership ports for the life of the pod (temporalio/temporal#11429); remove once a release ships the fix (temporalio/temporal#11431).
+              # destination_label entries are ORed: matches any destination outside temporal-system, or inside it but not a server pod.
+              - source_pod:
+                  - temporal-system/temporal-frontend-
+                  - temporal-system/temporal-history-
+                  - temporal-system/temporal-matching-
+                  - temporal-system/temporal-worker-
+                destination_port: ["6933", "6934", "6935", "6936", "6937", "6938", "6939"]
+                destination_label:
+                  - "k8s:io.kubernetes.pod.namespace!=temporal-system"
+                  - "k8s:app.kubernetes.io/component notin (frontend,history,matching,worker)"
+                drop_reason_desc: ["POLICY_DENIED"]
+          - name: icmp
   export:
     dynamic:
       enabled: true
@@ -158,20 +156,14 @@ hubble:
               - drop_reason
               - drop_reason_desc
               - traffic_direction
-socketLB: # Configure socket LB
-  enabled: true # Enable socket LB
+socketLB:
+  enabled: true
   hostNamespaceOnly: true # Strangely not mentioned in the helm chart reference but it is in the json schema.
 wellKnownIdentities:
-  enabled: true # Enable the use of well-known identities.
-# encryption:
-#   enabled: true # Enable transparent network encryption.
-#   nodeEncryption: true # Enable encryption for pure node to node traffic. This option is only effective when encryption.type is set to "wireguard".
-#   type: wireguard # Encryption method. Can be either ipsec or wireguard.
+  enabled: true
 securityContext:
-  # -- Run the pod with elevated privileges
   privileged: false
   capabilities:
-    # -- Capabilities for the `cilium-agent` container
     ciliumAgent:
       # Use to set socket permission
       - CHOWN
@@ -183,19 +175,12 @@ securityContext:
       - NET_RAW
       # Used since cilium monitor uses mmap
       - IPC_LOCK
-      # Used in iptables. Consider removing once we are iptables-free
-      # - SYS_MODULE
       # We need it for now but might not need it for >= 5.11 specially
       # for the 'SYS_RESOURCE'.
       # In >= 5.8 there's already BPF and PERMON capabilities
       - SYS_ADMIN
       # Could be an alternative for the SYS_ADMIN for the RLIMIT_NPROC
       - SYS_RESOURCE
-      # Both PERFMON and BPF requires kernel 5.8, container runtime
-      # cri-o >= v1.22.0 or containerd >= v1.5.0.
-      # If available, SYS_ADMIN can be removed.
-      # - PERFMON
-      # - BPF
       # Allow discretionary access control (e.g. required for package installation)
       - DAC_OVERRIDE
       # Allow to set Access Control Lists (ACLs) on arbitrary files (e.g. required for package installation)
@@ -204,21 +189,18 @@ securityContext:
       - SETGID
       # Allow to execute program that changes UID (e.g. required for package installation)
       - SETUID
-    # -- Capabilities for the `mount-cgroup` init container
     mountCgroup:
       # Only used for 'mount' cgroup
       - SYS_ADMIN
       # Used for nsenter
       - SYS_CHROOT
       - SYS_PTRACE
-    # -- capabilities for the `apply-sysctl-overwrites` init container
     applySysctlOverwrites:
       # Required in order to access host's /etc/sysctl.d dir
       - SYS_ADMIN
       # Used for nsenter
       - SYS_CHROOT
       - SYS_PTRACE
-      # -- Capabilities for the `clean-cilium-state` init container
     cleanCiliumState:
       # Most of the capabilities here are the same ones used in the
       # cilium-agent's container because this container can be used to
@@ -226,16 +208,9 @@ securityContext:
       # will need the same capabilities.
       # Used since cilium modifies routing tables, etc...
       - NET_ADMIN
-      # Used in iptables. Consider removing once we are iptables-free
-      # - SYS_MODULE
       # We need it for now but might not need it for >= 5.11 specially
       # for the 'SYS_RESOURCE'.
       # In >= 5.8 there's already BPF and PERMON capabilities
       - SYS_ADMIN
       # Could be an alternative for the SYS_ADMIN for the RLIMIT_NPROC
       - SYS_RESOURCE
-      # Both PERFMON and BPF requires kernel 5.8, container runtime
-      # cri-o >= v1.22.0 or containerd >= v1.5.0.
-      # If available, SYS_ADMIN can be removed.
-      # - PERFMON
-      # - BPF

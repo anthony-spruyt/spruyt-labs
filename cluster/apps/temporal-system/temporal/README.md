@@ -71,17 +71,12 @@ Temporal has no webhook receiver. External callers (GitHub etc.) hit an intake s
 
 3. **Steady `POLICY_DENIED` drops from `temporal-system` after a rollout, node drain or Talos upgrade**
 
-   - **Symptom**: Egress drops from the server pods to IPs with no pod behind them, on membership ports 6933-6939, in Hubble and the Cilium policy-drops dashboard. `CiliumPolicyDrops` skips drops from `temporal-system` to an unresolved destination, so they do not alert.
+   - **Symptom**: Egress drops from the server pods to IPs of pods that no longer exist, on membership ports 6933-6939, in Hubble. A new pod can reuse such an IP, so the drop then names a destination in another namespace.
 
-   - **Cause**: Ringpop keeps dead peers as faulty for 24h (hardcoded in Temporal) and keeps dialing them. Not a missing CNP rule; do not add a `world` egress rule.
+   - **Cause**: At startup each server reads the peers that heartbeated in the last 20s from the `cluster_membership` table, and ringpop's healer re-dials that fixed list until the pod restarts (`common/membership/ringpop/monitor.go` in temporalio/temporal v1.32.1). Peers replaced later stay on the list. Not a missing CNP rule; do not add a `world` egress rule. Upstream:
+     [temporalio/temporal#11429](https://github.com/temporalio/temporal/issues/11429), fix in [temporalio/temporal#11431](https://github.com/temporalio/temporal/pull/11431).
 
-   - **Fix**: A rolling restart is not enough; a new pod rejoins through a survivor and inherits the stale list. Take all four servers down together (brief outage):
-
-     ```bash
-     kubectl -n temporal-system scale deploy/temporal-{frontend,history,matching,worker} --replicas=0
-     # wait for the pods to terminate
-     kubectl -n temporal-system scale deploy/temporal-{frontend,history,matching,worker} --replicas=1
-     ```
+   - **Fix**: None needed. Hubble's drop metric leaves out these drops (the `drop` entry's `excludeFilters` in `cluster/apps/kube-system/cilium/app/values.yaml`); the Hubble flow log still records them. Remove the filter once a Temporal release ships temporalio/temporal#11431 and the chart runs it.
 
 ## References
 
