@@ -1,6 +1,6 @@
 ---
 name: kubernetes-upgrade
-description: Use when the user asks to upgrade or bump the Kubernetes (k8s) version, with or without a target such as 1.35.1, or when Renovate updates kubernetesVersion in topf.yaml. Not for Talos OS upgrades (use talos-upgrade agent).
+description: Use when the user asks to upgrade or bump the Kubernetes (k8s) version, with or without a target such as 1.35.1, or when Renovate updates kubernetesVersion in topf.yaml. Not for Talos OS upgrades (use talos-upgrade skill).
 argument-hint: <target-version>
 ---
 
@@ -15,7 +15,7 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 | Upgrade command | `talosctl upgrade-k8s -n <cp-node> --to v<version>` |
 | Config file     | `talos/topf.yaml` (`kubernetesVersion` field)       |
 | Node topology   | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3)            |
-| Talos OS agent  | `talos-upgrade` (different from this skill)         |
+| Talos OS skill  | `talos-upgrade` (different from this skill)         |
 
 ## Workflow
 
@@ -54,7 +54,7 @@ Consult `references/api-deprecation-scanning.md` for procedures.
 1. Read Talos version from `talos/topf.yaml` (`talosVersion`)
 2. Query Context7: `query-docs(libraryId: "/siderolabs/talos", query: "supported kubernetes versions for Talos v<current>")`
 
-**HARD GATE:** If incompatible, BLOCK. Recommend `talos-upgrade` agent first.
+**HARD GATE:** If incompatible, BLOCK. Recommend `talos-upgrade` skill first.
 
 ### Phase 6: Cluster Health Gate
 

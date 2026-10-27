@@ -19,7 +19,7 @@ gh pr view <N> --json number,title,author,state,labels,headRefName,files
 
 Stop and tell the user if the PR is not open, or is not from Renovate (author `app/renovate` or branch `renovate/*`).
 
-If the PR touches `talos/topf.yaml`, stop and hand off: a `kubernetesVersion` bump goes to the `kubernetes-upgrade` skill, a `talosVersion` bump to the `talos-upgrade` agent. Flux doesn't apply that file, so merging it alone records a version the nodes aren't running.
+If the PR touches `talos/topf.yaml`, stop and hand off: a `kubernetesVersion` bump goes to the `kubernetes-upgrade` skill, a `talosVersion` bump to the `talos-upgrade` skill. Flux doesn't apply that file, so merging it alone records a version the nodes aren't running.
 
 Then run `gh pr checks <N>`. If a check named `Agent triage` is not finished (pending, queued or in progress), stop: tell the user the agent platform is already triaging this PR, give the check's link, and do nothing else (no analyzer, no labels, no comment). A finished `Agent triage` check doesn't block; continue.
 
