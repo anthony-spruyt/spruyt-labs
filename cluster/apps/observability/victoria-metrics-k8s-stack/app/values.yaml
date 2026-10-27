@@ -43,8 +43,8 @@ defaultRules:
     RecordingRulesNoData:
       spec:
         for: 6h
-        # enshrouded:bad_performance_peak_ms:max is empty whenever no warning is logged. See #3742.
-        expr: 'sum(vmalert_recording_rules_last_evaluation_samples{recording!="enshrouded:bad_performance_peak_ms:max"}) without(id) < 1'
+        # Empty by design: enshrouded:bad_performance_peak_ms:max while no warning is logged (#3742), cilium:policy_drops:by_* while no policy drop happens (#3917).
+        expr: 'sum(vmalert_recording_rules_last_evaluation_samples{recording!~"enshrouded:bad_performance_peak_ms:max|cilium:policy_drops:by_(source|destination):rate5m"}) without(id) < 1'
   groups:
     # count:up0 is count(up == 0), which is an empty vector whenever every scrape target is
     # healthy, so it trips RecordingRulesNoData permanently. Neither count:up0 nor count:up1
@@ -57,7 +57,6 @@ victoria-metrics-operator:
 
 vmsingle:
   enabled: true
-  # -- Full spec for VMSingle CRD. Allowed values describe [here](https://docs.victoriametrics.com/operator/api#vmsinglespec)
   spec:
     priorityClassName: high-priority
     # Prefer different nodes from other heavy VM components to prevent thermal throttling
@@ -84,7 +83,6 @@ vmsingle:
       search.maxMemoryPerQuery: 1GB
       # Convert OTel dot-notation metric names to Prometheus underscore format at ingestion (#1043)
       opentelemetry.usePrometheusNaming: "true"
-    # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/single-server-victoriametrics/#retention)
     retentionPeriod: 1y
     replicaCount: 1
     # PVC managed by operator — operator doesn't support external PVC (reserves volume name + mount path)
@@ -99,7 +97,6 @@ vmsingle:
 alertmanager:
   enabled: true
   config: null
-  # -- (object) Full spec for VMAlertmanager CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertmanagerspec)
   spec:
     priorityClassName: high-priority
     # Required by the inhibit_rules in alertmanager-config.yaml. When false, the operator
@@ -138,7 +135,6 @@ alertmanager:
 
 vmalert:
   enabled: true
-  # -- (object) Full spec for VMAlert CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmalertspec)
   spec:
     priorityClassName: high-priority
     # LogsQL rules belong to the victoria-logs VMAlert; MetricsQL can't parse them
@@ -161,7 +157,6 @@ vmalert:
       external.url: https://grafana.lan.${EXTERNAL_DOMAIN}
 
 vmagent:
-  # -- (object) Full spec for VMAgent CRD. Allowed values described [here](https://docs.victoriametrics.com/operator/api#vmagentspec)
   # OOMKilled at 256Mi during service discovery
   spec:
     priorityClassName: high-priority
@@ -193,7 +188,6 @@ vmagent:
       promscrape.dropOriginalLabels: "false"
       promscrape.disableCompression: "true"
       promscrape.maxScrapeSize: "256MB"
-# -- Grafana dependency chart configuration. For possible values refer [here](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration)
 grafana:
   enabled: true
   priorityClassName: high-priority
@@ -273,7 +267,6 @@ grafana:
     - name: grafana-oauth-credentials
       optional: false
 
-# -- prometheus-node-exporter dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-node-exporter/values.yaml)
 prometheus-node-exporter:
   enabled: true
   resources:
@@ -301,7 +294,6 @@ prometheus-node-exporter:
               source_labels: [__name__, chip, sensor]
               regex: node_hwmon_temp_celsius;platform_nct6775_2592;temp(1|3|4|5|6|8|9|10|11|12)
 
-# -- kube-state-metrics dependency chart configuration. For possible values check [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml)
 kube-state-metrics:
   enabled: true
   priorityClassName: high-priority
@@ -421,7 +413,6 @@ kubeEtcd:
       # which only works if/because etcd is deployed on the same nodes where the rest
       # of the api server (notably kube-controller-manager) are deployed. Adjust if that's
       # not how your cluster is set up.
-  # -- Spec for VMServiceScrape CRD is [here](https://docs.victoriametrics.com/operator/api.html#vmservicescrapespec)
   vmScrape:
     spec:
       jobLabel: jobLabel
