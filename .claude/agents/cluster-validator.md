@@ -240,17 +240,17 @@ Ignore `POLICY_DENIED` egress from the Temporal server pods (frontend, history, 
 
 ## Service Programming Validation
 
-When the range adds, renames, replaces or changes a Service (above all LoadBalancer Services, or Services that share an IP), check on every Cilium agent that `cilium-dbg service list` has the Service's ClusterIP and each LoadBalancer frontend, for every port and protocol, with backends. Status fields on the Kubernetes Service are not proof. Also check every agent's log since the push for `Failure processing services`:
+When the range adds, renames, replaces or changes a Service (above all LoadBalancer Services, or Services that share an IP), check on every Cilium agent that `cilium-dbg service list` has a row for the Service's ClusterIP and each LoadBalancer frontend, for every port and protocol. Every row needs at least one backend, except that under `externalTrafficPolicy: Local` the plain LoadBalancer row has backends only on nodes that run a backend pod. Status fields on the Kubernetes Service are not proof. Also check every agent's log since the push for `Failure processing services`:
 
 ```bash
 for p in $(kubectl -n kube-system get pods -l k8s-app=cilium -o name); do
   echo "== $p"
   kubectl -n kube-system exec "$p" -c cilium-agent -- cilium-dbg service list | grep -F -e "<cluster-ip>:" -e "<lb-ip>:"
-  kubectl -n kube-system logs "$p" -c cilium-agent --since=<minutes since push>m | grep 'Failure processing services'
+  kubectl -n kube-system logs "$p" -c cilium-agent --since=<minutes since push>m | grep -c 'Failure processing services' || true
 done
 ```
 
-A missing frontend or backend on any agent, or that log line, means agents missed the Service: report ROLL-FORWARD, not rollback. The fix is an operational step: restart the affected agents one at a time.
+A missing row or a row without its backends on any agent, or a nonzero log count, means agents missed the Service: report ROLL-FORWARD, not rollback. The fix is an operational step: restart the affected agents one at a time.
 
 ## CronJob Validation
 
