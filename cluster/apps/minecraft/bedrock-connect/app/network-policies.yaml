@@ -38,3 +38,5 @@ spec:
         - ports:
             - port: "19132"
               protocol: UDP
+            - port: "19132"
+              protocol: TCP

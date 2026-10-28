@@ -60,12 +60,12 @@ Every other MCP server (e.g. Brave Search, VictoriaMetrics, n8n-mcp, UniFi) is r
 
 ## Credential Rotation
 
-| Credential                                   | Rotation                                                                                                                |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| GitHub App tokens (`github-bot-credentials`) | `github-token-rotation` CronJob in `github-system`, every 30 min; force-syncs the ExternalSecret in all five namespaces |
-| Bot SSH key (`github-bot-ssh-key`)           | `bot-ssh-key-rotation` CronJob, daily; force-syncs the ExternalSecret in both write-tier namespaces                     |
-| `mcp-credentials`                            | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`                                         |
-| `litellm-credentials`                        | Manual: one LiteLLM virtual key per namespace in each overlay's `litellm-credentials.sops.yaml`                         |
+| Credential                                   | Rotation                                                                                                                                                         |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub App tokens (`github-bot-credentials`) | `github-bot-credentials` ExternalSecret in `github-system` (Flux Kustomization `github-app-tokens`), refreshed every 30 min; each namespace pulls it every 5 min |
+| Bot SSH key (`github-bot-ssh-key`)           | `bot-ssh-key-rotation` CronJob, daily; force-syncs the ExternalSecret in both write-tier namespaces                                                              |
+| `mcp-credentials`                            | Manual: `sops cluster/apps/claude-agents-shared/base/mcp-credentials.sops.yaml`                                                                                  |
+| `litellm-credentials`                        | Manual: one LiteLLM virtual key per namespace in each overlay's `litellm-credentials.sops.yaml`                                                                  |
 
 The Claude subscription login is not stored here; it is set per n8n credential (see `litellm/README.md`).
 
@@ -79,7 +79,7 @@ The namespace name is hardcoded outside this directory. All of these must change
 4. `n8n-system/n8n/app/network-policies.yaml` (`allow-claude-agent-ingress`, for the agentplatform MCP)
 5. `observability/victoria-traces-single/app/network-policies.yaml` (OTLP traces)
 6. `nexus-system/nexus/app/network-policies.yaml`, write tiers only (pre-commit package pulls)
-7. `github-system/github-token-rotation/app/`: a `reader-role-binding-<ns>.yaml` and the namespace loop in `cronjob.yaml`
+7. `github-system/github-app-tokens/app/`: a `reader-role-binding-<ns>.yaml`
 8. For write tiers, `FORCE_SYNC_NAMESPACES` in `github-system/bot-ssh-key-rotation/app/cronjob.yaml`
 9. A matching Claude Code K8s credential and Dispatcher branch in n8n
 
@@ -97,8 +97,8 @@ The namespace name is hardcoded outside this directory. All of these must change
 
 3. **gh CLI returns 401 mid-run**
 
-   - **Cause**: Installation tokens last 1h. The pod mounts the rotated token through the `gh-config-sync` sidecar; if `github-token-rotation` stopped running, every pod ends up with an expired token.
-   - **Fix**: Check the last `github-token-rotation` Job in `github-system`.
+   - **Cause**: Installation tokens last 1h. The pod mounts the rotated token through the `gh-config-sync` sidecar; if the `github-bot-credentials` ExternalSecret in `github-system` stopped refreshing, every pod ends up with an expired token.
+   - **Fix**: Check that ExternalSecret is Ready (see `github-system/github-app-tokens/README.md`).
 
 4. **MCP connection refused or times out**
 

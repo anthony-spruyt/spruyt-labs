@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=falcosecurity/falcoctl datasource=github-releases
-VERSION="v0.14.2"
+VERSION="v0.14.3"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"

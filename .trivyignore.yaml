@@ -55,7 +55,6 @@ misconfigurations:
       - cluster/apps/authentik-system/authentik/app/external-secrets-rbac.yaml
       - cluster/apps/authentik-system/authentik/app/oauth-secret-rotation/role.yaml
       - cluster/apps/n8n-mcp/n8n-mcp-server/app/mcp-api-keys-reader-rbac.yaml
-      - cluster/apps/n8n-system/n8n/app/github-rotation-rbac.yaml
       - cluster/apps/valkey-system/valkey/app/secret-reader-rbac.yaml
       - cluster/apps/cnpg-system/plugin-barman-cloud/app/secret-reader-rbac.yaml
       - cluster/apps/temporal-system/temporal/app/cnpg-roles-eso.yaml
@@ -328,19 +327,14 @@ misconfigurations:
       - cluster/apps/claude-agents-spruyt-labs-read/claude-agents/app/rbac.yaml
 
   # ==============================================================================
-  # GitHub Token Rotation - CronJob and RBAC
+  # GitHub App Tokens - reader RBAC
   # ==============================================================================
-  # alpine/k8s is a trusted Docker Hub image for kubectl operations
-  - id: AVD-KSV-0125
-    paths:
-      - cluster/apps/github-system/github-token-rotation/app/cronjob.yaml
-  # Token rotation and reader roles need resourceName-scoped secret access (least-privilege)
+  # Reader roles need resourceName-scoped secret access (least-privilege)
   - id: AVD-KSV-0113
     paths:
-      - cluster/apps/github-system/github-token-rotation/app/reader-role.yaml
-      - cluster/apps/github-system/github-token-rotation/app/reader-role-litellm.yaml
-      - cluster/apps/github-system/github-token-rotation/app/reader-role-binding-n8n.yaml
-      - cluster/apps/github-system/github-token-rotation/app/role.yaml
+      - cluster/apps/github-system/github-app-tokens/app/reader-role.yaml
+      - cluster/apps/github-system/github-app-tokens/app/reader-role-litellm.yaml
+      - cluster/apps/github-system/github-app-tokens/app/reader-role-binding-n8n.yaml
       - cluster/apps/traefik/traefik/app/mcp-api-keys-reader-rbac.yaml
       - cluster/apps/flux-system/flux-instance/app/sops-age-reader-rbac.yaml
 

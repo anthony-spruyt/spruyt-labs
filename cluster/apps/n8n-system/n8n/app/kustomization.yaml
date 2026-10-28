@@ -8,7 +8,6 @@ resources:
   - ./aws-external-secret.yaml
   - ./github-secret-store.yaml
   - ./github-external-secret.yaml
-  - ./github-rotation-rbac.yaml
   - ./valkey-secret-store.yaml
   - ./valkey-external-secret.yaml
   - ./n8n-secrets.sops.yaml

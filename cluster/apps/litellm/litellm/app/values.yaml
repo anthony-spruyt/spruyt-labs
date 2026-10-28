@@ -809,6 +809,7 @@ configMaps:
               SONARQUBE_ORG: anthony-spruyt
             allowed_tools:
               - change_sonar_issue_status
+              - list_organizations
               - search_my_sonarqube_projects
               - search_sonar_issues_in_projects
               - search_security_hotspots
@@ -876,7 +877,7 @@ configMaps:
               - search_policies
               - search_private_modules
               - search_private_providers
-              - search_providers
+              - search_provider_docs
               - whoami
             disallowed_tools:
               - add_team_member
