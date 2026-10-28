@@ -72,21 +72,6 @@ controllers:
               initialDelaySeconds: 5
               periodSeconds: 15
               failureThreshold: 2
-          # liveness: intentionally disabled - see comment above
-          #   enabled: true
-          #   custom: true
-          #   spec:
-          #     exec:
-          #       command:
-          #         - sh
-          #         - -c
-          #         - |
-          #           chronyc waitsync 15           \
-          #           && exit 0 || exit 1
-          #     initialDelaySeconds: 20
-          #     periodSeconds: 60
-          #     timeoutSeconds: 5
-          #     failureThreshold: 3
         resources:
           requests:
             cpu: 16m

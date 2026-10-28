@@ -2,8 +2,8 @@
 
 ## Overview
 
-Relay between the [Happy](https://github.com/slopus/happy) phone/web app and the `happy` CLI in Coder workspaces, replacing Happy's public server ([#3314](https://github.com/anthony-spruyt/spruyt-labs/issues/3314)). Messages are end-to-end encrypted; the server stores blobs it can't read. Upstream publishes no image, so `docker.io/aspruyt/happy-server` is built from the `happy-server-self-host`
-npm package in [container-images](https://github.com/anthony-spruyt/container-images/tree/main/happy-server). It runs standalone: embedded PGlite and local files on the `/data` PVC, no Postgres, Redis or S3.
+Relay between the [Happy](https://github.com/slopus/happy) phone/web app and the `happy` CLI in Coder workspaces, replacing Happy's public server ([#3314](https://github.com/anthony-spruyt/spruyt-labs/issues/3314)). Messages are end-to-end encrypted; the server stores blobs it can't read. Upstream publishes no image, so the `happy-server` image is built from the `happy-server-self-host` npm
+package in [container-images](https://github.com/anthony-spruyt/container-images/tree/main/happy-server). It runs standalone: embedded PGlite and local files on the `/data` PVC, no Postgres, Redis or S3.
 
 ## Prerequisites
 

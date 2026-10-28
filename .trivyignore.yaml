@@ -135,8 +135,7 @@ misconfigurations:
     paths:
       - infra/terraform/**
 
-  # Versioning intentionally suspended on backup buckets - was only required for
-  # cross-region replication (now removed). Backup tools (CNPG, Velero) manage retention.
+  # Versioning off on backup buckets; CNPG and Velero manage retention.
   - id: AVD-AWS-0090
     paths:
       - infra/terraform/aws/cnpg-backup/main.tf
@@ -379,7 +378,7 @@ misconfigurations:
   # ==============================================================================
   # Coder GitOps Template Sync - Job + CronJob + RBAC
   # ==============================================================================
-  # Own Docker Hub image (trivy flags all non-bigfoot registries)
+  # Own Docker Hub image (trivy flags non-standard registries)
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/coder-system/coder-template-sync/app/job-template-push.yaml
