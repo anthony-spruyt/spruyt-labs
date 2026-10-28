@@ -27,9 +27,14 @@ Then read the comments: `gh pr view <N> --comments`.
 
 ## 2. Get a verdict
 
-If a comment holds an `agent-platform:renovate-triage` verdict and the diff still bumps the same versions (a rebase changes the head sha, not the bump), skip the analyzer: that changelog read stands. Check each risk named there or in an owner comment yourself (live cluster, upstream issue state), decide the verdict, and go to step 3.
+Reuse the platform's triage comment, and skip the analyzer, only when all of these hold:
 
-Otherwise spawn the `renovate-pr-analyzer` subagent. Get the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`. Prompt:
+- Its author is `skynet-rw[bot]`, and it opens with `<!-- agent-platform:renovate-triage -->` then `**Agent verdict: <X>**`.
+- Its `head <sha>` line is the PR head, or every PR commit is by `renovate[bot]` and the diff still bumps the same versions (a rebase).
+
+Then its changelog read stands. Check yourself each risk named there or in an `anthony-spruyt` comment (live cluster, upstream issue state), run the checks it says it skipped plus the analyzer's steps 6 and 7 (`.claude/agents/renovate-pr-analyzer.md`), decide the verdict by that file's step 9, and go to step 3.
+
+Otherwise spawn the `renovate-pr-analyzer` subagent, and add any triage comment's notice (foreign commits, held content) to the prompt as a risk to check. Get the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`. Prompt:
 
 ```text
 Analyze this Renovate dependency update PR for breaking changes and risks.
