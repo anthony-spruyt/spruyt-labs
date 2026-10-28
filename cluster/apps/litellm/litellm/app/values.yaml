@@ -876,7 +876,7 @@ configMaps:
               - search_policies
               - search_private_modules
               - search_private_providers
-              - search_providers
+              - search_provider_docs
               - whoami
             disallowed_tools:
               - add_team_member
