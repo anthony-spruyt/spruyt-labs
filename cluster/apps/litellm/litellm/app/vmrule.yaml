@@ -24,6 +24,17 @@ spec:
           annotations:
             summary: "llm-tool-guard has fewer than 2 ready pods"
             description: "Fewer than 2 llm-tool-guard pods have reported a loaded model for 15 minutes."
+        - alert: LLMToolGuardScansFailing
+          expr: |
+            sum by (pod) (rate(llm_tool_guard_scans_total{namespace="litellm",verdict=~"error|timeout"}[15m]))
+              / sum by (pod) (rate(llm_tool_guard_scans_total{namespace="litellm"}[15m])) > 0.5
+            and sum by (pod) (increase(llm_tool_guard_scans_total{namespace="litellm"}[15m])) >= 5
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "llm-tool-guard pod {{ $labels.pod }} fails most scans"
+            description: "More than half of the scans on {{ $labels.pod }} ended in error or timeout for 15 minutes, so the tool output it handles is marked unchecked. Check the pod's logs and its GPU."
         - alert: LLMToolGuardJevFailing
           expr: |
             sum(increase(llm_tool_guard_jev_requests_total{namespace="litellm",outcome="error"}[6h])) > 0
