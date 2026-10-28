@@ -20,7 +20,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/anthony-spruyt/happy-server
-          tag: 1.0.8@sha256:be56b48930a077da56bc9d495771853e3d5e5b69ac02cc75d68cf3732e419697
+          tag: 1.0.9@sha256:e63b9d35c3c7c48860d000efb0c4515538968e6a96b049ea0078f942656bbc78
           pullPolicy: IfNotPresent
         env:
           PUBLIC_URL: https://happy.${EXTERNAL_DOMAIN}
