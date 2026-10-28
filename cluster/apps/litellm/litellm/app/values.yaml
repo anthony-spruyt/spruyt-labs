@@ -361,21 +361,22 @@ controllers:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
         runAsNonRoot: true
+        # Group 44 owns /dev/dri/renderD*; without it OpenVINO lists only CPU
+        supplementalGroups:
+          - 44
         seccompProfile:
           type: RuntimeDefault
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchLabels:
-                    app.kubernetes.io/controller: llm-tool-guard
-                    app.kubernetes.io/instance: litellm
-                # Count only same-revision pods, else a rollout stacks both new pods on the node free of old ones
-                matchLabelKeys:
-                  - pod-template-hash
-                topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: llm-tool-guard
+                  app.kubernetes.io/instance: litellm
+              # Same-revision pods only, so a surge pod can share a node with an old one during a rollout
+              matchLabelKeys:
+                - pod-template-hash
+              topologyKey: kubernetes.io/hostname
     containers:
       llm-tool-guard:
         image:
@@ -399,6 +400,8 @@ controllers:
           JEV_MAX_TEXT_BYTES: "16384"
           JEV_MODE: enforce
           JEV_MODEL: jev-1.14.0
+          # Image default 0.9 less the largest GPU score drift (0.054); also the cut for asking Jev
+          THRESHOLD: "0.84"
           VALKEY_URL: "redis://litellm-valkey.litellm.svc:6379"
           VALKEY_USERNAME: llm-tool-guard
           VALKEY_PASSWORD:
@@ -441,7 +444,8 @@ controllers:
             cpu: 500m
             memory: 2Gi
           limits:
-            memory: 3Gi
+            memory: 4Gi
+            gpu.intel.com/i915: 1
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false

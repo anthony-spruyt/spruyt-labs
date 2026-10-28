@@ -104,8 +104,8 @@ spec:
       - containerName: llm-tool-guard
         controlledValues: "RequestsOnly"
         minAllowed:
-          # Scan model is CPU-bound; a tiny request lets a busy node starve it
-          cpu: "2"
+          # Host-side work takes about 1.7 cores while scanning; a tiny request lets a busy node starve it
+          cpu: "1"
           memory: 1Mi
         maxAllowed:
-          memory: 3Gi
+          memory: 4Gi

@@ -38,10 +38,10 @@ controllers:
               periodSeconds: 10
         resources:
           requests:
-            cpu: 10m
+            cpu: 40m
             memory: 16Mi
           limits:
-            cpu: 20m
+            cpu: 80m
             memory: 64Mi
             gpu.intel.com/monitoring: 1
         securityContext:
