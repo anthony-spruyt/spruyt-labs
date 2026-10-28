@@ -12,6 +12,7 @@ Advertises each MS-01 worker's Iris Xe iGPU to the scheduler as `gpu.intel.com/i
 ## Operations
 
 - `-shared-dev-num=2` lets two pods share each GPU, so each node offers two `gpu.intel.com/i915`. A second slot lets a rollout's surge pod schedule while the first pod still holds a GPU.
+- `-enable-monitoring` adds a `gpu.intel.com/monitoring` resource, separate from `gpu.intel.com/i915`, that gives a pod access to every GPU on the node. [`drm-exporter`](../drm-exporter/README.md) requests it.
 - A consumer that does not run as root must add `supplementalGroups: [44]`. Without it, `/dev/dri/renderD128` still opens (the plugin's CDI spec gives the device node to the pod's user), but OpenVINO lists only `CPU` (no supported devices found).
 - The namespace is PSA `privileged` and excluded from `pss-restricted-defaults`: the image runs as root and mounts host paths, and the injected `runAsNonRoot: true` would stop it starting.
 

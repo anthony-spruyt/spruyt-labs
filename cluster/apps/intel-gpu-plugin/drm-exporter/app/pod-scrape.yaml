@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmpodscrape_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: drm-exporter
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: drm-exporter
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      # Equals DRM_EXPORTER_INTERVAL_SECONDS: busy is averaged over that window, so a longer scrape interval skips samples
+      interval: 15s
+      scrapeTimeout: 10s
+      relabelConfigs:
+        # One pod per node and the PCI slot repeats across nodes, so dashboards group by node.
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node

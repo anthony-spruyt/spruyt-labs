@@ -17,6 +17,7 @@ controllers:
           pullPolicy: IfNotPresent
         args:
           - -shared-dev-num=2
+          - -enable-monitoring
         env:
           - name: NODE_NAME
             valueFrom:

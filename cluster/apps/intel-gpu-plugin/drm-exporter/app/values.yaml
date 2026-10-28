@@ -1,0 +1,82 @@
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+controllers:
+  drm-exporter:
+    type: daemonset
+    strategy: RollingUpdate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/home-operations/drm-exporter
+          tag: 0.3.6@sha256:d39c531a0032a7c021e8f0da03b24c6e1e469aab8cf2babc78be68a300d7ec5f
+          pullPolicy: IfNotPresent
+        env:
+          DRM_EXPORTER_PORT: "8081"
+          DRM_EXPORTER_INTERVAL_SECONDS: "15"
+        ports:
+          - name: metrics
+            containerPort: 8081
+            protocol: TCP
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8081
+              initialDelaySeconds: 5
+              periodSeconds: 20
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8081
+              initialDelaySeconds: 2
+              periodSeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 64Mi
+            gpu.intel.com/monitoring: 1
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - PERFMON
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  securityContext:
+    # Root keeps PERFMON effective: Kubernetes grants no ambient capabilities to a non-root user
+    runAsUser: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    seccompProfile:
+      type: RuntimeDefault
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              # The label value changes on every Talos upgrade, so match on presence
+              - key: extensions.talos.dev/i915
+                operator: Exists
+persistence:
+  sysfs:
+    type: hostPath
+    hostPath: /sys
+    hostPathType: Directory
+    globalMounts:
+      - path: /sys
+        readOnly: true

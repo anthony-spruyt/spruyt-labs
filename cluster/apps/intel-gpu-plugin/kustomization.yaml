@@ -6,3 +6,4 @@ resources:
   - ./namespace.yaml
   - ./network-policies.yaml
   - ./intel-gpu-plugin/ks.yaml
+  - ./drm-exporter/ks.yaml

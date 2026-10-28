@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Only vmagent may scrape /metrics
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-metrics-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: drm-exporter
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "8081"
+              protocol: TCP

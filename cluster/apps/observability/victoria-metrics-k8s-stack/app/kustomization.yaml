@@ -221,5 +221,12 @@ configMapGenerator:
     options:
       labels:
         grafana_dashboard: "1"
+  - name: grafana-dashboard-llm-tool-guard
+    namespace: observability
+    files:
+      - dashboards/llm-tool-guard.json
+    options:
+      labels:
+        grafana_dashboard: "1"
 configurations:
   - ./kustomizeconfig.yaml
