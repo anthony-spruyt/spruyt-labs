@@ -61,7 +61,7 @@ Cluster works without these, but operating it is impaired.
 | chrony           | chrony                                                                                                                                           | Time synchronization      |
 | falco-system     | falco (DaemonSet), falcosidekick                                                                                                                 | Runtime security alerting |
 | flux-system      | flux-operator                                                                                                                                    | GitOps operator           |
-| intel-gpu-plugin | intel-gpu-plugin                                                                                                                                 | GPU access for scanner    |
+| intel-gpu-plugin | intel-gpu-plugin                                                                                                                                 | llm-tool-guard GPU access |
 | kube-system      | descheduler (CronJob)                                                                                                                            | Pod rebalancing           |
 | litellm          | litellm-valkey                                                                                                                                   | LLM gateway cache         |
 | observability    | grafana, kube-state-metrics, victoria-metrics-operator, vmagent, vmalert, vmalertmanager, vmsingle, victoria-logs-single, victoria-traces-single | Monitoring stack          |
