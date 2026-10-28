@@ -3,4 +3,4 @@
 - Main session: the `renovate-pr` skill returning SAFE is the approval path for Renovate PRs.
 - Main session: pass the range `push-reviewed.sh` prints to cluster-validator; the CI wait gets the pushed sha.
 - A Coder workspace pod is not this devcontainer: `kubectl exec` into it to read its logs and test there.
-- When `validation.md` skips qa-validator, builders run `cd <path> && ./lint.sh`.
+- When `validation.md` skips qa-validator, builders run `cd <path> && ./lint.sh`, except value-only edits, which get only the `yq` check.

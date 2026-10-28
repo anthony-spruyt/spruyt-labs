@@ -36,7 +36,7 @@ Pass the linked issue number to qa-validator and cluster-validator: each posts i
 - `CLAUDE.md`
 - SOPS-only changes
 - Agent/tooling config (`.claude/**`, `.taskfiles/**`)
-- Value-only edits: an existing scalar changes (a number, flag, version, image tag or digest) and no keys are added, removed or renamed; check the file still parses with `yq` instead
+- Value-only edits under `cluster/`: each changed line only swaps a number, boolean, version, image tag or digest, and nothing else changes (no other strings, multi-line blocks, keys or comments); check each file still parses with `yq` instead
 
 qa-validator picks its own scope (fast path for cosmetic diffs, full validation otherwise).
 

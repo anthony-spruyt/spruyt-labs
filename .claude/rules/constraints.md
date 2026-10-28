@@ -2,7 +2,7 @@
 
 ## Work Requirements
 
-A change needs a linked GitHub issue when a validator will run on it (see `validation.md`), because validators post their reports there. Large or risky work gets one too. Changes on the qa-validator skip list in `validation.md`, and read-only work, do not; commit them with a clear message and no `Ref`.
+A change needs a linked GitHub issue when a validator will run on it (see `validation.md`), because validators post their reports there. Large or risky work gets one too. Changes on the qa-validator skip list in `validation.md`, and read-only work, do not, even when cluster-validator still runs; commit them with a clear message and no `Ref`.
 
 Closing keywords in commits don't close issues in this repo: close it yourself with `gh issue close`, and never tell the user an issue will auto-close.
 
