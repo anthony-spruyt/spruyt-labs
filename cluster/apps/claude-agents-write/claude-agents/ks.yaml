@@ -12,7 +12,8 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: github-token-rotation
+    - name: github-app-tokens
+    - name: bot-ssh-key-rotation
   prune: true
   timeout: 5m
   wait: true

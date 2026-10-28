@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: github-app-tokens
+spec:
+  groups:
+    - name: github-app-tokens
+      rules:
+        # The scrape sets namespace to external-secrets: the ExternalSecret's namespace is exported_namespace
+        - alert: GitHubAppTokensRefreshFailing
+          expr: |
+            externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "GitHub App token refresh is failing"
+            description: "ExternalSecret github-bot-credentials is not Ready, so its GitHub App installation tokens are not being refreshed. Consumers keep the last token until it expires."
+        # Tokens last 60m and refresh every 30m: the last good token expires about 30m after the first failed refresh
+        - alert: GitHubAppTokensExpiring
+          expr: |
+            externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
+            or
+            absent(externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"})
+          for: 20m
+          labels:
+            severity: critical
+          annotations:
+            summary: "GitHub App tokens are about to expire"
+            description: "ExternalSecret github-bot-credentials has not been Ready, or its metric is missing (ESO controller down), for 20+ minutes. Workloads using gh/git lose access when the last token expires."

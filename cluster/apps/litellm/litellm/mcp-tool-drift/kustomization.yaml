@@ -8,7 +8,6 @@ resources:
   - ./vpa.yaml
   - ./github-secret-store.yaml
   - ./github-token.yaml
-  - ./github-rotation-rbac.yaml
 configMapGenerator:
   - name: litellm-mcp-tool-drift-script
     namespace: litellm
