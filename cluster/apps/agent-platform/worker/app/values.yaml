@@ -101,7 +101,7 @@ controllers:
           LiteLlm__JevModel: jev-1.14.0
           RenovateTriage__Mode: Live
           RenovateTriage__Claude__MaxPerHour: "4"
-          RenovateTriage__Claude__MaxPerDay: "16"
+          RenovateTriage__Claude__MaxPerDay: "32"
           RenovateTriage__Claude__MaxPerPrPerDay: "2"
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
