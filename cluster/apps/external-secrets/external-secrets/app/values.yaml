@@ -8,6 +8,8 @@ resources:
   requests:
     cpu: 10m
     memory: 64Mi
+serviceMonitor:
+  enabled: true
 webhook:
   replicaCount: 2
   podDisruptionBudget:
