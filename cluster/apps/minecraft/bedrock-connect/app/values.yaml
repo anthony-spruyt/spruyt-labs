@@ -5,12 +5,14 @@ defaultPodOptions:
   priorityClassName: low-priority
 controllers:
   main:
+    strategy: Recreate
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
+        fsGroup: 1000
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
@@ -24,8 +26,13 @@ controllers:
               - ALL
         image:
           repository: pugmatt/bedrock-connect
-          tag: "1.72.0@sha256:a96145d371d6df4f48d8cfef745b418059467e841de3d453ca5fc83fc989c2d8"
+          tag: "1.72.1@sha256:f3e7b7a6fa631bcdec33f8050c7f92e6a20f391a7aa9df322b4d406109782c67"
           pullPolicy: IfNotPresent
+        # Image nests the jar in a same-named directory (https://github.com/Pugmatt/BedrockConnect/issues/728); remove once a release ships it at /docker/brc/BedrockConnect-1.0-SNAPSHOT.jar
+        command:
+          - java
+          - -jar
+          - /docker/brc/BedrockConnect-1.0-SNAPSHOT.jar/BedrockConnect-1.0-SNAPSHOT.jar
         resources:
           requests:
             cpu: 50m
@@ -37,12 +44,12 @@ controllers:
           - name: bedrock-udp
             containerPort: 19132
             protocol: UDP
+          - name: bedrock-tcp
+            containerPort: 19132
+            protocol: TCP
         env:
           - name: JAVA_TOOL_OPTIONS
             value: "-Djava.net.preferIPv4Stack=true"
-        # Probes: Disabled - minimal container image has no shell/pgrep utilities
-        # UDP-only service (Minecraft Bedrock protocol) with no HTTP/TCP endpoints
-        # Kubernetes will still restart pod on process crash
         probes:
           liveness:
             enabled: false
@@ -63,18 +70,33 @@ configMaps:
       config.yml: |-
         custom_servers: /docker/brc/custom_servers.json
         packet_limit: 10000000
+        advertise_addresses: ${BEDROCK_CONNECT_IP4}
+        stun_discovery: false
 service:
-  bedrockconnect:
+  udp:
     controller: main
     type: LoadBalancer
+    externalTrafficPolicy: Local
     annotations:
       lbipam.cilium.io/ips: "${BEDROCK_CONNECT_IP4}"
+      lbipam.cilium.io/sharing-key: bedrock-connect
     ports:
       bedrock-udp:
         port: 19132
         enabled: true
         protocol: UDP
+  tcp:
+    controller: main
+    type: LoadBalancer
     externalTrafficPolicy: Local
+    annotations:
+      lbipam.cilium.io/ips: "${BEDROCK_CONNECT_IP4}"
+      lbipam.cilium.io/sharing-key: bedrock-connect
+    ports:
+      bedrock-tcp:
+        port: 19132
+        enabled: true
+        protocol: TCP
 persistence:
   config:
     enabled: true
@@ -89,8 +111,23 @@ persistence:
           - path: /docker/brc/config.yml
             readOnly: true
             subPath: config.yml
-  # Player data storage - BedrockConnect writes player preferences here
-  # Must be in WORKDIR (/docker/brc) alongside the JAR file
+  tmp:
+    enabled: true
+    type: emptyDir
+    advancedMounts:
+      main:
+        main:
+          - path: /tmp
+  # NetherNet identity.pem: clients pin its public key, so it must survive restarts
+  nethernet:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: bedrock-connect-nethernet
+    advancedMounts:
+      main:
+        main:
+          - path: /docker/brc/nethernet
+  # Must be in WORKDIR (/docker/brc)
   players:
     enabled: true
     type: emptyDir
