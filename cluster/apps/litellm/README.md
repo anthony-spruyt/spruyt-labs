@@ -188,7 +188,7 @@ swapped for a fake with the same prefix, length and character classes before the
 
 ### Guardrails
 
-`pii-protection` (Presidio sidecars) and `jev-compaction` (TypeSafe, external) are both `default_on: false`: a caller must opt in per request or per key. `jev-compaction` sends tool output to an external service, so keep it opt-in.
+`pii-protection` (Presidio Deployments) and `jev-compaction` (TypeSafe, external) are both `default_on: false`: a caller must opt in per request or per key. `jev-compaction` sends tool output to an external service, so keep it opt-in.
 
 Text the `llm-tool-guard` scanner flags goes to TypeSafe automatically, with no opt-in: tool output for the second check described under Proxy middleware, and the text the agent-platform worker scans (pull request bodies, release-note sections and failing CI log tails). Tool output goes after `secret-masking` has masked it, because tool-guard runs after secret-masking.
 
