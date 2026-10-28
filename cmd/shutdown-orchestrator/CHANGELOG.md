@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.29](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.28...shutdown-orchestrator/v1.1.29) (2026-10-28)
+
+
+### Dependencies
+
+* **deps:** update module golang.org/x/net to v0.62.0 [security] ([#3988](https://github.com/anthony-spruyt/spruyt-labs/issues/3988)) ([7be3452](https://github.com/anthony-spruyt/spruyt-labs/commit/7be34523ff416292cec4b7cef0c7056339fbd188))
+
 ## [1.1.28](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.27...shutdown-orchestrator/v1.1.28) (2026-10-24)
 
 
