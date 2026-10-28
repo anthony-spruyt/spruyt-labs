@@ -100,14 +100,15 @@ gh search issues "<dependency-name>" --repo <owner/repo> --state open --json num
 
 **Check for:**
 
-- Issues with `blocked` label mentioning this dependency
 - Issues documenting known bugs, blockers, or "do not merge" guidance for this version
 - Prior upgrade tracking issues with unresolved blockers
 
+Read each issue and judge whether it blocks this update. A `blocked` label alone doesn't: it also marks unrelated work, such as a feature waiting on a future release of this dependency.
+
 **Verdict impact:**
 
-- If a `blocked` issue exists for this dependency → minimum verdict is **NEEDS_REVIEW**, regardless of other analysis
-- Include the issue number and blocker reason in the summary
+- If an issue blocks this update, or you can't tell whether it does → minimum verdict is **NEEDS_REVIEW**, regardless of other analysis
+- Name each issue you read in the summary, with its blocker reason or why it doesn't block this update
 - If the blocker references a specific upstream fix version, check whether the PR's target version includes that fix
 
 ### 7. Version Coherence Check
@@ -156,7 +157,7 @@ A breaking change only matters if it affects what we actually use.
 
 - No breaking changes, OR all have NO_IMPACT/LOW_IMPACT
 - No high-engagement bugs for target version
-- No local repo issues with `blocked` label referencing this dependency
+- No local repo issue blocks this update (step 6)
 - CI passed
 
 **FIXABLE**: the update is wanted but needs a small change in this repository (list it in Fix), or CI fails because of a fixable break:
@@ -175,7 +176,7 @@ A breaking change only matters if it affects what we actually use.
 
 - Cannot find upstream repo/changelog
 - Cannot determine impact scope
-- Local repo has `blocked` issue referencing this dependency
+- A local repo issue blocks this update, or you can't tell whether it does (step 6)
 - Default to NEEDS_REVIEW when evidence is insufficient — never assume SAFE
 
 **CI gate:** if CI is red, the verdict cannot be SAFE. Use FIXABLE at least, or BLOCKED or NEEDS_REVIEW if the situation is worse.
