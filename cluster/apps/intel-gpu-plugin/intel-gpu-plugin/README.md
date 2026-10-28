@@ -12,7 +12,7 @@ Advertises each MS-01 worker's Iris Xe iGPU to the scheduler as `gpu.intel.com/i
 ## Operations
 
 - `-shared-dev-num=2` lets two pods share each GPU, so each node offers two `gpu.intel.com/i915`. A second slot lets a rollout's surge pod schedule while the first pod still holds a GPU.
-- A consumer that does not run as root must add `supplementalGroups: [44]` to open `/dev/dri/renderD128`. The `gpu.intel.com/i915` request alone mounts the device node but grants no access to it.
+- A consumer that does not run as root must add `supplementalGroups: [44]`. Without it, `/dev/dri/renderD128` still opens (containerd gives the device node to the pod's user), but the GPU runtime finds no GPU.
 - The namespace is PSA `privileged` and excluded from `pss-restricted-defaults`: the image runs as root and mounts host paths, and the injected `runAsNonRoot: true` would stop it starting.
 
 ### Checking the result
