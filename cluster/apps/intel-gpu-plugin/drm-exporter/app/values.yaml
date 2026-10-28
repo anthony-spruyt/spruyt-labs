@@ -72,11 +72,3 @@ defaultPodOptions:
               # The label value changes on every Talos upgrade, so match on presence
               - key: extensions.talos.dev/i915
                 operator: Exists
-persistence:
-  sysfs:
-    type: hostPath
-    hostPath: /sys
-    hostPathType: Directory
-    globalMounts:
-      - path: /sys
-        readOnly: true

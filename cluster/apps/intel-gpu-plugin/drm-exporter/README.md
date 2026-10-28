@@ -2,7 +2,7 @@
 
 ## Overview
 
-Exports how busy each MS-01 iGPU is (per engine) and its clock, read from the i915 PMU, so the `llm-tool-guard` scanner's latency can be read next to GPU load. vmagent scrapes it through the `drm-exporter` `VMPodScrape`; the metrics are `drm_engine_utilization_ratio` and `drm_frequency_hertz`, and the `node` label comes from the pod's node name.
+Exports how busy each MS-01 iGPU is (per engine) and its clock, read from the i915 PMU, so the `llm-tool-guard` scanner's latency can be read next to GPU load. vmagent scrapes it through the `drm-exporter` `VMPodScrape`; the dashboard uses `drm_engine_utilization_ratio` and `drm_frequency_hertz`, and the `node` label comes from the pod's node name.
 
 ## Prerequisites
 
@@ -11,9 +11,9 @@ Exports how busy each MS-01 iGPU is (per engine) and its clock, read from the i9
 
 ## Operations
 
-- It runs as root with only `CAP_PERFMON` and a read-only `/sys` host mount. Talos sets `kernel.perf_event_paranoid=3`, so reading the PMU needs `CAP_PERFMON`; a non-root user would lose it, because Kubernetes grants no ambient capabilities to non-root users.
+- It runs as root with only `CAP_PERFMON` and reads GPU stats from the container's own read-only sysfs, with no host mount. Talos sets `kernel.perf_event_paranoid=3`, so reading the PMU needs `CAP_PERFMON`; a non-root user would lose it, because Kubernetes grants no ambient capabilities to non-root users.
 - The upstream docs also list `SYS_RAWIO` and a `/dev/cpu` mount. Those read per-CPU MSRs through the `msr` module, which Talos does not ship, so they are left out. Only the iGPU package temperature is lost; engine, frequency and power metrics are unaffected.
-- `DRM_EXPORTER_INTERVAL_SECONDS` and the `VMPodScrape` interval are both 15 seconds. Change them together.
+- Change `DRM_EXPORTER_INTERVAL_SECONDS` and the `VMPodScrape` interval together.
 - Dashboard: the GPU row of the `LLM Tool Guard` dashboard in Grafana.
 
 ## Troubleshooting
