@@ -103,12 +103,12 @@ gh search issues "<dependency-name>" --repo <owner/repo> --state open --json num
 - Issues documenting known bugs, blockers, or "do not merge" guidance for this version
 - Prior upgrade tracking issues with unresolved blockers
 
-Read each issue and judge whether it blocks this update. A `blocked` label alone doesn't: it also marks unrelated work, such as a feature waiting on a future release of this dependency.
+Read each issue and judge whether it blocks this update. A `blocked` label alone doesn't: it also marks work waiting on a future release of this dependency. If this update ships that release, the issue applies: list any change it says must come with the bump in Fix (FIXABLE).
 
 **Verdict impact:**
 
 - If an issue blocks this update, or you can't tell whether it does → minimum verdict is **NEEDS_REVIEW**, regardless of other analysis
-- Name each issue you read in the summary, with its blocker reason or why it doesn't block this update
+- In Reasons, name each issue that blocks this update and each `blocked` issue you judged doesn't, with why.
 - If the blocker references a specific upstream fix version, check whether the PR's target version includes that fix
 
 ### 7. Version Coherence Check
