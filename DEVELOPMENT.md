@@ -220,7 +220,7 @@ Volumes persist across workspace stop/start. Deleting the workspace deletes volu
 
 ### Base Image
 
-Both paths use `ghcr.io/anthony-spruyt/devcontainer-common` which includes Python, Node, GitHub CLI, pre-commit, Podman, and the `agent-run` policy wrapper.
+Both paths use `docker.io/aspruyt/devcontainer-common` which includes Python, Node, GitHub CLI, pre-commit, Podman, and the `agent-run` policy wrapper.
 
 ### Devcontainer Features
 

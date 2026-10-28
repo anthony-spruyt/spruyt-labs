@@ -285,7 +285,7 @@ controllers:
     containers:
       llm-guard:
         image:
-          repository: ghcr.io/anthony-spruyt/llm-guard
+          repository: docker.io/aspruyt/llm-guard
           tag: "1.2.0@sha256:a20e3ccefd731c960fe957f34e4196ef0f66923614107d8d76c6fa296a7c9431"
           pullPolicy: IfNotPresent
         env:
@@ -379,7 +379,7 @@ controllers:
     containers:
       llm-tool-guard:
         image:
-          repository: ghcr.io/anthony-spruyt/llm-tool-guard
+          repository: docker.io/aspruyt/llm-tool-guard
           tag: "1.6.0@sha256:2141e62af243306c6df9256210c40476010e34f905178695d3df8e9966e5e314"
           pullPolicy: IfNotPresent
         lifecycle:
@@ -1481,7 +1481,7 @@ persistence:
   llm-tool-guard-model:
     type: image
     image:
-      repository: ghcr.io/anthony-spruyt/llm-tool-guard-model
+      repository: docker.io/aspruyt/llm-tool-guard-model
       tag: 1.0.5@sha256:67a3aec852ed403425db7bb58ce0b44cb5917318fc11b23442eba235784418e1
     pullPolicy: IfNotPresent
     advancedMounts:
@@ -1492,7 +1492,7 @@ persistence:
   litellm-middleware:
     type: image
     image:
-      repository: ghcr.io/anthony-spruyt/litellm-middleware
+      repository: docker.io/aspruyt/litellm-middleware
       tag: 1.7.2@sha256:4249f9ea03c768dbfe9d347ccf97bc6de0405248d118c2f82bf1f9cc6a6618bf
     pullPolicy: IfNotPresent
     advancedMounts:

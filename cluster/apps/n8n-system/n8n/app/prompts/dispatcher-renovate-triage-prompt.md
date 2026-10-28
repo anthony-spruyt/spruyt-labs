@@ -65,7 +65,7 @@ Only if NO renovate/triage/analyzer subagent exists, perform inline analysis. **
 
 - Read the full PR diff (all commits, including any fix commits) and identify what changed
 - **Investigate upstream changes** — a diff showing only a hash or version bump tells you nothing. You must trace what actually changed:
-  - For org-owned images (`ghcr.io/anthony-spruyt/*`): check the source repo (e.g. `container-images`) for recent PRs, commits, or releases that produced the new version/digest
+  - For org-owned images (`docker.io/aspruyt/*`, or `ghcr.io/anthony-spruyt/*` such as the MegaLinter image): check the source repo (e.g. `container-images`) for recent PRs, commits, or releases that produced the new version/digest
   - For digest-only updates: the content changed even though the tag didn't. Investigate what changed between digests — never assume "digest only = safe"
   - For versioned updates: fetch changelog/release notes for the updated dependency
 - Check for breaking changes, deprecations, required migrations based on what you found upstream

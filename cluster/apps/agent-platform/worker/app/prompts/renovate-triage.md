@@ -31,7 +31,7 @@ Otherwise, analyse it yourself:
 - The diff must change only the versions and digests Renovate names.
 - Read every comment and commit on the branch. Earlier triage verdicts and fix summaries are posted as comments; if a fix was pushed, check that it resolves what was flagged and say so.
 - A digest-only update changed content; find out what changed.
-- For `ghcr.io/anthony-spruyt/*` images, check the source repository's pull requests and releases behind the new version.
+- For our own images (`docker.io/aspruyt/*`, or `ghcr.io/anthony-spruyt/*` such as the MegaLinter image), check the source repository's pull requests and releases behind the new version.
 - For a failing check, read its log to see whether this update caused it.
 
 ## Verdict

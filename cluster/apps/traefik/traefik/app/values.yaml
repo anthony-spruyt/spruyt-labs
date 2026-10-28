@@ -85,7 +85,7 @@ deployment:
   additionalVolumes:
     - name: traefik-api-key-auth-plugin
       image:
-        reference: ghcr.io/anthony-spruyt/traefik-api-key-auth:1.0.1@sha256:75c99966fb4e2bd019c2136ab3f9e77c7f918b15d7f081a32d9db6f048c17a3a
+        reference: docker.io/aspruyt/traefik-api-key-auth:1.0.1@sha256:75c99966fb4e2bd019c2136ab3f9e77c7f918b15d7f081a32d9db6f048c17a3a
         pullPolicy: IfNotPresent
 topologySpreadConstraints:
   - maxSkew: 1

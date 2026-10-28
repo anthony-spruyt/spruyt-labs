@@ -103,7 +103,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "ghcr.io/anthony-spruyt/mcp-header-proxy"
+        "docker.io/aspruyt/mcp-header-proxy"
       ],
       "sourceUrl": "https://github.com/anthony-spruyt/mcp-header-proxy"
     },
@@ -113,7 +113,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "ghcr.io/anthony-spruyt/shutdown-orchestrator"
+        "docker.io/aspruyt/shutdown-orchestrator"
       ],
       "sourceDirectory": "cmd/shutdown-orchestrator"
     },
@@ -123,7 +123,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "ghcr.io/anthony-spruyt/kata-tap-qdisc-fix"
+        "docker.io/aspruyt/kata-tap-qdisc-fix"
       ],
       "sourceUrl": "https://github.com/anthony-spruyt/kata-tap-qdisc-fix"
     },
@@ -192,7 +192,7 @@
       ],
       "matchPackageNames": [
         "ghcr.io/berriai/litellm-non_root",
-        "ghcr.io/anthony-spruyt/litellm-middleware"
+        "docker.io/aspruyt/litellm-middleware"
       ],
       "groupName": "litellm",
       "separateMajorMinor": false

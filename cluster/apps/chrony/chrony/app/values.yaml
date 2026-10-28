@@ -35,7 +35,7 @@ controllers:
             drop:
               - ALL
         image:
-          repository: ghcr.io/anthony-spruyt/chrony
+          repository: docker.io/aspruyt/chrony
           tag: "5.0.8@sha256:9da6d03ea9f68cc673edaefb0a4903e51fae9f3607538cef9da43a4ec60b3b99"
           pullPolicy: IfNotPresent
         ports:

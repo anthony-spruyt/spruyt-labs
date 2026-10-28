@@ -27,8 +27,8 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/anthony-spruyt/agent-platform
-          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
+          repository: docker.io/aspruyt/agent-platform
+          # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
           tag: "1.20.0@sha256:23fc7136b9158f416a1c12677853adf0b27e6744438c730ad490aa9fec92b2a1"
           pullPolicy: IfNotPresent
         lifecycle:

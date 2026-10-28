@@ -23,8 +23,8 @@ controllers:
     initContainers:
       migrate:
         image:
-          repository: ghcr.io/anthony-spruyt/agent-platform
-          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
+          repository: docker.io/aspruyt/agent-platform
+          # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
           tag: "1.20.0@sha256:23fc7136b9158f416a1c12677853adf0b27e6744438c730ad490aa9fec92b2a1"
           pullPolicy: IfNotPresent
         env:
@@ -57,15 +57,15 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/anthony-spruyt/agent-platform
-          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/agent-platform
+          repository: docker.io/aspruyt/agent-platform
+          # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
           tag: "1.20.0@sha256:23fc7136b9158f416a1c12677853adf0b27e6744438c730ad490aa9fec92b2a1"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Worker
           ASPNETCORE_HTTP_PORTS: "8080"
-          # renovate: datasource=docker depName=ghcr.io/anthony-spruyt/claude-agent-read
-          AgentPods__Image: "ghcr.io/anthony-spruyt/claude-agent-read:1.1.10@sha256:606c3ee0e6b55a20a18dd26c421ce01a7a043fe6b0be472153a6d89f1f3b9441"
+          # renovate: datasource=docker depName=docker.io/aspruyt/claude-agent-read
+          AgentPods__Image: "docker.io/aspruyt/claude-agent-read:1.1.10@sha256:606c3ee0e6b55a20a18dd26c421ce01a7a043fe6b0be472153a6d89f1f3b9441"
           AgentPods__MaxConcurrentActivities: "1"
           AgentPods__Model: opus
           AgentPrompts__Directory: /etc/agent-platform/prompts

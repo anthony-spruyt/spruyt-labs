@@ -21,7 +21,7 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/anthony-spruyt/sungather
+          repository: docker.io/aspruyt/sungather
           tag: 3.0.5@sha256:622f4db6fdf7566a8ef043e14deba916db6c4cba09a1fed60ce7a66638a7245d
           pullPolicy: IfNotPresent
         env:

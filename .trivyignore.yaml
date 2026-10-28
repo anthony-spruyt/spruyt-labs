@@ -360,7 +360,7 @@ misconfigurations:
   # ==============================================================================
   # Bot SSH Key Rotation - CronJob and RBAC
   # ==============================================================================
-  # Own ghcr.io image (trivy flags non-standard registries)
+  # Own Docker Hub image (trivy flags non-standard registries)
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/github-system/bot-ssh-key-rotation/app/cronjob.yaml
@@ -379,7 +379,7 @@ misconfigurations:
   # ==============================================================================
   # Coder GitOps Template Sync - Job + CronJob + RBAC
   # ==============================================================================
-  # Own ghcr.io image (trivy flags all non-bigfoot registries)
+  # Own Docker Hub image (trivy flags all non-bigfoot registries)
   - id: AVD-KSV-0125
     paths:
       - cluster/apps/coder-system/coder-template-sync/app/job-template-push.yaml

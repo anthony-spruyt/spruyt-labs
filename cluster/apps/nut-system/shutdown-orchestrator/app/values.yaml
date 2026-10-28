@@ -28,7 +28,7 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/anthony-spruyt/shutdown-orchestrator
+          repository: docker.io/aspruyt/shutdown-orchestrator
           tag: 1.1.29@sha256:229b128fd479d4515c3d3147111e4ab1741c44997c1f2be8e3ebda2aad01d6d2
           pullPolicy: IfNotPresent
         env:

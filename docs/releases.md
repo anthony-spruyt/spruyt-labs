@@ -4,9 +4,9 @@ Every container image in this repository is released by [release-please](https:/
 
 ## Services
 
-| Service               | Path                        | Image                                          |
-| --------------------- | --------------------------- | ---------------------------------------------- |
-| shutdown-orchestrator | `cmd/shutdown-orchestrator` | `ghcr.io/anthony-spruyt/shutdown-orchestrator` |
+| Service               | Path                        | Image                                     |
+| --------------------- | --------------------------- | ----------------------------------------- |
+| shutdown-orchestrator | `cmd/shutdown-orchestrator` | `docker.io/aspruyt/shutdown-orchestrator` |
 
 [`kata-tap-qdisc-fix`](https://github.com/anthony-spruyt/kata-tap-qdisc-fix) and [`mcp-header-proxy`](https://github.com/anthony-spruyt/mcp-header-proxy) are deployed here but built and released from their own repositories, under the same image names.
 

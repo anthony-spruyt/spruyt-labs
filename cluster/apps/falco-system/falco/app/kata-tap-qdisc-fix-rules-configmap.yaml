@@ -13,7 +13,7 @@ data:
         on a Kata-ready node's /run/netns/cni-* file.
       condition: >
         evt.type = setns and
-        container.image.repository != "ghcr.io/anthony-spruyt/kata-tap-qdisc-fix" and
+        container.image.repository != "docker.io/aspruyt/kata-tap-qdisc-fix" and
         fd.name startswith "/run/netns/cni-"
       output: >-
         Unauthorized setns into pod netns

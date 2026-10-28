@@ -24,7 +24,7 @@ controllers:
           seccompProfile:
             type: RuntimeDefault
         image:
-          repository: ghcr.io/anthony-spruyt/blog
+          repository: docker.io/aspruyt/blog
           tag: 1.4.1@sha256:3d0583594a13cc32688fc05fe7acf88fe51a5d08eea996733908d23672a212f8
           pullPolicy: IfNotPresent
         resources:
