@@ -170,7 +170,7 @@ controllers:
                 port: 3000
               periodSeconds: 10
               timeoutSeconds: 5
-              failureThreshold: 18    # 180s window
+              failureThreshold: 18
           liveness:
             enabled: true
             custom: true
@@ -234,7 +234,7 @@ controllers:
                 port: 3000
               periodSeconds: 5
               timeoutSeconds: 5
-              failureThreshold: 6     # 30s window
+              failureThreshold: 6
           liveness:
             enabled: true
             custom: true
@@ -264,82 +264,6 @@ controllers:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-              - ALL
-  llm-guard:
-    type: deployment
-    # Parked: guardrail unused (false positives); see Guardrails in README.md
-    replicas: 0
-    annotations:
-      reloader.stakater.com/auto: "true"
-    pod:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-    containers:
-      llm-guard:
-        image:
-          repository: docker.io/aspruyt/llm-guard
-          tag: "1.2.0@sha256:a20e3ccefd731c960fe957f34e4196ef0f66923614107d8d76c6fa296a7c9431"
-          pullPolicy: IfNotPresent
-        env:
-          LISTEN_PORT: "8000"
-          # Per-scanner thresholds live in scanners.yml, not the THRESHOLD env.
-          CONFIG_FILE: "/config/scanners.yml"
-          # Load the model from the HF cache PVC only; remove to refill an empty cache (see README)
-          HF_HUB_OFFLINE: "1"
-          HF_TOKEN:
-            valueFrom:
-              secretKeyRef:
-                name: litellm-secrets
-                key: HF_TOKEN
-        probes:
-          startup:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /healthz
-                port: 8000
-              periodSeconds: 10
-              timeoutSeconds: 5
-              # 300s window covers the cold case: a pod with an empty HF cache PVC downloads the model first
-              failureThreshold: 30
-          liveness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /healthz
-                port: 8000
-              periodSeconds: 30
-              timeoutSeconds: 5
-              failureThreshold: 3
-          readiness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /readyz
-                port: 8000
-              periodSeconds: 10
-              timeoutSeconds: 5
-              failureThreshold: 3
-        resources:
-          requests:
-            cpu: 100m
-            memory: 1Gi
-          limits:
-            memory: 2Gi
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
           capabilities:
             drop:
               - ALL
@@ -472,12 +396,6 @@ service:
       http:
         port: 3000
         protocol: TCP
-  llm-guard:
-    controller: llm-guard
-    ports:
-      http:
-        port: 8000
-        protocol: TCP
   llm-tool-guard:
     controller: llm-tool-guard
     ports:
@@ -524,28 +442,6 @@ configMaps:
             type: predefined
           - name: MedicalLicenseRecognizer
             type: predefined
-  llm-guard-scanners:
-    data:
-      scanners.yml: |
-        input_scanners:
-          - type: PromptInjection
-            params:
-              model: Horizon-Labs/prompt-injection-guard-base
-              injection_label: INJECTION
-              threshold: 0.9
-              match_type: sliding_window
-              model_max_length: 2048
-              window_overlap: 512
-              window_batch_size: 1
-              max_windows: 136
-          - type: Regex
-            params:
-              patterns: ["Bearer [A-Za-z0-9-._~+/]+"]
-              is_blocked: true
-              match_type: search
-              redact: true
-          - type: InvisibleText
-            params: {}
   litellm-config:
     data:
       config.yaml: |
@@ -594,13 +490,6 @@ configMaps:
                 AU_ABN: MASK
                 AU_ACN: MASK
                 IBAN_CODE: MASK
-          - guardrail_name: prompt-injection
-            litellm_params:
-              guardrail: generic_guardrail_api
-              mode: pre_call
-              default_on: false
-              skip_system_message_in_guardrail: true
-              api_base: http://litellm-llm-guard.litellm.svc.cluster.local:8000
           - guardrail_name: tool-guard
             litellm_params:
               guardrail: litellm_middleware.tool_guard.placeholder.ToolGuardPlaceholder
@@ -1458,23 +1347,6 @@ persistence:
       presidio-anonymizer:
         presidio-anonymizer:
           - path: /home/presidio/.cache
-  llm-guard-scanners-config:
-    type: configMap
-    identifier: llm-guard-scanners
-    advancedMounts:
-      llm-guard:
-        llm-guard:
-          - path: /config/scanners.yml
-            subPath: scanners.yml
-            readOnly: true
-  # HF_HOME for llm-guard; loaded offline, refill by removing HF_HUB_OFFLINE (see README)
-  llm-guard-hf-cache:
-    type: persistentVolumeClaim
-    existingClaim: llm-guard-hf-cache
-    advancedMounts:
-      llm-guard:
-        llm-guard:
-          - path: /app/.cache/huggingface
   llm-tool-guard-hf-home:
     type: emptyDir
     advancedMounts:

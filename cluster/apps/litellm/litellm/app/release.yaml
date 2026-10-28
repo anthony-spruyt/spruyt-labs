@@ -10,12 +10,8 @@ spec:
     name: app-template
     namespace: flux-system
   interval: 4h
-  # Bounds image pull AND readiness for every controller here. Worst case is
-  # roughly 23m: the ~2.9GB llm-guard image took ~18m to pull cold on a worker,
-  # plus its 5m startup probe budget (failureThreshold 30 x periodSeconds 10).
-  # At the previous 15m the pull alone blew the deadline, so Flux rolled the
-  # whole release back and re-upgraded, restarting the proxy and both Presidio
-  # controllers as collateral. Ref #2591
+  # Bounds pull AND readiness for every controller. The two llm-tool-guard pods roll in turn, ~1.5GB cold each: ~19m at
+  # the 2.9GB-in-18m pull pace of #2591, and a shorter timeout rolls the whole release back. Ref #2591
   timeout: 30m
   valuesFrom:
     - kind: ConfigMap

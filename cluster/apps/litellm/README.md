@@ -10,7 +10,6 @@ from [`anthony-spruyt/litellm-middleware`](https://github.com/anthony-spruyt/lit
 - Authentik OAuth provider, secret and rotation wiring — see [authentik README](../authentik-system/authentik/README.md#oauth-credential-rotation).
 - Provider API keys in `litellm/app/litellm-secrets.sops.yaml`, referenced from `config.yaml` as `os.environ/<NAME>`. The `anthropic/*` models set no `api_key`; they are subscription passthrough (below). The `anthropic-api/*` fallback models set `api_key: os.environ/ANTHROPIC_API_KEY`.
 - `TOOL_GUARD_TEAM_IDS` in the same secret: the comma-separated LiteLLM team IDs whose requests the tool-guard middleware enforces.
-- `HF_TOKEN` in `litellm-secrets`, for the llm-guard model download.
 - The Brave search tool's `BRAVE_API_KEY` comes from `litellm-brave`, not `litellm-secrets`. `litellm/app/brave-secret-store.yaml` copies it from `brave-search-secrets` in `brave-search-mcp` into `litellm-brave` every 5m through ESO, and the container reads it from there. Rotate it in that one SOPS file; see the [brave-search-mcp README](../brave-search-mcp/brave-search-mcp/README.md).
 
 ## Operations
@@ -189,18 +188,18 @@ swapped for a fake with the same prefix, length and character classes before the
 
 ### Guardrails
 
-`pii-protection` (Presidio sidecars), `prompt-injection` (llm-guard sidecar) and `jev-compaction` (TypeSafe, external) are all `default_on: false`: a caller must opt in per request or per key. `jev-compaction` sends tool output to an external service, so keep it opt-in.
+`pii-protection` (Presidio sidecars) and `jev-compaction` (TypeSafe, external) are both `default_on: false`: a caller must opt in per request or per key. `jev-compaction` sends tool output to an external service, so keep it opt-in.
 
 Text the `llm-tool-guard` scanner flags goes to TypeSafe automatically, with no opt-in: tool output for the second check described under Proxy middleware, and the text the agent-platform worker scans (pull request bodies, release-note sections and failing CI log tails). Tool output goes after `secret-masking` has masked it, because tool-guard runs after secret-masking.
 
-The Presidio and llm-guard Deployments are parked at `replicas: 0` (#3323): nothing opts in, and their false-positive rate makes them unusable for Claude traffic on a global toggle. Config, VPAs, network policies and the `llm-guard-hf-cache` PVC are kept, so set `replicas: 1` on all three controllers in `values.yaml` to bring them back. While parked, a request that does opt in to `pii-protection`
-or `prompt-injection` fails rather than skipping the check: neither sets `unreachable_fallback: fail_open`.
+The Presidio Deployments are parked at `replicas: 0` (#3323): nothing opts in, and their false-positive rate makes them unusable for Claude traffic on a global toggle. Config, VPAs and network policies are kept, so set `replicas: 1` on both controllers in `values.yaml` to bring them back. While parked, a request that does opt in to `pii-protection` fails rather than skipping the check: it does not
+set `unreachable_fallback: fail_open`.
 
-`llm-tool-guard` is the scanner behind the `tool-guard` middleware (see Proxy middleware), a separate Deployment from llm-guard and not a LiteLLM guardrail. It serves `POST /v1/scan` on port 8080 and scores tool-result text with `Horizon-Labs/prompt-injection-guard-base` in overlapping token windows on an ms-01 node's Intel iGPU through OpenVINO: each pod limits `gpu.intel.com/i915` to 1 and runs
-with group 44 (see the [intel-gpu-plugin README](../intel-gpu-plugin/intel-gpu-plugin/README.md)). There is no CPU fallback, so a pod on a node without a working GPU stays unready. It runs as 2 copies, each on its own node by required pod anti-affinity (`RollingUpdate` with no unavailable pod, a PodDisruptionBudget of `minAvailable: 1`, and a 10 s `preStop` sleep so a pod leaves the Service before
-it stops). The model comes from the `llm-tool-guard-model` image, mounted read-only as an image volume at `$HF_HOME/hub` over an `emptyDir` `HF_HOME`; a pod becomes ready once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Jev's answers are cached beside them
-under `llm-tool-guard:jev:`, one answer per result text across both copies, and the thresholds apply when an answer is read, so retuning `JEV_BLOCK_AT` or `JEV_CLEAR_BELOW` asks Jev nothing again. Only LiteLLM pods, the agent-platform worker (for text scans) and vmagent (for metrics) can reach the scanner, and it reaches `litellm-valkey` and the LiteLLM proxy. It runs with `HF_HUB_OFFLINE`, so it
-never downloads the model. To change the model revision, bump the weights image tag and digest in `values.yaml` (`llm-tool-guard-model` under `persistence`); the revision pin lives in that image's source in `container-images`, and a new revision, a `THRESHOLD` change, or an `llm-tool-guard` upgrade that changes the scoring code, starts fresh verdict and Jev caches. Metrics (`llm_tool_guard_*`) are
+`llm-tool-guard` is the scanner behind the `tool-guard` middleware (see Proxy middleware) and not a LiteLLM guardrail. It serves `POST /v1/scan` on port 8080 and scores tool-result text with `Horizon-Labs/prompt-injection-guard-base` in overlapping token windows on an ms-01 node's Intel iGPU through OpenVINO: each pod limits `gpu.intel.com/i915` to 1 and runs with group 44 (see the
+[intel-gpu-plugin README](../intel-gpu-plugin/intel-gpu-plugin/README.md)). There is no CPU fallback, so a pod on a node without a working GPU stays unready. It runs as 2 copies, each on its own node by required pod anti-affinity (`RollingUpdate` with no unavailable pod, a PodDisruptionBudget of `minAvailable: 1`, and a 10 s `preStop` sleep so a pod leaves the Service before it stops). The model
+comes from the `llm-tool-guard-model` image, mounted read-only as an image volume at `$HF_HOME/hub` over an `emptyDir` `HF_HOME`; a pod becomes ready once it has loaded. Verdicts are cached by content hash in `litellm-valkey` under `llm-tool-guard:` through the `llm-tool-guard` ACL user, so a result gets the same verdict on every turn. Jev's answers are cached beside them under
+`llm-tool-guard:jev:`, one answer per result text across both copies, and the thresholds apply when an answer is read, so retuning `JEV_BLOCK_AT` or `JEV_CLEAR_BELOW` asks Jev nothing again. Only LiteLLM pods, the agent-platform worker (for text scans) and vmagent (for metrics) can reach the scanner, and it reaches `litellm-valkey` and the LiteLLM proxy. It runs with `HF_HUB_OFFLINE`, so it never
+downloads the model. To change the model revision, bump the weights image tag and digest in `values.yaml` (`llm-tool-guard-model` under `persistence`); the revision pin lives in that image's source in `container-images`, and a new revision, a `THRESHOLD` change, or an `llm-tool-guard` upgrade that changes the scoring code, starts fresh verdict and Jev caches. Metrics (`llm_tool_guard_*`) are
 scraped from `/metrics`; the `LLMToolGuardUnavailable` alert fires when no pod is ready and `LLMToolGuardDegraded` when fewer than 2 are ready for 15 minutes, and `LLMToolGuardScansFailing` when more than half of one pod's scans end in error or timeout for 15 minutes, such as when its GPU starts failing after the model loaded. `LLMToolGuardJevFailing` (expression in `litellm/app/vmrule.yaml`)
 fires when a question failed and none was answered in the last 6 hours, so one refused text can fire it too. Jev runs only a few times a day, so the alert looks back 6 hours instead of using a rate.
 
@@ -212,9 +211,6 @@ the full TTL.
 - To rotate it, create a new key in the `llm-tool-guard` team in the admin UI, write it to `JEV_API_KEY` with `sops`, and push. Once the scanner pods have rolled, check that they log answered Jev outcomes, then delete the old key. After that, `llm_tool_guard_jev_requests_total{outcome="error"}` should not rise.
 
 The `tool-guard` entry under `guardrails:` is a placeholder: it never runs on its own (no caller opts in) and exists so the Guardrails Monitor detail page for `tool-guard` loads. The records themselves come from the middleware.
-
-`prompt-injection` uses `Horizon-Labs/prompt-injection-guard-base` (ungated), scanning in overlapping 2048-token windows with a 512-token overlap. Inputs over `max_windows` (about 200k tokens) are blocked. llm-guard runs with `HF_HUB_OFFLINE=1` and loads the model from the `llm-guard-hf-cache` PVC. To refill an empty cache, remove `HF_HUB_OFFLINE` from `values.yaml`, let one pod download the model
-(the download uses `HF_TOKEN` from `litellm-secrets`), then restore it (Ref #2592, #3464).
 
 ### Known issues
 
@@ -248,11 +244,6 @@ LiteLLM PyPI versions 1.82.7-1.82.8 were compromised via a trivy scan dependency
 
    - **Cause**: The client put the virtual key in `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN`, so it was forwarded to Anthropic.
    - **Fix**: Send it as `x-litellm-api-key: Bearer <key>` via `ANTHROPIC_CUSTOM_HEADERS`.
-
-4. **llm-guard pod never becomes ready after storage loss**
-
-   - **Cause**: `HF_HUB_OFFLINE=1` against an empty cache PVC.
-   - **Fix**: See Guardrails above.
 
 ## References
 
