@@ -11,7 +11,7 @@ own SecretStore. Each refresh starts from the App private key, so a failed refre
 
 ## Operations
 
-### Secrets in this directory
+### Secrets in `github-system`
 
 | Secret                   | Written by                                                | Notes                                                                    |
 | ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -31,7 +31,7 @@ Generate a new key in the GitHub App settings and replace it in `github-app-cred
 ## Troubleshooting
 
 1. **ExternalSecret `github-bot-credentials` not Ready**
-   - **Cause**: A generator call failed; the status message carries the GitHub error. Consumers keep the last token until it expires. `GitHubAppTokensRefreshFailing` fires after 5 minutes and `GitHubAppTokensExpiring` after 20.
+   - **Cause**: A generator call failed; the status message carries the GitHub error. Consumers keep the last token until it expires. The `GitHubAppTokensRefreshFailing` and `GitHubAppTokensExpiring` alerts in `app/vmrule.yaml` cover this.
    - **Fix**: See the entries below.
 2. **401 from GitHub**
    - **Cause**: The App private key was revoked or does not match the App ID.

@@ -8,10 +8,13 @@ spec:
   groups:
     - name: github-app-tokens
       rules:
-        # The scrape sets namespace to external-secrets: the ExternalSecret's namespace is exported_namespace
+        # The scrape puts the ExternalSecret's namespace in exported_namespace; label_replace moves it back
         - alert: GitHubAppTokensRefreshFailing
           expr: |
-            externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
+            label_replace(
+              externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1,
+              "namespace", "$1", "exported_namespace", "(.+)"
+            )
           for: 5m
           labels:
             severity: warning
@@ -21,9 +24,12 @@ spec:
         # Tokens last 60m and refresh every 30m: the last good token expires about 30m after the first failed refresh
         - alert: GitHubAppTokensExpiring
           expr: |
-            externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
-            or
-            absent(externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"})
+            label_replace(
+              externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
+              or
+              absent(externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"}),
+              "namespace", "$1", "exported_namespace", "(.+)"
+            )
           for: 20m
           labels:
             severity: critical
