@@ -196,6 +196,19 @@
       ],
       "groupName": "litellm",
       "separateMajorMinor": false
+    },
+    {
+      // A model format change ships in both images; either bump alone then leaves the scanner unable to load its model. Ref #4016
+      "description": "Bump the llm-tool-guard scanner and its model image in one PR",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/aspruyt/llm-tool-guard",
+        "docker.io/aspruyt/llm-tool-guard-model"
+      ],
+      "groupName": "llm-tool-guard",
+      "separateMajorMinor": false
     }
   ]
 }
