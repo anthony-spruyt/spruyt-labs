@@ -24,6 +24,7 @@ resources:
   - ./coder-workspaces
   - ./vaultwarden
   - ./irq-balance
+  - ./intel-gpu-plugin
   - ./chrony
   - ./minecraft
   - ./mosquitto

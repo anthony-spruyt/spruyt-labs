@@ -1,0 +1,82 @@
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+# Probes: Not configured - the plugin has no health endpoint
+controllers:
+  intel-gpu-plugin:
+    type: daemonset
+    strategy: RollingUpdate
+    rollingUpdate:
+      # Two plugin pods on one node would fight over the kubelet socket
+      maxSurge: 0
+      maxUnavailable: 1
+    containers:
+      app:
+        image:
+          repository: docker.io/intel/intel-gpu-plugin
+          tag: 0.37.1@sha256:004641b2547d58f1eadce58473fa160ad71377de1eb588cf1f82832387bf3e33
+          pullPolicy: IfNotPresent
+        args:
+          - -shared-dev-num=2
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+        resources:
+          requests:
+            cpu: 20m
+            memory: 45Mi
+          limits:
+            cpu: 100m
+            memory: 115Mi
+        securityContext:
+          seLinuxOptions:
+            type: container_device_plugin_t
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+defaultPodOptions:
+  priorityClassName: high-priority
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              # The label value changes on every Talos upgrade, so match on presence
+              - key: extensions.talos.dev/i915
+                operator: Exists
+persistence:
+  devfs:
+    type: hostPath
+    hostPath: /dev/dri
+    globalMounts:
+      - path: /dev/dri
+        readOnly: true
+  sysfsdrm:
+    type: hostPath
+    hostPath: /sys/class/drm
+    globalMounts:
+      - path: /sys/class/drm
+        readOnly: true
+  kubeletsockets:
+    type: hostPath
+    hostPath: /var/lib/kubelet/device-plugins
+    globalMounts:
+      - path: /var/lib/kubelet/device-plugins
+  cdipath:
+    type: hostPath
+    hostPath: /var/run/cdi
+    hostPathType: DirectoryOrCreate
+    globalMounts:
+      - path: /var/run/cdi
