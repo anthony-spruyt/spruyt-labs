@@ -23,18 +23,22 @@ If the PR touches `talos/topf.yaml`, stop and hand off: a `kubernetesVersion` bu
 
 Then run `gh pr checks <N>`. If a check named `Agent triage` is not finished (pending, queued or in progress), stop: tell the user the agent platform is already triaging this PR, give the check's link, and do nothing else (no analyzer, no labels, no comment). A finished `Agent triage` check doesn't block; continue.
 
-Then read the comments: `gh pr view <N> --comments`.
+Then read the comments with their real authors (`gh pr view` drops the `[bot]` suffix):
+
+```bash
+gh api 'repos/{owner}/{repo}/issues/<N>/comments' --paginate --jq '.[] | {login: .user.login, type: .user.type, body}'
+```
 
 ## 2. Get a verdict
 
 Reuse the platform's triage comment, and skip the analyzer, only when all of these hold:
 
-- Its author is `skynet-rw[bot]`, and it opens with `<!-- agent-platform:renovate-triage -->` then `**Agent verdict: <X>**`.
+- Its `login` is `skynet-rw[bot]` and its `type` is `Bot`, and it opens with `<!-- agent-platform:renovate-triage -->` then `**Agent verdict: <X>**`.
 - Its `head <sha>` line is the PR head, or every PR commit is by `renovate[bot]` and the diff still bumps the same versions (a rebase).
 
 Then its changelog read stands. Check yourself each risk named there or in an `anthony-spruyt` comment (live cluster, upstream issue state), run the checks it says it skipped plus the analyzer's steps 6 and 7 (`.claude/agents/renovate-pr-analyzer.md`), decide the verdict by that file's step 9, and go to step 3.
 
-Otherwise spawn the `renovate-pr-analyzer` subagent, and add any triage comment's notice (foreign commits, held content) to the prompt as a risk to check. Get the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`. Prompt:
+Otherwise spawn the `renovate-pr-analyzer` subagent, and add the `skynet-rw[bot]` comment's notice (foreign commits, held content), if any, to the prompt as a risk to check. Get the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`. Prompt:
 
 ```text
 Analyze this Renovate dependency update PR for breaking changes and risks.
