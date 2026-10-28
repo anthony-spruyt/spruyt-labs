@@ -9,11 +9,14 @@ spec:
     - name: github-app-tokens
       rules:
         # The scrape puts the ExternalSecret's namespace in exported_namespace; label_replace moves it back
+        # max by drops pod and instance so an ESO restart does not reset the for: timer
         - alert: GitHubAppTokensRefreshFailing
           expr: |
-            label_replace(
-              externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1,
-              "namespace", "$1", "exported_namespace", "(.+)"
+            max by (name, namespace) (
+              label_replace(
+                externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1,
+                "namespace", "$1", "exported_namespace", "(.+)"
+              )
             )
           for: 5m
           labels:
@@ -24,11 +27,13 @@ spec:
         # Tokens last 60m and refresh every 30m: the last good token expires about 30m after the first failed refresh
         - alert: GitHubAppTokensExpiring
           expr: |
-            label_replace(
-              externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
-              or
-              absent(externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"}),
-              "namespace", "$1", "exported_namespace", "(.+)"
+            max by (name, namespace) (
+              label_replace(
+                externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"} != 1
+                or
+                absent(externalsecret_status_condition{exported_namespace="github-system", name="github-bot-credentials", condition="Ready", status="True"}),
+                "namespace", "$1", "exported_namespace", "(.+)"
+              )
             )
           for: 20m
           labels:

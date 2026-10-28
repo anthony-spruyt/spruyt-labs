@@ -13,11 +13,12 @@ own SecretStore. Each refresh starts from the App private key, so a failed refre
 
 ### Secrets in `github-system`
 
-| Secret                   | Written by                                                | Notes                                                                    |
-| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `github-app-credentials` | You (SOPS)                                                | Only secret here that needs manual rotation                              |
-| `github-bot-credentials` | ExternalSecret `github-bot-credentials`                   | `<write\|read>-access-token`, `<write\|read>-hosts.yml`                  |
-| `github-bot-ssh-key`     | [bot-ssh-key-rotation](../bot-ssh-key-rotation/README.md) | Not managed here; the `github-token-reader` Role grants consumers access |
+| Secret                   | Written by                                                              | Notes                                                                    |
+| ------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `github-app-credentials` | You (SOPS)                                                              | App keys; see "Rotating an App private key" below                        |
+| `github-bot-credentials` | ExternalSecret `github-bot-credentials`                                 | `<write\|read>-access-token`, `<write\|read>-hosts.yml`                  |
+| `github-bot-ssh-key`     | [bot-ssh-key-rotation](../bot-ssh-key-rotation/README.md)               | Not managed here; the `github-token-reader` Role grants consumers access |
+| `bot-ssh-rotation-token` | You (SOPS) in [bot-ssh-key-rotation](../bot-ssh-key-rotation/README.md) | PAT the SSH key job uses; consumers don't read it                        |
 
 ### Adding a consumer namespace
 
