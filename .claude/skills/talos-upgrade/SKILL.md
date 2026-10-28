@@ -69,6 +69,7 @@ Read [references/pre-upgrade.md](references/pre-upgrade.md) now for Groups 1 to 
 - [ ] talosctl health passes
 - [ ] etcd has 3 healthy members with consistent terms
 - [ ] Ceph ready (see Step 4.1)
+- [ ] GPU baseline: every ms-01 passes the Step 4.4b gate ([references/workers.md](references/workers.md)) before any node is touched
 - [ ] All Flux kustomizations are Ready
 - [ ] No pending HelmRelease upgrades/failures
 - [ ] PDBs surveyed and worker drain strategy chosen
@@ -114,6 +115,7 @@ One at a time, Ceph gate between each: two workers down can leave PGs without a 
 - **Step 4.3a:** a drain-based upgrade aborted and left the node cordoned: `kubectl uncordon <hostname>` first, and confirm the node was NOT upgraded before retrying with `--drain=false` (worker-drain.md)
 - **Step 4.4:** node Ready (5 minutes), Talos API responsive
 - **Step 4.4a (first worker only):** run the Kata config diff in [references/kata.md](references/kata.md). If it shows more than the expected differences, fix `talos/patches/worker/13-tune-kata-memory.yaml` as that file says, land it (landing rule) before Phase 8, and carry on. Do not apply it now (rule 10)
+- **Step 4.4b (each ms-01, BLOCKING):** GPU gate in [references/workers.md](references/workers.md): `gpu.intel.com/i915` allocatable is 2 and a one-shot pod pinned to the node lists OpenVINO `GPU`. A failed gate is WORKER UPGRADE BLOCKED ([references/templates.md](references/templates.md)): do not start the next ms-01, because later drains would push scanner pods onto nodes without a working GPU. No CPU fallback
 - **Step 4.5:** poll until Ceph ready (Step 4.1), timeout 30 minutes; judge by data state, and wait rather than restart an OSD ([references/ceph-recovery.md](references/ceph-recovery.md))
 - **Step 4.5a:** `Error` pods after a reboot are stale; leave them and judge health from controllers (ceph-recovery.md)
 - **Step 4.6:** post progress to the issue, including Ceph recovery time

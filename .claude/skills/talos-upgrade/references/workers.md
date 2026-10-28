@@ -1,6 +1,6 @@
 # Phase 4: Worker Upgrades
 
-Commands for Steps 4.1 to 4.6. The gates, including the "Ceph ready" definition, are in the skill. Drain strategy (Step 4.3, Step 4.3a): [worker-drain.md](worker-drain.md). Kata check (Step 4.4a): [kata.md](kata.md). Ceph recovery detail (Step 4.5, Step 4.5a): [ceph-recovery.md](ceph-recovery.md).
+Commands for Steps 4.1 to 4.6. The gates, including the "Ceph ready" definition, are in the skill. Drain strategy (Step 4.3, Step 4.3a): [worker-drain.md](worker-drain.md). Kata check (Step 4.4a): [kata.md](kata.md). GPU gate (Step 4.4b, also the Phase 1 baseline): below. Ceph recovery detail (Step 4.5, Step 4.5a): [ceph-recovery.md](ceph-recovery.md).
 
 ## Step 4.1: Pre-node Ceph check (BLOCKING)
 
@@ -52,6 +52,24 @@ kubectl wait --for=condition=Ready node/<hostname> --timeout=300s
 # Verify Talos API is responsive
 talosctl health -n <node-ip>
 ```
+
+## Step 4.4b: GPU gate (each ms-01, BLOCKING)
+
+The llm-tool-guard scanner runs on the ms-01 Intel iGPU, and a later drain can land its pods on any ms-01. After each ms-01 upgrade, and for every ms-01 in Phase 1 as the baseline, prove the GPU works on that node itself. A scanner pod Ready there is not the check: pods do not move back after a drain, so it would fail every time.
+
+```bash
+# The device plugin re-registers after the reboot (timeout: 5 minutes)
+kubectl wait --for=jsonpath='{.status.allocatable.gpu\.intel\.com/i915}'=2 node/<hostname> --timeout=300s
+
+IMG=$(kubectl -n litellm get deploy litellm-llm-tool-guard -o jsonpath='{.spec.template.spec.containers[?(@.name=="llm-tool-guard")].image}')
+kubectl run gpu-gate -n default --rm -i --restart=Never --image="${IMG:?}" --pod-running-timeout=3m --override-type=strategic \
+  --overrides='{"spec":{"automountServiceAccountToken":false,"nodeSelector":{"kubernetes.io/hostname":"<hostname>"},"securityContext":{"runAsUser":1000,"runAsGroup":1000,"runAsNonRoot":true,"supplementalGroups":[44],"seccompProfile":{"type":"RuntimeDefault"}},"containers":[{"name":"gpu-gate","securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]}},"resources":{"limits":{"gpu.intel.com/i915":"1"}}}]}}' \
+  --command -- python3 -c 'import openvino as ov; c=ov.Core(); print("devices:", c.available_devices); print("GPU:", c.get_property("GPU","FULL_DEVICE_NAME"))'
+```
+
+The image comes from the live Deployment, so the gate follows Renovate bumps. The pod copies the scanner's user, groups, seccomp and capabilities, and requests one of the node's two GPU shares. Group 44 owns `/dev/dri/renderD*`: without it OpenVINO lists only `CPU`. `--override-type=strategic` is required: the default merge replaces `containers` and drops the image.
+
+**Good:** `devices:` includes `'GPU'`, a `GPU: Intel(R) ... Graphics` line follows, and the pod is deleted. Anything else (allocatable never reaches 2, no `GPU` in `devices:`, `terminated (Error)`, a timeout) fails the gate. After an upgrade, report WORKER UPGRADE BLOCKED ([templates.md](templates.md)) with the failing output, name the GPU gate as the reason, and stop before the next ms-01; in Phase 1 it is PRE-UPGRADE BLOCKED. No CPU fallback.
 
 ## Step 4.5: Wait for Ceph recovery
 
