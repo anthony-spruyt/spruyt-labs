@@ -51,23 +51,22 @@ Post progress updates as issue comments. Example body:
 [What needs to be fixed before upgrade can proceed]
 ```
 
-## WORKER UPGRADE BLOCKED (Step 4.1)
+## WORKER UPGRADE BLOCKED (Step 4.1, Step 4.4b)
 
 ```text
 ## WORKER UPGRADE BLOCKED
 
 ### Reason
-Ceph is not ready - cannot proceed with worker upgrade.
+[Step 4.1: Ceph is not ready. Step 4.4b: the GPU gate failed on <hostname>.]
 
-### Current Ceph Status
-[ceph status and ceph health detail output, IPs stripped]
+### Current Status
+[Step 4.1: ceph status and ceph health detail output. Step 4.4b: the gate's failing output. IPs stripped.]
 
 ### Required Action
-Wait for Ceph to be ready before upgrading next worker.
-This may take 5-30 minutes depending on rebalancing.
+[Step 4.1: wait for Ceph to be ready before upgrading the next worker; this may take 5-30 minutes depending on rebalancing. Step 4.4b: fix the node's GPU before any other node or phase.]
 
 ### Command to Monitor
-kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
+[Step 4.1: kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status. Step 4.4b: the Step 4.4b block in workers.md.]
 ```
 
 ## Upgrade Complete (Phase 9)

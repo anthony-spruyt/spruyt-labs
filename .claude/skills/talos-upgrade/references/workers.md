@@ -69,7 +69,7 @@ kubectl run gpu-gate -n default --rm -i --restart=Never --image="${IMG:?}" --pod
 
 The image comes from the live Deployment, so the gate follows Renovate bumps. The pod copies the scanner's user, groups, seccomp and capabilities, and requests one of the node's two GPU shares. Group 44 owns `/dev/dri/renderD*`: without it OpenVINO lists only `CPU`. `--override-type=strategic` is required: the default merge replaces `containers` and drops the image.
 
-**Good:** `devices:` includes `'GPU'`, a `GPU: Intel(R) ... Graphics` line follows, and the pod is deleted. Anything else (allocatable never reaches 2, no `GPU` in `devices:`, `terminated (Error)`, a timeout) fails the gate. After an upgrade, report WORKER UPGRADE BLOCKED ([templates.md](templates.md)) with the failing output, name the GPU gate as the reason, and stop before the next ms-01; in Phase 1 it is PRE-UPGRADE BLOCKED. No CPU fallback.
+**Good:** `devices:` includes `'GPU'`, a `GPU: Intel(R) ... Graphics` line follows, and the pod is deleted. Anything else (allocatable never reaches 2, no `GPU` in `devices:`, `terminated (Error)`, a timeout) fails the gate. After an upgrade, report WORKER UPGRADE BLOCKED ([templates.md](templates.md)) with the failing output, name the GPU gate as the reason, and stop and tell the owner, even on the last worker; in Phase 1 it is PRE-UPGRADE BLOCKED. No CPU fallback.
 
 ## Step 4.5: Wait for Ceph recovery
 

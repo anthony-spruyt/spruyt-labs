@@ -1,6 +1,6 @@
 # Phase 1: Pre-Upgrade Checks
 
-Commands for the Phase 1 checks. The checklist and the BLOCK rule are in the skill. Parallel Group 4, the PDB survey, is in [worker-drain.md](worker-drain.md); the pre-flight drift check is in [drift-check.md](drift-check.md).
+Commands for the Phase 1 checks. The checklist and the BLOCK rule are in the skill. Parallel Group 4, the PDB survey, is in [worker-drain.md](worker-drain.md); the pre-flight drift check is in [drift-check.md](drift-check.md); the GPU baseline is Step 4.4b in [workers.md](workers.md).
 
 ## Parallel Groups 1 to 3
 
