@@ -29,8 +29,13 @@ spec:
       parameters:
         barmanObjectName: authentik-cnpg-aws-object-store
   postgresql:
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: preferred
     parameters:
       shared_buffers: 256MB
+      synchronous_commit: remote_write
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
   resources:

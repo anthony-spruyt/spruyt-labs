@@ -24,8 +24,13 @@ spec:
       parameters:
         barmanObjectName: litellm-cnpg-aws-object-store
   postgresql:
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: preferred
     parameters:
       shared_buffers: 128MB
+      synchronous_commit: remote_write
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
   resources:

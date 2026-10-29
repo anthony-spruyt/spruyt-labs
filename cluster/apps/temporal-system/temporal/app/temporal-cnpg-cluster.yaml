@@ -47,10 +47,15 @@ spec:
         passwordSecret:
           name: temporal-cnpg-agent-platform
   postgresql:
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: preferred
     parameters:
       # 4 server pods x 2 stores x maxConns 10 (values.yaml) already needs 80 of the default 100.
       max_connections: "200"
       shared_buffers: 256MB
+      synchronous_commit: remote_write
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
   resources:
