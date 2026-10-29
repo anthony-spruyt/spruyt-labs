@@ -25,7 +25,7 @@ controllers:
             type: RuntimeDefault
         image:
           repository: docker.io/aspruyt/blog
-          tag: 1.4.1@sha256:3d0583594a13cc32688fc05fe7acf88fe51a5d08eea996733908d23672a212f8
+          tag: 1.5.0@sha256:6a1d1f4470085e06465eb4c1cbe744384f0f3308d17d0e5f1ac2c4d685cb56c0
           pullPolicy: IfNotPresent
         resources:
           requests:
