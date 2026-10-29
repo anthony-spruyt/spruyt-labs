@@ -30,11 +30,6 @@ locals {
       origin_request = { http2_origin = true, origin_server_name = "foundry.${var.zone_name}" }
     },
     {
-      subdomain      = "happy"
-      service        = local.traefik_service
-      origin_request = { http2_origin = true, origin_server_name = "happy.${var.zone_name}" }
-    },
-    {
       subdomain      = "hooks"
       service        = local.traefik_service
       path           = "^/webhooks/github$"

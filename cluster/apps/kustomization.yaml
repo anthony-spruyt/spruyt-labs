@@ -58,6 +58,5 @@ resources:
   - ./vpa-system
   - ./temporal-system
   - ./agent-platform
-  - ./happy-system
   - ./blog
   - ./enshrouded

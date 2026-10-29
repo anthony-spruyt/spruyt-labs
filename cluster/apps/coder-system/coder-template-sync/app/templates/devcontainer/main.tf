@@ -47,11 +47,6 @@ locals {
 
   devcontainer_builder_image = data.coder_parameter.devcontainer_builder.value
 
-  # renovate: datasource=npm depName=happy
-  happy_version = "1.2.5"
-  # Flux substitution is off for templates, so the domain comes from the access URL.
-  happy_server_url = replace(trimsuffix(data.coder_workspace.me.access_url, "/"), "://code.", "://happy.")
-
   workspace_folder = "/workspaces/${one(regex("([^/:]+?)(?:\\.git)?/?$", local.repo_url))}"
   # Keyed on owner/repo, not workspace name, so new workspaces reuse layers from earlier builds.
   cache_key = replace(lower(one(regex("([^/:]+/[^/:]+?)(?:\\.git)?/?$", split("#", local.repo_url)[0]))), "/[^a-z0-9._/-]/", "-")
@@ -100,10 +95,6 @@ locals {
     "SAFE_CHAIN_LOGGING" : "silent"
   }
 }
-
-# ---------------------------------------------------------------------------
-# Parameters
-# ---------------------------------------------------------------------------
 
 data "coder_parameter" "repo" {
   name         = "repo"
@@ -176,10 +167,6 @@ data "coder_parameter" "devcontainer_builder" {
   mutable = true
   order   = 7
 }
-
-# ---------------------------------------------------------------------------
-# Persistent volumes
-# ---------------------------------------------------------------------------
 
 resource "kubernetes_persistent_volume_claim_v1" "workspaces" {
   metadata {
@@ -272,10 +259,6 @@ resource "kubernetes_persistent_volume_claim_v1" "home" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# Coder agent
-# ---------------------------------------------------------------------------
-
 resource "coder_agent" "main" {
   arch = data.coder_provisioner.me.arch
   os   = "linux"
@@ -284,8 +267,6 @@ resource "coder_agent" "main" {
     set -e
     cd "${local.workspace_folder}"
 
-    # Direct-assigned block device for podman storage. First boot: mkfs.
-    # Subsequent boots: detect existing ext4 and mount.
     if [ -b /dev/containers-disk ]; then
       if ! sudo blkid /dev/containers-disk >/dev/null 2>&1; then
         sudo mkfs.ext4 -q -L containers /dev/containers-disk
@@ -328,8 +309,6 @@ resource "coder_agent" "main" {
     GIT_COMMITTER_NAME  = local.git_author_name
     GIT_COMMITTER_EMAIL = local.git_author_email
     GIT_SSH_COMMAND     = "ssh -i /etc/coder/ssh-keys/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-    HAPPY_SERVER_URL    = local.happy_server_url
-    HAPPY_WEBAPP_URL    = local.happy_server_url
   }
 
   metadata {
@@ -388,10 +367,7 @@ resource "coder_agent" "main" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# VS Code Desktop (explicit folder bypass for recent-folder cache bug)
-# ---------------------------------------------------------------------------
-
+# folder set explicitly to bypass the VS Code recent-folder cache bug.
 module "vscode" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/coder/vscode-desktop/coder"
@@ -399,10 +375,6 @@ module "vscode" {
   agent_id = coder_agent.main.id
   folder   = local.workspace_folder
 }
-
-# ---------------------------------------------------------------------------
-# code-server (VS Code in browser)
-# ---------------------------------------------------------------------------
 
 resource "coder_script" "code_server" {
   agent_id           = coder_agent.main.id
@@ -418,7 +390,6 @@ resource "coder_script" "code_server" {
       curl -fsSL https://code-server.dev/install.sh | flock /tmp/coder-dpkg.lock sh
     fi
 
-    # Install extensions from devcontainer.json for both VS Code Web and Desktop
     dc="${local.workspace_folder}/.devcontainer/devcontainer.json"
     if [ -f "$dc" ] && command -v jq &>/dev/null; then
       mkdir -p ~/.vscode-server/extensions
@@ -478,8 +449,6 @@ resource "coder_script" "tmux" {
       ) 9>/tmp/coder-dpkg.lock
     fi
     printf 'set -g mouse on\nset -g history-limit 50000\n' | sudo tee /etc/tmux.conf >/dev/null
-    # The happy script waits on this, so its tmux server starts with the config above.
-    touch /tmp/coder-tmux-ready
 
     # Reattach an orphaned session first, so terminals left behind by a closed VS Code come back.
     mkdir -p /home/vscode/.local/bin
@@ -521,109 +490,6 @@ resource "coder_script" "image_prune" {
   EOT
 }
 
-resource "coder_script" "happy" {
-  agent_id           = coder_agent.main.id
-  display_name       = "Happy"
-  icon               = "/emojis/1f4f1.png"
-  run_on_start       = true
-  start_blocks_login = false
-  log_path           = "/tmp/happy-setup.log"
-  script             = <<-EOT
-    #!/bin/bash
-    set -e
-    command -v npm >/dev/null || { echo "npm not found, skipping Happy"; exit 0; }
-    # Scripts skip ~/.bashrc, which is what puts the safe-chain npm shim on PATH.
-    npm=/home/vscode/.safe-chain/shims/npm
-    [ -x "$npm" ] || npm=npm
-    # Fresh cache, so npm only sees safe-chain's filtered metadata; drop once safe-chain ignores npm's cache revalidation headers (#3785).
-    if ! "$npm" ls -g --depth=0 "happy@${local.happy_version}" &>/dev/null; then
-      cache=$(mktemp -d)
-      trap 'rm -rf "$cache"' EXIT
-      "$npm" install -g --no-fund --no-audit --cache "$cache" "happy@${local.happy_version}"
-      rm -rf "$cache"
-      trap - EXIT
-    fi
-
-    # Happy reads only ~/.claude/settings.json (not project settings) and defaults to adding its co-author ad to commits.
-    settings=/home/vscode/.claude/settings.json
-    if command -v jq >/dev/null; then
-      mkdir -p "$(dirname "$settings")"
-      [ -s "$settings" ] || echo '{}' >"$settings"
-      jq '.includeCoAuthoredBy = false' "$settings" >"$settings.tmp" && mv "$settings.tmp" "$settings" ||
-        { rm -f "$settings.tmp"; echo "WARNING: could not set includeCoAuthoredBy in $settings"; }
-    else
-      echo "jq not found, Happy will add its co-author trailer"
-    fi
-
-    mkdir -p /home/vscode/.local/bin
-    cat >/home/vscode/.local/bin/happy-here <<'SH'
-    #!/bin/bash
-    # The daemon runs phone-started sessions without a terminal; drop once slopus/happy#1846 lets it spawn them in tmux (#3358).
-    set -euo pipefail
-    if [ "$${1:-}" = --check ]; then
-      n=$(pgrep -cf -- '--started-by daemon' || true)
-      [ "$n" -gt 0 ] && echo "📱 $n phone-started Happy session(s). Run happy-here to move one into this terminal."
-      exit 0
-    fi
-    mapfile -t sessions < <(happy daemon list | sed -n '/^\[/,$p' | jq -r '.[] | select(.startedBy == "daemon") | "\(.happySessionId) \(.pid)"')
-    [ $${#sessions[@]} -gt 0 ] || { echo "No phone-started Happy sessions on this workspace."; exit 0; }
-    pick=$${sessions[0]}
-    if [ $${#sessions[@]} -gt 1 ]; then
-      labels=()
-      for s in "$${sessions[@]}"; do
-        labels+=("$(readlink "/proc/$${s#* }/cwd" || echo "?"), running $(ps -o etime= -p "$${s#* }" | tr -d ' ')")
-      done
-      PS3="Session to move here: "
-      select choice in "$${labels[@]}"; do [ -n "$choice" ] && pick=$${sessions[REPLY - 1]} && break; done
-      [ -n "$${choice:-}" ] || exit 1
-    fi
-    id=$${pick% *} pid=$${pick#* }
-    # Stopping kills a reply still in progress; resume picks the conversation up from the last finished turn.
-    out=$(happy daemon stop-session "$id")
-    [ "$out" = "Session stopped" ] || { echo "Could not stop the daemon's copy: $out" >&2; exit 1; }
-    for _ in $(seq 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
-    if kill -0 "$pid" 2>/dev/null; then echo "Session $id is still running in the daemon; not resuming a second copy." >&2; exit 1; fi
-    exec happy resume "$id"
-    SH
-    chmod +x /home/vscode/.local/bin/happy-here
-    grep -qs happy-here /home/vscode/.bashrc ||
-      echo '[ -t 1 ] && [ -x ~/.local/bin/happy-here ] && ~/.local/bin/happy-here --check' >>/home/vscode/.bashrc
-
-    # A regular file is a pairing made in this workspace, so it wins over the template key.
-    key=/home/vscode/.happy/access.key
-    if [ -f /etc/coder/happy/access.key ] && { [ -L "$key" ] || [ ! -e "$key" ]; }; then
-      mkdir -p -m 700 /home/vscode/.happy
-      ln -sfn /etc/coder/happy/access.key "$key"
-    elif [ -L "$key" ] && [ ! -e "$key" ]; then
-      # Dangling once the template secret is gone; Happy would write a new pairing through it into the read-only mount.
-      rm -f "$key"
-    fi
-    # Unpaired, the daemon would block on an interactive QR login; the first `happy` run pairs it.
-    [ -f "$key" ] || exit 0
-    # The phone app starts new sessions in ~; drop once https://github.com/slopus/happy/issues/1686 lands (#3354).
-    cat >/home/vscode/.happy/start-in-repo.cjs <<'JS'
-    const i = process.argv.indexOf("--started-by");
-    if (i > 0 && process.argv[i + 1] === "daemon" && process.cwd() === require("os").homedir()) try { process.chdir("${local.workspace_folder}"); } catch {}
-    JS
-    NODE_OPTIONS="--require=/home/vscode/.happy/start-in-repo.cjs" happy daemon start
-
-    for _ in $(seq 180); do [ -f /tmp/coder-tmux-ready ] && break; sleep 5; done
-    [ -f /tmp/coder-tmux-ready ] || { echo "tmux not ready after 15 minutes, not starting a Happy session"; exit 0; }
-    # Started while the server is down, Happy runs an offline session that the phone can't control even after it reconnects.
-    for _ in $(seq 180); do curl -fsS -o /dev/null --max-time 5 "${local.happy_server_url}/health" && break; sleep 5; done
-    curl -fsS -o /dev/null --max-time 5 "${local.happy_server_url}/health" || { echo "Happy server unreachable after 15 minutes, not starting a Happy session"; exit 0; }
-    # Own socket: a default server started here would hand this script's env to every VS Code terminal.
-    if ! tmux -L happy has-session -t happy 2>/dev/null; then
-      tmux -L happy new-session -d -s happy -c "${local.workspace_folder}"
-      tmux -L happy send-keys -t happy happy Enter
-    fi
-  EOT
-}
-
-# ---------------------------------------------------------------------------
-# Workspace Pod
-# ---------------------------------------------------------------------------
-
 resource "kubernetes_pod_v1" "main" {
   count = data.coder_workspace.me.start_count
 
@@ -660,8 +526,7 @@ resource "kubernetes_pod_v1" "main" {
     # AI-agent-generated code inside the workspace. Ref #933.
     runtime_class_name               = "kata"
     termination_grace_period_seconds = 300
-    # Happy names the machine after the hostname, so the app shows the workspace rather than the pod id.
-    hostname = lower(data.coder_workspace.me.name)
+    hostname                         = lower(data.coder_workspace.me.name)
 
     node_selector = {
       "kata.spruyt-labs/ready" = "true"
@@ -680,7 +545,6 @@ resource "kubernetes_pod_v1" "main" {
       ip = local.traefik_lb_ip
       hostnames = [
         replace(replace(data.coder_workspace.me.access_url, "https://", ""), "http://", ""),
-        replace(replace(local.happy_server_url, "https://", ""), "http://", ""),
       ]
     }
 
@@ -763,7 +627,6 @@ resource "kubernetes_pod_v1" "main" {
         mount_path = "/home/vscode"
       }
 
-      # SSH key (read-only mount, referenced directly via GIT_SSH_COMMAND)
       volume_mount {
         name       = "ssh-signing-key"
         mount_path = "/etc/coder/ssh-keys"
@@ -773,12 +636,6 @@ resource "kubernetes_pod_v1" "main" {
       volume_mount {
         name       = "gh-hosts"
         mount_path = "/etc/coder/gh"
-        read_only  = true
-      }
-
-      volume_mount {
-        name       = "happy-key"
-        mount_path = "/etc/coder/happy"
         read_only  = true
       }
 
@@ -871,15 +728,6 @@ resource "kubernetes_pod_v1" "main" {
     }
 
     volume {
-      name = "happy-key"
-      secret {
-        secret_name  = "coder-happy-devcontainer"
-        default_mode = "0400"
-        optional     = true
-      }
-    }
-
-    volume {
       name = "registries-conf"
       config_map {
         name         = "coder-workspace-registries-conf"
@@ -905,10 +753,6 @@ resource "kubernetes_pod_v1" "main" {
 
   }
 }
-
-# ---------------------------------------------------------------------------
-# Metadata displayed in the Coder dashboard
-# ---------------------------------------------------------------------------
 
 resource "coder_metadata" "container_info" {
   count       = data.coder_workspace.me.start_count

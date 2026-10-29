@@ -10,7 +10,6 @@ resources:
   - ./enshrouded
   - ./flux-system
   - ./foundryvtt
-  - ./happy-system
   - ./headlamp-system
   - ./kube-system
   - ./litellm

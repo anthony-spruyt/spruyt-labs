@@ -36,8 +36,6 @@ locals {
 
   github_webhook_hosts = ["flux-webhook.${var.zone_name}", "hooks.${var.zone_name}", "n8n.${var.zone_name}"]
 
-  happy_signup_expression = "http.host eq \"happy.${var.zone_name}\" and lower(url_decode(http.request.uri.path)) contains \"/auth\" and not http.request.uri.path in {\"/v1/auth/response\" \"/v1/auth/account/response\" \"/v1/auth/request/status\"}"
-
   authentik_admin_expression = format(
     "lower(http.host) eq \"auth.%s\" and not ip.src in {%s} and (%s in {\"/api/v3\" \"/api/v3/\"} or %s)",
     var.zone_name,
@@ -110,9 +108,9 @@ resource "cloudflare_ruleset" "firewall_custom" {
       enabled     = true
     },
     {
-      ref         = "block-happy-signup-authentik-admin"
-      description = "Block Happy account creation and pairing, and Authentik admin paths outside home"
-      expression  = format("(%s) or (%s)", local.happy_signup_expression, local.authentik_admin_expression)
+      ref         = "block-authentik-admin"
+      description = "Block Authentik admin paths outside home"
+      expression  = local.authentik_admin_expression
       action      = "block"
       enabled     = true
     },
