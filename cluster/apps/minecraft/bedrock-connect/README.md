@@ -18,7 +18,6 @@ Bedrock 26.60 clients no longer speak RakNet, so Bedrock Connect serves them ove
 - `advertise_addresses` in `app/values.yaml` is the LoadBalancer IP (`${BEDROCK_CONNECT_IP4}`) and `stun_discovery` is off. Otherwise the server advertises its WAN address, which LAN consoles cannot use.
 - `identity.pem` lives on the `bedrock-connect-nethernet` PVC. Clients pin its public key, so deleting the file or the PVC makes every player confirm the server again. The PVC is labelled for Velero backup.
 - The Deployment uses `Recreate` because the ReadWriteOnce volume attaches to one node only, so a rolling update whose new pod lands on another node would hang.
-- The image nests the jar in a directory of the same name, so `app/values.yaml` overrides `command` with the nested path ([upstream issue](https://github.com/Pugmatt/BedrockConnect/issues/728)). The Renovate bump that picks up an upstream fix must drop the override, or the pod crashes with "Unable to access jarfile".
 
 ## References
 

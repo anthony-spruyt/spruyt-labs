@@ -26,13 +26,8 @@ controllers:
               - ALL
         image:
           repository: pugmatt/bedrock-connect
-          tag: "1.72.1@sha256:f3e7b7a6fa631bcdec33f8050c7f92e6a20f391a7aa9df322b4d406109782c67"
+          tag: "1.72.1@sha256:5a5d550c5558c0878672eb3962b82cd2450ddf01b61cfb1c47d323d410929907"
           pullPolicy: IfNotPresent
-        # Image nests the jar in a same-named directory (https://github.com/Pugmatt/BedrockConnect/issues/728); remove once a release ships it at /docker/brc/BedrockConnect-1.0-SNAPSHOT.jar
-        command:
-          - java
-          - -jar
-          - /docker/brc/BedrockConnect-1.0-SNAPSHOT.jar/BedrockConnect-1.0-SNAPSHOT.jar
         resources:
           requests:
             cpu: 50m
