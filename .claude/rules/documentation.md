@@ -42,8 +42,6 @@ Worth writing down:
 - **Namespace READMEs** (`cluster/apps/<ns>/README.md`) are fine for multi-app namespaces with shared architecture
   (e.g., `rook-ceph/`).
 - Never document generic `kubectl`/`flux`/`helm` commands. Only component-specific operations.
-- Rollback steps never list commits or issue numbers; a revert is enough. Write down only what a revert won't tell
-  the reader, such as an off switch or a timeout not worth waiting out.
 
 ## Runbooks (`docs/`)
 
@@ -67,3 +65,5 @@ Markdownlint (via MegaLinter) owns formatting; don't restate its rules here. Bey
 
 - A change that makes a doc wrong must update the doc in the same commit
 - Delete stale sections rather than leave them; a wrong doc is worse than none
+- Rollback steps never list commits or issue numbers; a revert is enough. Write down only what a revert won't tell
+  the reader, such as an off switch or a timeout not worth waiting out.
