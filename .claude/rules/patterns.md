@@ -19,7 +19,7 @@ cluster/apps/<namespace>/
 │   │   ├── values.yaml         # Helm values
 │   │   ├── vpa.yaml            # VPA (see VPA section)
 │   │   ├── network-policies.yaml # CiliumNetworkPolicies
-│   │   ├── externalsecret-<name>.yaml # ExternalSecret (or *-eso.yaml; never *secret.yaml, hooks block it)
+│   │   ├── externalsecret-<name>.yaml # ExternalSecret (or *-eso.yaml; never *secret.yaml or *secrets.yaml, hooks block them)
 │   │   └── *-secrets.sops.yaml # Encrypted secrets
 │   └── <optional>/         # Optional dependent resources (e.g., rbac/, resources/)
 ├── <app1>/                 # Multiple apps (e.g., operator + instance)
