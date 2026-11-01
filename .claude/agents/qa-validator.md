@@ -150,9 +150,9 @@ YAML/JSON syntax is handled by MegaLinter (step 4). This step focuses on Kuberne
 
 First run `pre-commit run --files <in-scope files>`, then run it again: the first pass applies the auto-fixers (mdformat, shfmt, terraform fmt, whitespace) and exits non-zero when it rewrites anything. Only failures left on the second pass count. List the rewritten files in the report as fixes applied, never as blockers.
 
-Then run MegaLinter with `task dev-env:lint`. Read results from `.output/` directory.
+Then run MegaLinter with `task dev-env:lint`, or `APPLY_FIXES=none ./lint.sh` when the caller says not to edit files. Read results from `.output/` directory.
 
-`task dev-env:lint` is not read-only: it deletes `.output/` first and applies auto-fixes in place across the whole repo. Note `git status` before it runs and list every file it rewrote in the report, so the caller can review the fixes and stage only its own files.
+`task dev-env:lint` is not read-only: it deletes `.output/` first and applies auto-fixes in place across the whole repo. Compare `git status` before and after it runs, not `.output/updated_sources/` (it also copies files it left unchanged), and list every file it rewrote in the report, so the caller can review the fixes and stage only its own files.
 
 Stop if linting fails. Report all errors.
 

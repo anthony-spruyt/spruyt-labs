@@ -78,10 +78,10 @@ git diff <base> origin/main --name-only
 
 Run independent checks simultaneously using multiple tool calls per message.
 
-**Group 1** (initial state):
+**Group 1** (initial state, after the revision wait in Full Cluster Reconciliation Wait, Step 1; a baseline, not a verdict):
 
-- `flux get kustomizations -A`
-- `flux get helmreleases -A`
+- `flux get kustomizations -A --no-header | grep -E "False\s+(False|Unknown)"`
+- `flux get helmreleases -A --no-header | grep -E "False\s+(False|Unknown)"`
 - `kubectl get nodes -o wide`
 
 **Group 2** (after identifying affected resources):
@@ -97,6 +97,8 @@ Run independent checks simultaneously using multiple tool calls per message.
 ## Full Cluster Reconciliation Wait
 
 Wait for reconciliation to finish before reporting a verdict. Dependency chains take 3-5 minutes to settle, so a single snapshot misreports.
+
+Never start a command with `sleep`: the harness blocks it. Wait on a condition instead, with `kubectl wait`, `kubectl rollout status` or the Step 2 loop.
 
 ### Reconciliation Timeline
 
