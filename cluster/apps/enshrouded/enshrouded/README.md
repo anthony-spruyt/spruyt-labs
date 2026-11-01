@@ -59,7 +59,7 @@ kubectl -n enshrouded wait --for=condition=Ready externalsecret/enshrouded-livem
 kubectl -n enshrouded rollout restart statefulset/enshrouded
 ```
 
-To switch the map off, remove `WINEDLLOVERRIDES`: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the 70m HelmRelease timeout, so don't wait for it.
+If the map breaks a rollout, switch it off by removing `WINEDLLOVERRIDES`: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the HelmRelease timeout, so don't wait for it.
 
 ### Updates
 
