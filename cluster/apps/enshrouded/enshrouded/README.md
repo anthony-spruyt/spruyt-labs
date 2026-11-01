@@ -59,7 +59,7 @@ kubectl -n enshrouded wait --for=condition=Ready externalsecret/enshrouded-livem
 kubectl -n enshrouded rollout restart statefulset/enshrouded
 ```
 
-To roll back, revert every commit that references #3892 or #4063 (`git log --grep '#3892' --grep '#4063'`): reverting the script without its tests fails the bats job. Removing only `WINEDLLOVERRIDES` also works: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the 70m HelmRelease timeout, so don't wait for it.
+To switch the map off, remove `WINEDLLOVERRIDES`: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the 70m HelmRelease timeout, so don't wait for it.
 
 ### Updates
 
