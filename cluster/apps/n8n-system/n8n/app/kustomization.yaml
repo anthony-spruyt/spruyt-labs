@@ -5,11 +5,11 @@ kind: Kustomization
 resources:
   - ./authentik-outpost-rbac.yaml
   - ./aws-secret-store.yaml
-  - ./aws-external-secret.yaml
+  - ./externalsecret-aws.yaml
   - ./github-secret-store.yaml
-  - ./github-external-secret.yaml
+  - ./externalsecret-github.yaml
   - ./valkey-secret-store.yaml
-  - ./valkey-external-secret.yaml
+  - ./externalsecret-valkey.yaml
   - ./n8n-secrets.sops.yaml
   - ./runner-auth-eso.yaml
   - ./n8n-cnpg-object-stores.yaml

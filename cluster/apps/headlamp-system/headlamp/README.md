@@ -27,7 +27,7 @@ Authentik anyway. Pattern details are in the [authentik README](../../authentik-
 
 ### OIDC config comes from one secret
 
-The chart's `externalSecret` mode expects **all** OIDC settings in the secret, so `app/headlamp-oauth-external-secret.yaml` templates issuer, scopes and callback URL alongside the synced client ID and secret. It writes each value twice: `OIDC_*` for the chart's `envFrom`, and `HEADLAMP_CONFIG_OIDC_*` for Headlamp's own config loader, which keeps the client secret off the command line
+The chart's `externalSecret` mode expects **all** OIDC settings in the secret, so `app/externalsecret-headlamp-oauth.yaml` templates issuer, scopes and callback URL alongside the synced client ID and secret. It writes each value twice: `OIDC_*` for the chart's `envFrom`, and `HEADLAMP_CONFIG_OIDC_*` for Headlamp's own config loader, which keeps the client secret off the command line
 (`/proc/<pid>/cmdline`).
 
 Client-secret rotation follows the shared Authentik rotation job; see the [authentik README](../../authentik-system/authentik/README.md#oauth-credential-rotation).

@@ -6,7 +6,7 @@ resources:
   - ./persistent-volume-claims.yaml
   - ./vaultwarden-secrets.sops.yaml
   - ./authentik-secret-store.yaml
-  - ./vaultwarden-oauth-external-secret.yaml
+  - ./externalsecret-vaultwarden-oauth.yaml
   - ./oauth-rotation-rbac.yaml
   - ./release.yaml
   - ./network-policies.yaml

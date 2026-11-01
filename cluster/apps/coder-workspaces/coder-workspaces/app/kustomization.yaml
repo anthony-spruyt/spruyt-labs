@@ -9,9 +9,9 @@ resources:
   - ./coder-terraform-credentials.sops.yaml
   - ./nexus-clients-eso.yaml
   - ./sops-age-secret-store.yaml
-  - ./sops-age-externalsecret.yaml
+  - ./externalsecret-sops-age.yaml
   - ./github-secret-store.yaml
-  - ./github-bot-external-secret.yaml
+  - ./externalsecret-github-bot.yaml
   - ./bot-ssh-key-rotation-rbac.yaml
   - ./rbac.yaml
   - ./registries-conf-configmap.yaml

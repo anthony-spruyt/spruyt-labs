@@ -5,9 +5,9 @@ kind: Kustomization
 resources:
   - ../../../claude-agents-shared/base
   - ./claude-mcp-config.yaml
-  - ./github-external-secret.yaml
+  - ./externalsecret-github.yaml
   - ./litellm-credentials.sops.yaml
-  - ./github-ssh-external-secret.yaml
+  - ./externalsecret-github-ssh.yaml
   - ./github-bot-gitconfig.yaml
 configMapGenerator:
   - name: claude-settings-profiles

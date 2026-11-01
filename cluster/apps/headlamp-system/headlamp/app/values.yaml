@@ -16,7 +16,7 @@ config:
     secret:
       create: false
     # Chart's externalSecret feature requires ALL OIDC config in the secret
-    # See headlamp-oauth-external-secret.yaml for full config
+    # See externalsecret-headlamp-oauth.yaml for full config
     externalSecret:
       enabled: true
       name: headlamp-oauth-credentials

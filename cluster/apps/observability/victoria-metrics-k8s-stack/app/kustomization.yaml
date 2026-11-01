@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./grafana-admin-eso.yaml
   - ./authentik-secret-store.yaml
-  - ./grafana-oauth-external-secret.yaml
+  - ./externalsecret-grafana-oauth.yaml
   - ./oauth-rotation-rbac.yaml
   - ./alertmanager-credentials.sops.yaml
   - ./alertmanager-config.yaml

@@ -425,7 +425,7 @@ Add the app's `authentik-<app>-oauth` secret name to `resourceNames`, or the pat
 | Rotation CronJob         | `app/oauth-secret-rotation/cronjob.yaml`             |
 | Rotation RBAC            | `app/oauth-secret-rotation/role.yaml`                |
 
-Worked OAuth2 examples: Grafana (`observability/victoria-metrics-k8s-stack/app/`), Vaultwarden (`vaultwarden/vaultwarden/app/`), Headlamp (`headlamp-system/headlamp/app/`), Coder (`coder-system/coder/app/`), LiteLLM (`litellm/litellm/app/`). Each consumer directory has `authentik-secret-store.yaml`, `<app>-oauth-external-secret.yaml` and `oauth-rotation-rbac.yaml`.
+Worked OAuth2 examples: Grafana (`observability/victoria-metrics-k8s-stack/app/`), Vaultwarden (`vaultwarden/vaultwarden/app/`), Headlamp (`headlamp-system/headlamp/app/`), Coder (`coder-system/coder/app/`), LiteLLM (`litellm/litellm/app/`). Each consumer directory has `authentik-secret-store.yaml`, `externalsecret-<app>-oauth.yaml` and `oauth-rotation-rbac.yaml`.
 
 **Vaultwarden-specific notes:**
 

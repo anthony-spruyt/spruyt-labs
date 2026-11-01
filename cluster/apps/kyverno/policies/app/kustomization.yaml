@@ -9,7 +9,7 @@ resources:
   - ./inject-claude-agent-config.yaml
   - ./pss-restricted-defaults.yaml
   - ./set-agent-deadline.yaml
-  - ./remove-image-pull-secrets.yaml
+  - ./remove-image-pull-secrets-policy.yaml
   - ./topology-spread-policy.yaml
   - ./validate-agent-deadline.yaml
   - ./verify-litellm-image.yaml

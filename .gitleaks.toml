@@ -10,7 +10,7 @@ useDefault = true
 [allowlist]
 paths = [
   # spruyt-labs: ExternalSecret CRDs contain key references, not secret values
-  '''external-secret\.yaml$''',
+  '''(?:^|/)externalsecret-[^/]*\.yaml$''',
   '''talos/clusterconfig/''',
 ]
 

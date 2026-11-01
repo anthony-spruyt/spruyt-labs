@@ -12,7 +12,7 @@ resources:
   - ./authentik-litellm-oauth.sops.yaml
   - ./authentik-cnpg-object-stores.yaml
   - ./aws-secret-store.yaml
-  - ./aws-external-secret.yaml
+  - ./externalsecret-aws.yaml
   - ./external-secrets-rbac.yaml
   - ./cnpg-roles-eso.yaml
   - ./authentik-cnpg-cluster.yaml
