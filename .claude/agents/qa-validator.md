@@ -106,11 +106,11 @@ fi
 
 Skip this section entirely for `trivial` scope — go straight to standards + security spot-check.
 
-First note `git status`: lint rewrites files, and the report must list what it changed.
+First record the pre-lint snapshot (Step 4): lint rewrites files, and the report must list what it changed.
 
 Then run in parallel:
 
-- `task dev-env:lint` (MegaLinter)
+- `task dev-env:lint` (MegaLinter), or `APPLY_FIXES=none ./lint.sh` when the caller says not to edit files
 - Schema validation (`kubectl apply --dry-run=client`)
 - Kustomize build verification
 
@@ -152,7 +152,15 @@ First run `pre-commit run --files <in-scope files>`, then run it again: the firs
 
 Then run MegaLinter with `task dev-env:lint`, or `APPLY_FIXES=none ./lint.sh` when the caller says not to edit files. Read results from `.output/` directory.
 
-`task dev-env:lint` is not read-only: it deletes `.output/` first and applies auto-fixes in place across the whole repo. Compare `git status` before and after it runs, not `.output/updated_sources/` (it also copies files it left unchanged), and list every file it rewrote in the report, so the caller can review the fixes and stage only its own files.
+`task dev-env:lint` is not read-only: it deletes `.output/` first and applies auto-fixes in place across the whole repo. Snapshot status and hashes before it runs, and diff them after; `git status` alone misses rewrites of already-modified files, and `.output/updated_sources/` holds every modified file, changed or not:
+
+```bash
+{ git status --porcelain; git ls-files -mo --exclude-standard -z | xargs -0 sha256sum 2>/dev/null; } > "$(git rev-parse --git-dir)/qa-lint-before"
+# after the run: every differing path is a file lint rewrote
+{ git status --porcelain; git ls-files -mo --exclude-standard -z | xargs -0 sha256sum 2>/dev/null; } | diff "$(git rev-parse --git-dir)/qa-lint-before" -
+```
+
+List every file it rewrote in the report, so the caller can review the fixes and stage only its own files.
 
 Stop if linting fails. Report all errors.
 

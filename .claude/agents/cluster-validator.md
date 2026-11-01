@@ -80,8 +80,8 @@ Run independent checks simultaneously using multiple tool calls per message.
 
 **Group 1** (initial state, after the revision wait in Full Cluster Reconciliation Wait, Step 1; a baseline, not a verdict):
 
-- `flux get kustomizations -A --no-header | grep -E "False\s+(False|Unknown)"`
-- `flux get helmreleases -A --no-header | grep -E "False\s+(False|Unknown)"`
+- `flux get kustomizations -A --no-header | grep -E "False\s+(False|Unknown)" || true`
+- `flux get helmreleases -A --no-header | grep -E "False\s+(False|Unknown)" || true`
 - `kubectl get nodes -o wide`
 
 **Group 2** (after identifying affected resources):
@@ -190,12 +190,10 @@ Run the full wait loop before classifying anything. A resource is either ready o
 Prefer `flux get` over raw kubectl for Flux resources:
 
 ```bash
-flux get kustomizations -A
-flux get helmreleases -A
 flux get sources git -A
 ```
 
-After the initial check, follow the Full Cluster Reconciliation Wait above before classifying anything.
+Then follow the Full Cluster Reconciliation Wait above, and take the Group 1 baseline after its Step 1, before classifying anything.
 
 ### Step 2: Resource Status
 
