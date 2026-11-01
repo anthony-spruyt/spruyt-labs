@@ -38,6 +38,7 @@ Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunn
 The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. The hook is `app/livemap-install.sh`, mounted from a ConfigMap at `/opt/livemap`:
 
 - It downloads the release for `LIVEMAP_VERSION`, checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
+- It swaps the empty page icon upstream ships for the Flame Altar icon from the release, inlined into `livemap/index.html` on every start, so the browser tab has an icon without a request that would need the key. It does nothing once upstream ships its own icon.
 - It rewrites `livemap.ini` on every start. `Key=` is `LIVEMAP_KEY`, the key from the Secret `enshrouded-livemap-key`. If `LIVEMAP_KEY` is empty or breaks the map's key rule (3-64 letters, digits, `-` or `_`, and not a reserved word), the hook keeps the existing `Key=`, or makes a new one when there is none. When it ignores a key that is set, it logs why, without the key. The Secret is optional,
   so the server still starts while it is missing.
 - It always exits 0 and is capped at 300 s, so a map problem never stops the server from starting. `WINEDLLOVERRIDES=iphlpapi=n,b` is what makes Wine load the DLL.

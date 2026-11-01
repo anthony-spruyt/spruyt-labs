@@ -131,11 +131,46 @@ trim_log() {
   fi
 }
 
+inline_icon() {
+  python3 -I - "$@" <<'PY'
+import base64
+import sys
+
+page, icon, out = sys.argv[1:]
+with open(icon, "rb") as f:
+    uri = base64.b64encode(f.read())
+with open(page, "rb") as f:
+    html = f.read()
+old = b'<link rel="icon" href="data:,">'
+new = b'<link rel="icon" type="image/png" href="data:image/png;base64,' + uri + b'">'
+with open(out, "wb") as f:
+    f.write(html.replace(old, new))
+PY
+}
+
+# Upstream ships an empty icon because every request needs the key; an inline data URI needs no request
+set_favicon() {
+  local page=$root/livemap/index.html icon=$root/livemap/icons/altar.png tmp
+  grep -qF '<link rel="icon" href="data:,">' "$page" 2>/dev/null || return 0
+  if [ ! -f "$icon" ]; then
+    log "altar.png not found, leaving the live map without a favicon"
+    return 0
+  fi
+  tmp=$page.new
+  if inline_icon "$page" "$icon" "$tmp" 2>/dev/null && mv -f "$tmp" "$page"; then
+    log "added the favicon to the live map page"
+  else
+    rm -f "$tmp"
+    log "could not add the favicon to the live map page"
+  fi
+}
+
 if up_to_date; then
   log "$LIVEMAP_VERSION already installed"
 else
   install_release
 fi
+set_favicon
 write_ini
 trim_log
 exit 0

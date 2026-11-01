@@ -10,13 +10,56 @@ POLICIES="${APP}/network-policies.yaml"
 INGRESS_ROUTES="${REPO_ROOT}/cluster/apps/traefik/traefik/ingress/enshrouded/ingress-routes.yaml"
 WRONG_SHA="0000000000000000000000000000000000000000000000000000000000000000"
 
-make_zip() {
+pack_zip() {
+  local src="${WORK}/src-$1"
+  python3 -I -m zipfile -c "${WORK}/release-$1.zip" "${src}/iphlpapi.dll" "${src}/livemap"
+}
+
+stage_release() {
   local src="${WORK}/src-$1"
   mkdir -p "${src}/livemap"
   printf 'dll-%s' "$1" >"${src}/iphlpapi.dll"
   printf 'index-%s' "$1" >"${src}/livemap/index.html"
   printf 'maps-%s' "$1" >"${src}/livemap/maps.json"
-  python3 -I -m zipfile -c "${WORK}/release-$1.zip" "${src}/iphlpapi.dll" "${src}/livemap"
+}
+
+make_zip() {
+  stage_release "$1"
+  pack_zip "$1"
+}
+
+# Every byte value, and a length that needs padding, so the encoding has /, + and =
+icon_bytes() {
+  python3 -I -c 'import sys
+sys.stdout.buffer.write(bytes(range(256)) * 3 + b"\xfb\xff")'
+}
+
+make_map_zip() {
+  local name="$1" page="$2" has_icon="$3"
+  stage_release "${name}"
+  printf '%s' "${page}" >"${WORK}/src-${name}/livemap/index.html"
+  if [ "${has_icon}" = yes ]; then
+    mkdir -p "${WORK}/src-${name}/livemap/icons"
+    icon_bytes >"${WORK}/src-${name}/livemap/icons/altar.png"
+  fi
+  pack_zip "${name}"
+}
+
+use_release() {
+  export FAKE_ZIP="${WORK}/release-$1.zip"
+  LIVEMAP_SHA256="$(sha_of "$1")"
+  export LIVEMAP_SHA256
+}
+
+assert_page_has_icon() {
+  local page="${LIVEMAP_ROOT}/livemap/index.html" data
+  ! grep -qF '<link rel="icon" href="data:,">' "${page}"
+  data="$(sed -n 's|.*<link rel="icon" type="image/png" href="data:image/png;base64,\([A-Za-z0-9+/=]*\)">.*|\1|p' "${page}")"
+  [[ "${data}" == */* && "${data}" == *+* && "${data}" == *=* ]]
+  python3 -I -c 'import base64, sys
+sys.stdout.buffer.write(base64.b64decode(sys.argv[1], validate=True))' "${data}" | cmp - "${WORK}/src-$1/livemap/icons/altar.png"
+  [ "$(grep -c 'rel="icon"' "${page}")" -eq 1 ]
+  diff <(grep -v 'rel="icon"' "${page}") <(grep -v 'rel="icon"' "${WORK}/src-$1/livemap/index.html")
 }
 
 sha_of() {
@@ -82,6 +125,8 @@ assert_invalid_key_falls_back() {
   [ "${status}" -eq 0 ]
   [[ "$(ini_get key)" =~ ^[abcdefghjkmnpqrstuvwxyz23456789]{16}$ ]]
 }
+
+EMPTY_ICON_PAGE=$'<html>\n<head>\n<title>map</title>\n<link rel="icon" href="data:,">\n</head>\n</html>\n'
 
 setup() {
   WORK="$(mktemp -d)"
@@ -412,6 +457,97 @@ break"
   [ -n "${all}" ]
   [[ "${all}" != *"${key}"* ]]
   [[ "${all}" != *"bad key!"* ]]
+}
+
+@test "replaces the empty icon with the Flame Altar icon as a data URI that decodes to the icon's exact bytes" {
+  make_map_zip icon "${EMPTY_ICON_PAGE}" yes
+  use_release icon
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  assert_page_has_icon icon
+  [[ "${output}" == *"livemap-install: added the favicon to the live map page"* ]]
+  [ ! -e "${LIVEMAP_ROOT}/livemap/index.html.new" ]
+}
+
+@test "a second run leaves the page byte-identical and does not log the favicon again" {
+  local first
+  make_map_zip icon "${EMPTY_ICON_PAGE}" yes
+  use_release icon
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  first="$(sha256sum <"${LIVEMAP_ROOT}/livemap/index.html")"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(sha256sum <"${LIVEMAP_ROOT}/livemap/index.html")" = "${first}" ]
+  [[ "${output}" != *"favicon"* ]]
+  assert_page_has_icon icon
+}
+
+@test "adds the favicon on the already-up-to-date path without downloading" {
+  make_map_zip icon "${EMPTY_ICON_PAGE}" yes
+  use_release icon
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  cp "${WORK}/src-icon/livemap/index.html" "${LIVEMAP_ROOT}/livemap/index.html"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(curl_calls)" -eq 1 ]
+  [[ "${output}" == *"already installed"* ]]
+  assert_page_has_icon icon
+}
+
+@test "a reinstall that restores the empty icon gets the favicon again" {
+  make_map_zip icon "${EMPTY_ICON_PAGE}" yes
+  use_release icon
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  rm "${LIVEMAP_ROOT}/iphlpapi.dll"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(curl_calls)" -eq 2 ]
+  assert_page_has_icon icon
+}
+
+@test "a release without the icon leaves the page unchanged, logs why and exits 0" {
+  make_map_zip noicon "${EMPTY_ICON_PAGE}" no
+  use_release noicon
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  cmp "${LIVEMAP_ROOT}/livemap/index.html" "${WORK}/src-noicon/livemap/index.html"
+  [[ "${output}" == *"livemap-install: altar.png not found"* ]]
+  [ "$(grep -c 'favicon\|altar' <<<"${output}")" -eq 1 ]
+  [ "$(<"${LIVEMAP_ROOT}/livemap/.installed")" = "${LIVEMAP_SHA256}" ]
+}
+
+@test "a page without the empty icon tag is unchanged and logs nothing about the icon" {
+  local page i=0
+  local -a pages=(
+    $'<html>\n<head>\n<link rel="icon" href="/favicon.ico">\n</head>\n</html>\n'
+    $'<html>\n<head>\n<title>map</title>\n</head>\n</html>'
+    $'<html>\n<head>\n<link rel="icon" href="data:,x">\n</head>\n</html>\n'
+  )
+  for page in "${pages[@]}"; do
+    i=$((i + 1))
+    make_map_zip "other${i}" "${page}" yes
+    use_release "other${i}"
+    run bash "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    cmp "${LIVEMAP_ROOT}/livemap/index.html" "${WORK}/src-other${i}/livemap/index.html"
+    [[ "${output}" != *"favicon"* ]]
+    [[ "${output}" != *"altar"* ]]
+  done
+}
+
+@test "a failed page write logs one line, leaves the page untouched and exits 0" {
+  make_map_zip icon "${EMPTY_ICON_PAGE}" yes
+  use_release icon
+  mkdir -p "${LIVEMAP_ROOT}/livemap/index.html.new"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  cmp "${LIVEMAP_ROOT}/livemap/index.html" "${WORK}/src-icon/livemap/index.html"
+  [[ "${output}" == *"livemap-install: could not add the favicon to the live map page"* ]]
+  [ "$(grep -c 'favicon' <<<"${output}")" -eq 1 ]
+  [ "$(ini_get key | wc -c)" -eq 17 ]
 }
 
 @test "the script has no braced variable for Flux to substitute in the ConfigMap" {
