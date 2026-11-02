@@ -51,4 +51,4 @@ Show the table to the user before changing tiers. Moving a workload between tier
 - **Code**: set `priorityClassName` at the path the chart expects (check upstream `values.yaml`), and keep the CPU limit at request × the tier multiplier.
 - **Docs**: add, move, or remove workloads in the tier tables. Record anything you can't fix yet under Known Gaps.
 
-Code changes under `cluster/` follow the normal validation flow: issue, qa-validator, commit, push, cluster-validator. Re-run the live query afterwards to confirm the classes applied.
+Code changes under `cluster/` follow the normal validation flow: issue, qa-validator, land per the `orchestration` skill (`push-reviewed.sh`), then cluster-validator with the range it prints. Re-run the live query afterwards to confirm the classes applied.

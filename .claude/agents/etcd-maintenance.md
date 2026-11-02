@@ -63,7 +63,7 @@ talosctl -n <node-ip> logs etcd 2>&1 | grep -iE '"level":"warn"|slow|took too lo
 
 A weekly `kube-system/etcd-defrag` CronJob already defragments every control plane, followers first and the leader last so the leader stalls only once (`cluster/apps/kube-system/etcd-defrag/README.md`). Check its last run with `kubectl -n kube-system get jobs` before defragging by hand, and use the same order.
 
-**CRITICAL: Defrag ONE node at a time. NEVER parallel.**
+Defrag one node at a time, and wait until it reports healthy before the next: a defrag blocks that member while it runs, so two at once can cost etcd quorum.
 
 For each control plane node:
 

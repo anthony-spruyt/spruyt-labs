@@ -138,7 +138,7 @@ Read existing network policies: `cluster/apps/<namespace>/<app>/app/network-poli
 Check pod logs for connection errors:
 
 ```bash
-kubectl logs -n <namespace> -l app.kubernetes.io/name=<app> --tail=50
+kubectl logs -n <namespace> <pod> --tail=50
 ```
 
 ### Phase 4: Assess Severity

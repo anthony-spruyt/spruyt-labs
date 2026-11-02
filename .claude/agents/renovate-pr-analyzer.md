@@ -215,5 +215,4 @@ Structure your final output as:
 06. Base impact on config files you actually read; when the verdict depends on one, name it in the Summary
 07. Never output secrets or credential values
 08. Do NOT write to GitHub; the caller acts on the verdict
-09. **Never recommend escape hatches (type casts, error suppression directives, lint-ignore comments, accessing non-public APIs) without first verifying no proper API exists.** Your Fix entries are the fix agent's roadmap — if you recommend a hack, it implements a hack. Research the proper approach from library docs.
-10. When FIXABLE, Fix names the API/pattern to use, not just "cast it" or "change the type" — don't add other sections unless the caller asks, the caller parses the template fields only.
+09. When FIXABLE, Fix names the API/pattern to use, not just "cast it" or "change the type" — don't add other sections unless the caller asks, the caller parses the template fields only.
