@@ -41,6 +41,8 @@ Bedrock 26.60 clients only speak NetherNet: HTTP signaling on the TCP `server-po
 
 On the LAN the hostname resolves to `${CRAFTY_CONTROLLER_IP4}`, so signaling stays local and only the UDP game traffic loops back to the WAN IP through the router's hairpin NAT. Chicken's allow-list is on.
 
+The [MCXboxBroadcast](../mcxboxbroadcast/README.md) bot relays joins to Chicken's TCP signaling port (its `remote-port`) through the `allow-crafty-mcxboxbroadcast-ingress` and `allow-mcxboxbroadcast-crafty-egress` policies, so moving Chicken's signaling port means updating those too.
+
 When the home IP changes, follow the home IP steps in the [Cloudflare module README](../../../../infra/terraform/cloudflare/README.md#variables), then update the `server-udp-ports` lines and restart the server.
 
 ## References

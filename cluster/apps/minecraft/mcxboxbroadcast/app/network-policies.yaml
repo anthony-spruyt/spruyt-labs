@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
-# Allow HTTPS egress for Microsoft/Xbox Live sign-in, REST and signaling websockets
+# HTTPS egress to public internet addresses only: Microsoft sign-in and Xbox Live REST and signaling
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -12,8 +12,15 @@ spec:
       app.kubernetes.io/instance: mcxboxbroadcast
       app.kubernetes.io/name: mcxboxbroadcast
   egress:
-    - toEntities:
-        - world
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+            - 169.254.0.0/16
+            - 100.64.0.0/10
+            - ${GATEWAY_PUBLIC_IP4}/32
       toPorts:
         - ports:
             - port: "443"
