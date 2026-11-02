@@ -38,6 +38,25 @@ spec:
               family: IPv4
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Egress only: NetherNet servers send ICE checks to the addresses LAN players advertise, and replies return on that flow
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-crafty-lan-ice-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: crafty-controller
+  egress:
+    - toCIDR:
+        - ${LAN_CIDR_IP4}
+      toPorts:
+        - ports:
+            - port: "32768"
+              endPort: 65535
+              protocol: UDP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
 # Allow Bedrock game traffic (UDP) and NetherNet signaling (TCP) ingress from world (LoadBalancer)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
