@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.30](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.29...shutdown-orchestrator/v1.1.30) (2026-11-02)
+
+
+### Bug Fixes
+
+* **shutdown-orchestrator:** keep Kyverno up and retry refused deletes in drain ([66cb9a9](https://github.com/anthony-spruyt/spruyt-labs/commit/66cb9a9122b242867dfe0cc2106c55875fe960ea)), closes [#4076](https://github.com/anthony-spruyt/spruyt-labs/issues/4076)
+* **shutdown-orchestrator:** wait for deleted pods to unmount and on failed lists ([2cb9078](https://github.com/anthony-spruyt/spruyt-labs/commit/2cb90780516af75ada75db9b8aec0989c9fbec95)), closes [#4076](https://github.com/anthony-spruyt/spruyt-labs/issues/4076)
+
+
+### Dependencies
+
+* **deps:** update container image gcr.io/distroless/static to 18f4cc2 ([#4052](https://github.com/anthony-spruyt/spruyt-labs/issues/4052)) ([d521d66](https://github.com/anthony-spruyt/spruyt-labs/commit/d521d6608236d88079c334910b04068006fa8f0c))
+
 ## [1.1.29](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.28...shutdown-orchestrator/v1.1.29) (2026-10-28)
 
 
