@@ -98,7 +98,7 @@ controllers:
           - name: bedrock-8
             containerPort: 19139
             protocol: UDP
-          # NetherNet signaling for the server on the default port
+          # Never reaches the pod (see README Ports); removing it can roll the pod
           - name: bedrock-tcp
             containerPort: 19132
             protocol: TCP

@@ -8,7 +8,7 @@ Web panel that lets the kids create and run Minecraft Bedrock servers and instal
 
 ### Ports are fixed in advance
 
-The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, so a server created in the UI must use a port in that range to be reachable. A server beyond the free ports needs a new port added to the Service in `app/values.yaml`.
+The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, and the servers below use all of it. A new server needs its UDP ports added to the Service in `app/values.yaml` and the UDP range in `allow-crafty-bedrock-ingress` raised to match.
 
 The `bedrock-tcp` Service shares that IP and exposes TCP 19132 and 19139 for NetherNet signaling:
 
@@ -38,7 +38,7 @@ Bedrock 26.60 clients only speak NetherNet: HTTP signaling on the TCP `server-po
 - The router forwards TCP 19132 and UDP 19132-19136 to `${CRAFTY_CONTROLLER_IP4}` on the same ports. The forwards live in UniFi, not in Git.
 - `server-udp-ports` advertises the home WAN IP instead of `${CRAFTY_CONTROLLER_IP4}`.
 
-On the LAN the hostname resolves to `${CRAFTY_CONTROLLER_IP4}`, so signaling stays local and only the UDP game traffic loops back to the WAN IP through the router's hairpin NAT. The server's allow-list is on.
+On the LAN the hostname resolves to `${CRAFTY_CONTROLLER_IP4}`, so signaling stays local and only the UDP game traffic loops back to the WAN IP through the router's hairpin NAT. Chicken's allow-list is on.
 
 When the home IP changes, follow the home IP steps in the [Cloudflare module README](../../../../infra/terraform/cloudflare/README.md#variables), then update the `server-udp-ports` lines and restart the server.
 
