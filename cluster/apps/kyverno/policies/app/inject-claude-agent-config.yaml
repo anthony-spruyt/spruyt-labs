@@ -635,6 +635,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              operations:
+                - CREATE
+                - UPDATE
               namespaces:
                 - claude-agents-spruyt-labs-write
                 - claude-agents-write
@@ -665,6 +668,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              operations:
+                - CREATE
+                - UPDATE
               namespaces:
                 - claude-agents-read
                 - claude-agents-spruyt-labs-read

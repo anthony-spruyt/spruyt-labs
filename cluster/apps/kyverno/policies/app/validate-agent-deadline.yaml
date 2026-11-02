@@ -19,6 +19,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              operations:
+                - CREATE
+                - UPDATE
               selector:
                 matchLabels:
                   managed-by: n8n-claude-code
