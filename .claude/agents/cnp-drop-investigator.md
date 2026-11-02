@@ -135,7 +135,7 @@ Key VLogs flow fields:
 
 Read existing network policies: `cluster/apps/<namespace>/<app>/app/network-policies.yaml`
 
-Check pod logs for connection errors:
+Check the source pod's logs (`log.flow.source.pod_name` from the VLogs query) for connection errors:
 
 ```bash
 kubectl logs -n <namespace> <pod> --tail=50
