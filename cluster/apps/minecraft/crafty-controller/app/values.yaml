@@ -194,6 +194,22 @@ service:
       bedrock-8:
         port: 19139
         protocol: UDP
+      # Above 32767 so Cilium's masquerade keeps the source port (see README Remote play)
+      chicken-1:
+        port: 61132
+        protocol: UDP
+      chicken-2:
+        port: 61133
+        protocol: UDP
+      chicken-3:
+        port: 61134
+        protocol: UDP
+      chicken-4:
+        port: 61135
+        protocol: UDP
+      chicken-5:
+        port: 61136
+        protocol: UDP
   bedrock-tcp:
     controller: crafty
     type: LoadBalancer

@@ -100,6 +100,9 @@ spec:
             - port: "19132"
               endPort: 19139
               protocol: UDP
+            - port: "61132"
+              endPort: 61136
+              protocol: UDP
             - port: "19132"
               protocol: TCP
             - port: "19139"
