@@ -8,7 +8,7 @@ Web panel that lets the kids create and run Minecraft Bedrock servers and instal
 
 ### Ports are fixed in advance
 
-The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, so a server created in the UI must use a port in that range to be reachable. A ninth server needs a new port added to the Service in `app/values.yaml`.
+The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, so a server created in the UI must use a port in that range to be reachable. A server beyond the free ports needs a new port added to the Service in `app/values.yaml`.
 
 The `bedrock-tcp` Service shares that IP and exposes TCP 19132. The NetherNet server on port 19132 uses it for signaling and UDP 19132-19136 for game traffic (see Remote play), which leaves UDP 19137-19139 for other servers. Another NetherNet server needs its TCP port added to the `bedrock-tcp` Service, the container ports in `app/values.yaml` and the `allow-crafty-bedrock-ingress` policy.
 
@@ -26,11 +26,11 @@ Bedrock 26.60 clients only speak NetherNet: HTTP signaling on the TCP `server-po
 
 - The public DNS-only record `minecraft.${EXTERNAL_DOMAIN}` exists (`infra/terraform/cloudflare/dns.tf`).
 - The router forwards TCP 19132 and UDP 19132-19136 to `${CRAFTY_CONTROLLER_IP4}` on the same ports. The forwards live in UniFi, not in Git.
-- `server.properties` carries the home WAN IP in `server-udp-ports`, one `server-udp-ports=<wan-ip>:<port>:<port>` line per port. Ranges and comma lists are mis-parsed (Mojira BDS-23126), and the server advertises only its own IPs otherwise (Mojira BDS-23108).
+- `server.properties` carries the home WAN IP in `server-udp-ports`, one `server-udp-ports=<wan-ip>:<port>:<port>` line per port. Without the WAN IP the server advertises only its own pod IP ([BDS-23108](https://bugs.mojang.com/browse/BDS/issues/BDS-23108)). Ranges and comma lists are mis-parsed ([BDS-23126](https://bugs.mojang.com/browse/BDS/issues/BDS-23126)); switch to one range line once that is fixed.
 
-LAN players reach the server through the router's hairpin NAT. The server's allow-list is on. The Fambam server runs RakNet on UDP 19139 with LAN visibility off, because with RakNet LAN visibility binds UDP 19132 and 19133 whatever port is set.
+On the LAN the hostname resolves to `${CRAFTY_CONTROLLER_IP4}`, so signaling stays local and only the UDP game traffic loops back to the WAN IP through the router's hairpin NAT. The server's allow-list is on. The Fambam server runs RakNet on UDP 19139 with LAN visibility off, because with RakNet LAN visibility binds UDP 19132 and 19133 whatever port is set.
 
-When the home IP changes, update the `server-udp-ports` lines as well as the `home_ip` variable on the Terraform Cloud workspace (see the [Cloudflare module](../../../../infra/terraform/cloudflare/README.md)), then restart the server.
+When the home IP changes, follow the home IP steps in the [Cloudflare module README](../../../../infra/terraform/cloudflare/README.md#variables), then update the `server-udp-ports` lines and restart the server.
 
 ## References
 
