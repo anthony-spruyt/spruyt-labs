@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/persistentvolumeclaim.json
+# Documentation: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mcxboxbroadcast-config
+  namespace: minecraft
+  labels:
+    velero.io/backup-volumes: "true"
+spec:
+  storageClassName: rbd-fast-delete
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

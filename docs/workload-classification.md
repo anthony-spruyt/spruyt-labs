@@ -89,7 +89,7 @@ Can tolerate preemption.
 | foundryvtt       | foundryvtt                                                | Gaming (D&D)         |
 | headlamp-system  | headlamp                                                  | Kubernetes dashboard |
 | intel-gpu-plugin | drm-exporter                                              | GPU busy metrics     |
-| minecraft        | crafty-controller, bedrock-connect                        | Gaming servers       |
+| minecraft        | crafty-controller, bedrock-connect, mcxboxbroadcast       | Gaming servers       |
 | n8n-mcp          | n8n-mcp-server                                            | Agent tooling        |
 | observability    | mcp-victorialogs, mcp-victoriametrics, mcp-victoriatraces | Agent tooling        |
 | redisinsight     | redisinsight                                              | Redis GUI            |

@@ -1,0 +1,116 @@
+# Default values: https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/refs/heads/main/charts/library/common/values.schema.json
+fullnameOverride: mcxboxbroadcast
+defaultPodOptions:
+  priorityClassName: low-priority
+  automountServiceAccountToken: false
+controllers:
+  main:
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    initContainers:
+      install-config:
+        image:
+          repository: busybox
+          tag: "1.38.0@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e"
+          pullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - cp /config-template/config.yml /opt/app/config/config.yml
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi
+          limits:
+            cpu: 10m
+            memory: 16Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+    containers:
+      main:
+        image:
+          repository: ghcr.io/mcxboxbroadcast/standalone
+          tag: latest@sha256:372ab1c256e980c3e6fe2d593a3ad2391f7fe00f91f5d30ee9c4aba1480e1a0b
+          pullPolicy: IfNotPresent
+        env:
+          JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        probes:
+          liveness:
+            enabled: false
+          readiness:
+            enabled: false
+          startup:
+            enabled: false
+configMaps:
+  config:
+    enabled: true
+    data:
+      config.yml: |-
+        session:
+          remote-address: crafty-controller-bedrock-tcp.minecraft.svc.cluster.local
+          remote-port: "19132"
+          query-server: true
+          config-fallback: true
+          session-info:
+            host-name: Chicken
+            world-name: Chicken
+          allow-ipv6: false
+        friend-sync:
+          auto-friend: true
+          initial-invite: true
+        config-version: 9
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: mcxboxbroadcast-config
+    advancedMounts:
+      main:
+        install-config:
+          - path: /opt/app/config
+        main:
+          - path: /opt/app/config
+  config-template:
+    enabled: true
+    type: configMap
+    name: mcxboxbroadcast
+    advancedMounts:
+      main:
+        install-config:
+          - path: /config-template
+            readOnly: true
+  tmp:
+    enabled: true
+    type: emptyDir
+    advancedMounts:
+      main:
+        main:
+          - path: /tmp

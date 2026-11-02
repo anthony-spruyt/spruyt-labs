@@ -98,3 +98,24 @@ spec:
         - ports:
             - port: "8443"
               protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow the MCXboxBroadcast relay to reach NetherNet signaling (TCP)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-crafty-mcxboxbroadcast-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: crafty-controller
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: minecraft
+            k8s:app.kubernetes.io/name: mcxboxbroadcast
+            k8s:app.kubernetes.io/controller: main
+      toPorts:
+        - ports:
+            - port: "19132"
+              protocol: TCP

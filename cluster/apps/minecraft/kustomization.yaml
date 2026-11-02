@@ -6,3 +6,4 @@ resources:
   - ./namespace.yaml
   - ./bedrock-connect/ks.yaml
   - ./crafty-controller/ks.yaml
+  - ./mcxboxbroadcast/ks.yaml

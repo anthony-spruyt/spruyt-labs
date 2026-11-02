@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow HTTPS egress for Microsoft/Xbox Live sign-in, REST and signaling websockets
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mcxboxbroadcast-xbox-live-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: mcxboxbroadcast
+      app.kubernetes.io/name: mcxboxbroadcast
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumnetworkpolicy_v2.json
+# Allow NetherNet HTTP signaling egress to Crafty (server query and join relay)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mcxboxbroadcast-crafty-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: main
+      app.kubernetes.io/instance: mcxboxbroadcast
+      app.kubernetes.io/name: mcxboxbroadcast
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: minecraft
+            k8s:app.kubernetes.io/name: crafty-controller
+      toPorts:
+        - ports:
+            - port: "19132"
+              protocol: TCP
