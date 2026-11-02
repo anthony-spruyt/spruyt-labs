@@ -336,11 +336,12 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 ### Evidence
 [kubectl/flux output]
 ### Deployed Version
-[revision, image tags]
+origin/main `<full CURRENT_REV sha Step 1 waited on>`; image tags
 ```
 
 **Output rules:**
 
+- **Always include Deployed Version.**
 - **Omit sections with nothing to report.** Do not write "Pre-existing Issues: None" — just leave the section out entirely.
 - **Never fabricate context.** Only report what you observed in actual command output. Do not speculate about what "might have" happened.
 
