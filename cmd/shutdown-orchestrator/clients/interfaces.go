@@ -18,11 +18,13 @@ type Node struct {
 
 // PodInfo represents metadata about a Kubernetes pod.
 type PodInfo struct {
-  Namespace string
-  Name      string
-  NodeName  string
-  DaemonSet bool // owned by a DaemonSet
-  HasPVC    bool // has persistentVolumeClaim volumes
+  Namespace   string
+  Name        string
+  NodeName    string
+  Phase       string
+  Terminating bool // has a deletionTimestamp
+  DaemonSet   bool // owned by a DaemonSet
+  HasPVC      bool // has persistentVolumeClaim volumes
 }
 
 // KubeClient abstracts Kubernetes API operations.

@@ -2,6 +2,7 @@ package phases
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -16,7 +17,8 @@ type drainMockKube struct {
 	podsByNode      map[string][]clients.PodInfo
 	cordonErr       error
 	uncordonErr     error
-	neverTerminate  bool // if true, DeletePod does not remove pods from podsByNode
+	neverTerminate  bool           // if true, DeletePod leaves pods in podsByNode, marked Terminating
+	refuseDeletes   map[string]int // ns/name -> number of DeletePod calls to refuse before accepting
 }
 
 func (m *drainMockKube) CordonNode(_ context.Context, name string) error {
@@ -41,7 +43,18 @@ func (m *drainMockKube) GetPodsOnNode(_ context.Context, nodeName string) ([]cli
 
 func (m *drainMockKube) DeletePod(_ context.Context, ns, name string, _ int64) error {
 	m.deletedPods = append(m.deletedPods, ns+"/"+name)
+	if m.refuseDeletes[ns+"/"+name] > 0 {
+		m.refuseDeletes[ns+"/"+name]--
+		return errors.New("admission webhook denied the request")
+	}
 	if m.neverTerminate {
+		for _, pods := range m.podsByNode {
+			for i := range pods {
+				if pods[i].Namespace == ns && pods[i].Name == name {
+					pods[i].Terminating = true
+				}
+			}
+		}
 		return nil
 	}
 	for nodeName, pods := range m.podsByNode {
@@ -164,6 +177,46 @@ func TestDrainEvictWorkloadsSkipsExcludedNamespaces(t *testing.T) {
 	}
 }
 
+func TestDrainEvictWorkloadsSkipsFinishedPods(t *testing.T) {
+	mock := &drainMockKube{
+		podsByNode: map[string][]clients.PodInfo{
+			"worker-1": {
+				{Namespace: "default", Name: "app-pod", NodeName: "worker-1", Phase: "Running"},
+				{Namespace: "velero", Name: "done-job", NodeName: "worker-1", Phase: "Succeeded"},
+				{Namespace: "velero", Name: "failed-job", NodeName: "worker-1", Phase: "Failed"},
+			},
+		},
+	}
+	phase := NewDrainPhase(mock, newNodeTestLogger())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_ = phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30)
+	if len(mock.deletedPods) != 1 || mock.deletedPods[0] != "default/app-pod" {
+		t.Errorf("deleted pods = %v, want only default/app-pod", mock.deletedPods)
+	}
+}
+
+func TestDrainEvictWorkloadsDoesNotWaitOnFinishedPods(t *testing.T) {
+	mock := &drainMockKube{
+		podsByNode: map[string][]clients.PodInfo{
+			"worker-1": {
+				{Namespace: "velero", Name: "done-job", NodeName: "worker-1", Phase: "Succeeded"},
+				{Namespace: "velero", Name: "failed-job", NodeName: "worker-1", Phase: "Failed"},
+			},
+		},
+	}
+	phase := NewDrainPhase(mock, newNodeTestLogger())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	if err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30); err != nil {
+		t.Fatalf("EvictWorkloads() error: %v", err)
+	}
+}
+
 func TestDrainEvictWorkloadsWaitsForTermination(t *testing.T) {
 	mock := &drainMockKube{
 		podsByNode: map[string][]clients.PodInfo{
@@ -182,6 +235,52 @@ func TestDrainEvictWorkloadsWaitsForTermination(t *testing.T) {
 	}
 	if len(mock.deletedPods) != 1 {
 		t.Errorf("expected 1 deleted pod, got %d", len(mock.deletedPods))
+	}
+}
+
+func TestDrainEvictWorkloadsRetriesRefusedDelete(t *testing.T) {
+	mock := &drainMockKube{
+		podsByNode: map[string][]clients.PodInfo{
+			"worker-1": {
+				{Namespace: "databases", Name: "pg-1", NodeName: "worker-1", Phase: "Running"},
+			},
+		},
+		refuseDeletes: map[string]int{"databases/pg-1": 2},
+	}
+	phase := NewDrainPhase(mock, newNodeTestLogger())
+	phase.pollInterval = 10 * time.Millisecond
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30); err != nil {
+		t.Fatalf("EvictWorkloads() error: %v", err)
+	}
+	if len(mock.deletedPods) != 3 {
+		t.Errorf("expected 3 delete attempts (2 refused, 1 accepted), got %d: %v", len(mock.deletedPods), mock.deletedPods)
+	}
+}
+
+func TestDrainEvictWorkloadsDoesNotRedeleteTerminatingPods(t *testing.T) {
+	mock := &drainMockKube{
+		podsByNode: map[string][]clients.PodInfo{
+			"worker-1": {
+				{Namespace: "databases", Name: "pg-1", NodeName: "worker-1", Phase: "Running"},
+			},
+		},
+		neverTerminate: true,
+	}
+	phase := NewDrainPhase(mock, newNodeTestLogger())
+	phase.pollInterval = 10 * time.Millisecond
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	if err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30); err == nil {
+		t.Fatal("EvictWorkloads() should time out while the pod is still terminating")
+	}
+	if len(mock.deletedPods) != 1 {
+		t.Errorf("expected 1 delete for a terminating pod, got %d: %v", len(mock.deletedPods), mock.deletedPods)
 	}
 }
 

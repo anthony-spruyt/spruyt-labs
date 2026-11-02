@@ -311,27 +311,33 @@ func (k *RealKubeClient) GetPodsOnNode(ctx context.Context, nodeName string) ([]
 	}
 
 	result := make([]PodInfo, 0, len(pods.Items))
-	for _, pod := range pods.Items {
-		info := PodInfo{
-			Namespace: pod.Namespace,
-			Name:      pod.Name,
-			NodeName:  pod.Spec.NodeName,
-		}
-		for _, ref := range pod.OwnerReferences {
-			if ref.Kind == "DaemonSet" {
-				info.DaemonSet = true
-				break
-			}
-		}
-		for _, vol := range pod.Spec.Volumes {
-			if vol.PersistentVolumeClaim != nil {
-				info.HasPVC = true
-				break
-			}
-		}
-		result = append(result, info)
+	for i := range pods.Items {
+		result = append(result, podInfoFromPod(&pods.Items[i]))
 	}
 	return result, nil
+}
+
+func podInfoFromPod(pod *corev1.Pod) PodInfo {
+	info := PodInfo{
+		Namespace:   pod.Namespace,
+		Name:        pod.Name,
+		NodeName:    pod.Spec.NodeName,
+		Phase:       string(pod.Status.Phase),
+		Terminating: pod.DeletionTimestamp != nil,
+	}
+	for _, ref := range pod.OwnerReferences {
+		if ref.Kind == "DaemonSet" {
+			info.DaemonSet = true
+			break
+		}
+	}
+	for _, vol := range pod.Spec.Volumes {
+		if vol.PersistentVolumeClaim != nil {
+			info.HasPVC = true
+			break
+		}
+	}
+	return info
 }
 
 // DeletePod deletes a pod with the specified grace period.

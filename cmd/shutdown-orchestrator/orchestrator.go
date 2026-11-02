@@ -100,7 +100,7 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
     drainFailed := false
     if err := runPhase(ctx, o.logger, "drain-workers", o.cfg.DrainPhaseTimeout, func(pctx context.Context) error {
       return o.drain.EvictWorkloads(pctx, workerNames,
-        []string{"rook-ceph", "kube-system", "nut-system"}, 30)
+        []string{"rook-ceph", "kube-system", "nut-system", "kyverno"}, 30)
     }); err != nil {
       errs = append(errs, fmt.Errorf("drain-workers: %w", err))
       drainFailed = true

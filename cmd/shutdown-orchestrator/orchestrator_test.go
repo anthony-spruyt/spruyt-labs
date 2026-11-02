@@ -39,6 +39,9 @@ type orchestratorMockKube struct {
   // Node config
   nodes    []clients.Node
   nodesErr error
+
+  // Pods per node, removed on DeletePod
+  podsByNode map[string][]clients.PodInfo
 }
 
 func (m *orchestratorMockKube) record(name string) {
@@ -173,11 +176,20 @@ func (m *orchestratorMockKube) UncordonNode(_ context.Context, name string) erro
 
 func (m *orchestratorMockKube) GetPodsOnNode(_ context.Context, nodeName string) ([]clients.PodInfo, error) {
   m.record("GetPodsOnNode:" + nodeName)
-  return nil, nil // no pods — drain completes immediately
+  m.mu.Lock()
+  defer m.mu.Unlock()
+  return slices.Clone(m.podsByNode[nodeName]), nil
 }
 
 func (m *orchestratorMockKube) DeletePod(_ context.Context, ns, name string, _ int64) error {
   m.record("DeletePod:" + ns + "/" + name)
+  m.mu.Lock()
+  defer m.mu.Unlock()
+  for node, pods := range m.podsByNode {
+    m.podsByNode[node] = slices.DeleteFunc(slices.Clone(pods), func(p clients.PodInfo) bool {
+      return p.Namespace == ns && p.Name == name
+    })
+  }
   return nil
 }
 
@@ -300,6 +312,32 @@ func TestOrchestratorShutdownSequence(t *testing.T) {
   talosCalls := talos.getCalls()
   if len(talosCalls) == 0 {
     t.Fatal("node shutdown was not called via Talos")
+  }
+}
+
+func TestOrchestratorShutdownLeavesKyvernoRunningDuringDrain(t *testing.T) {
+  kube := &orchestratorMockKube{
+    toolsExists: true,
+    podsByNode: map[string][]clients.PodInfo{
+      "ms-01-1": {
+        {Namespace: "kyverno", Name: "kyverno-admission-controller", NodeName: "ms-01-1"},
+        {Namespace: "default", Name: "app", NodeName: "ms-01-1"},
+      },
+    },
+  }
+  talos := &orchestratorMockTalos{}
+  orch := newTestOrchestrator(kube, talos)
+
+  if err := orch.Shutdown(context.Background()); err != nil {
+    t.Fatalf("Shutdown() returned error: %v", err)
+  }
+
+  calls := kube.getCalls()
+  if !slices.Contains(calls, "DeletePod:default/app") {
+    t.Errorf("drain should delete default/app, calls: %v", calls)
+  }
+  if slices.Contains(calls, "DeletePod:kyverno/kyverno-admission-controller") {
+    t.Error("drain must leave the kyverno namespace running: its webhook gates pod deletes")
   }
 }
 
