@@ -12,12 +12,12 @@ The repo is public, so the account ID, zone name, and domain-identifying DNS tok
 | ------------------- | ------------------------------------------------------------------------------------------ |
 | `tunnel.tf`         | Tunnel `spruyt-labs-01`, its remote ingress config, and one proxied CNAME per route        |
 | `access.tf`         | Access application, policy and service token that gate the `litellm` host for CI           |
-| `dns.tf`            | Static DNS records (Brevo, SPF, DMARC, site verification, Home Assistant, Enshrouded)      |
+| `dns.tf`            | Static DNS records (Brevo, SPF, DMARC, site verification, Home Assistant, game servers)    |
 | `rulesets.tf`       | Custom firewall rules, rate limiting, cache rules, redirect rules                          |
 | `zone-settings.tf`  | Security and TLS zone settings                                                             |
 | `bot-management.tf` | Bot Fight Mode off and managed robots.txt on (other bot settings are set in the dashboard) |
 
-Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`). The same variable must hold exactly one bare IPv4, which the DNS-only `enshrouded` record in `dns.tf` points at.
+Authentik admin paths are limited to the home IPs in `home_ip` by a Cloudflare WAF rule (`rulesets.tf`). The same variable must hold exactly one bare IPv4, which the DNS-only game records (`enshrouded`, `minecraft`) in `dns.tf` point at.
 
 The Cloudflare Free plan caps custom firewall rules at 5, so new conditions get folded into existing rules. The current five, in order:
 

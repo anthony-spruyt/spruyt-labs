@@ -109,10 +109,12 @@ resource "cloudflare_dns_record" "this" {
   ttl     = each.value.ttl
 }
 
-# DNS-only: Cloudflare cannot proxy UDP game traffic, so the record points straight at the home router port forward.
-resource "cloudflare_dns_record" "enshrouded" {
+# DNS-only: Cloudflare cannot proxy UDP game traffic, so the records point straight at the home router port forward.
+resource "cloudflare_dns_record" "game" {
+  for_each = toset(["enshrouded", "minecraft"])
+
   zone_id = local.zone_id
-  name    = "enshrouded.${var.zone_name}"
+  name    = "${each.key}.${var.zone_name}"
   type    = "A"
   content = one(local.home_ipv4)
   proxied = false
@@ -121,7 +123,12 @@ resource "cloudflare_dns_record" "enshrouded" {
   lifecycle {
     precondition {
       condition     = length(local.home_ipv4) == 1
-      error_message = "home_ip must contain exactly one bare IPv4 address (CIDRs and IPv6 are ignored) for the enshrouded record."
+      error_message = "home_ip must contain exactly one bare IPv4 address (CIDRs and IPv6 are ignored) for the game records."
     }
   }
+}
+
+moved {
+  from = cloudflare_dns_record.enshrouded
+  to   = cloudflare_dns_record.game["enshrouded"]
 }

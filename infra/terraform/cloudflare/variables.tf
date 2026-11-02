@@ -11,7 +11,7 @@ variable "zone_name" {
 variable "home_ip" {
   type        = string
   sensitive   = true
-  description = "Space-separated home public IPs or CIDRs allowed to reach Authentik admin paths; must hold exactly one bare IPv4, which the enshrouded DNS record uses (set on the TFC workspace by workspace-factory)"
+  description = "Space-separated home public IPs or CIDRs allowed to reach Authentik admin paths; must hold exactly one bare IPv4, which the game DNS records use (set on the TFC workspace by workspace-factory)"
 
   validation {
     condition     = can(regex("^[0-9A-Fa-f:./]+( [0-9A-Fa-f:./]+)*$", var.home_ip))
