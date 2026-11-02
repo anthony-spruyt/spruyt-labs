@@ -7,7 +7,7 @@ Lets Minecraft Bedrock players on consoles (Xbox, PlayStation, Switch), which ca
 ## Prerequisites
 
 - DNS overrides on the LAN resolver that point the featured-server hostnames at this service's LoadBalancer IP (`${BEDROCK_CONNECT_IP4}`). They are not managed in this repo; without them consoles never reach Bedrock Connect. The hostname list is in the upstream README.
-- A DNS record for `minecraft.${EXTERNAL_DOMAIN}`, the address in the custom server list. Also not managed here.
+- A DNS record for `minecraft.${EXTERNAL_DOMAIN}`, the address in the custom server list. The public DNS-only record is managed in Terraform (`infra/terraform/cloudflare/dns.tf`); the LAN record is not managed here.
 
 ## Operations
 

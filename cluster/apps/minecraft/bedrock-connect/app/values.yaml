@@ -57,7 +57,7 @@ configMaps:
       custom_servers.json: |-
         [
           {
-            "name": "Fambam",
+            "name": "Chicken",
             "address": "minecraft.${EXTERNAL_DOMAIN}",
             "port": 19132
           }
