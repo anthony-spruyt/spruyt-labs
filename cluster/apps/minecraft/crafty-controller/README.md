@@ -20,7 +20,8 @@ The `bedrock-tcp` Service shares that IP and exposes TCP 19132 and 19139 for Net
 Each server's `server.properties` lists its UDP ports in `server-udp-ports`, one `<ip>:<port>:<port>` line per port, because the server advertises only its own pod IP otherwise ([BDS-23108](https://bugs.mojang.com/browse/BDS/issues/BDS-23108)). Ranges and comma lists are mis-parsed ([BDS-23126](https://bugs.mojang.com/browse/BDS/issues/BDS-23126)); switch to one range line once that is fixed.
 LAN-only servers advertise `${CRAFTY_CONTROLLER_IP4}`. Keep `enable-lan-visibility=false` on all but one server, because LAN discovery binds a fixed UDP port.
 
-Another NetherNet server needs its TCP port added to the `bedrock-tcp` Service and the `allow-crafty-bedrock-ingress` policy. Helm upgrades this release with a client-side three-way merge, which keys container ports on the number alone and drops a TCP port that shares its number with a UDP one ([kubernetes#105610](https://github.com/kubernetes/kubernetes/issues/105610)). The Service targets the port number, so the container ports need no TCP entry. Add them if the release moves to server-side apply.
+Another NetherNet server needs its TCP port added to the `bedrock-tcp` Service and the `allow-crafty-bedrock-ingress` policy. Helm upgrades this release with a client-side three-way merge, which keys container ports on the number alone and drops a TCP port that shares its number with a UDP one ([kubernetes#105610](https://github.com/kubernetes/kubernetes/issues/105610)). The Service targets the
+port number, so the container ports need no TCP entry. Add them if the release moves to server-side apply.
 
 ### First login
 
