@@ -194,7 +194,7 @@ service:
       bedrock-8:
         port: 19139
         protocol: UDP
-      # Above 32767 so Cilium's masquerade keeps the source port (see README Remote play)
+      # Above 60999 so Cilium's masquerade keeps the source port (see README Remote play)
       chicken-1:
         port: 61132
         protocol: UDP

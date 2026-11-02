@@ -8,7 +8,7 @@ Web panel that lets the kids create and run Minecraft Bedrock servers and instal
 
 ### Ports are fixed in advance
 
-The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, plus Chicken's 61132-61136. Fambam uses 19137-19139, so 19132-19136 are free for a LAN-only server. Any other server needs its UDP ports added to the Service in `app/values.yaml` and to `allow-crafty-bedrock-ingress`; an internet-reachable one needs ports above 32767 (see Remote play).
+The `bedrock` LoadBalancer Service (IP `${CRAFTY_CONTROLLER_IP4}`) exposes UDP 19132-19139 up front, plus Chicken's 61132-61136. Fambam uses 19137-19139, so 19132-19136 are free for a LAN-only server. Any other server needs its UDP ports added to the Service in `app/values.yaml` and to `allow-crafty-bedrock-ingress`; an internet-reachable one needs ports above 60999 (see Remote play).
 
 The `bedrock-tcp` Service shares that IP and exposes TCP 19132 and 19139 for NetherNet signaling:
 
@@ -38,7 +38,7 @@ Bedrock 26.60 clients only speak NetherNet: HTTP signaling on the TCP `server-po
 - The public DNS-only record `minecraft.${EXTERNAL_DOMAIN}` exists (`infra/terraform/cloudflare/dns.tf`).
 - The router forwards TCP 19132 and UDP 61132-61136 to `${CRAFTY_CONTROLLER_IP4}` on the same ports. The forwards live in UniFi, not in Git.
 - `server-udp-ports` advertises the home WAN IP instead of `${CRAFTY_CONTROLLER_IP4}`.
-- The UDP ports are above 32767. Cilium's BPF masquerade keeps a pod's source port only in 32768-65535 and picks a random one per destination below that, so the server's ICE checks would leave from a port it never advertised and remote clients would fall back to a distant Microsoft relay.
+- The UDP ports are above 60999. Cilium's BPF masquerade keeps a pod's source port only in 32768-65535 and picks a random one per destination below that, so the server's ICE checks would leave from a port it never advertised and remote clients would fall back to a distant Microsoft relay.
 
 On the LAN the hostname resolves to `${CRAFTY_CONTROLLER_IP4}`, so signaling stays local and only the UDP game traffic loops back to the WAN IP through the router's hairpin NAT. Chicken's allow-list is on.
 
