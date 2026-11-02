@@ -34,7 +34,7 @@ UPS --USB--> nut-server (UPS node) --:3493--> LoadBalancer ${NUT_IP4} --> Home A
 After `SHUTDOWN_DELAY` seconds on battery (`OB` status):
 
 1. `ceph osd set noout`
-2. Cordon workers, then evict workloads on them (excluding `rook-ceph`, `kube-system`, `nut-system`, `kyverno`) so RBD mounts are released before storage goes away. Finished pods (`Succeeded`/`Failed`) are skipped, and a refused delete is retried on every poll while the drain waits. If the drain fails, the Ceph scale-down is skipped.
+2. Cordon workers, then evict workloads on them (excluding `rook-ceph`, `kube-system`, `nut-system`, `kyverno`) so RBD mounts are released before storage goes away. `kyverno` stays up until its node shuts down because its fail-closed webhooks gate pod creates and updates. Pods that finished before the drain (`Succeeded`/`Failed`, not being deleted) are skipped, and a refused delete is retried on every poll while the drain waits. If the drain fails, the Ceph scale-down is skipped.
 3. Scale Ceph to 0: operator -> MDS -> OSD -> MON -> MGR.
 4. Shut down workers concurrently, then control-plane nodes one at a time. The node the orchestrator runs on goes last.
 

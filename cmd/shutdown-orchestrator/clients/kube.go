@@ -117,7 +117,6 @@ func (k *RealKubeClient) DeploymentExists(ctx context.Context, ns, name string) 
 // ExecInDeployment finds the first ready pod for the given deployment and
 // executes a command, returning the combined stdout output.
 func (k *RealKubeClient) ExecInDeployment(ctx context.Context, ns, deploy string, cmd []string) (string, error) {
-  // Get the deployment to find its selector.
   dep, err := k.clientset.AppsV1().Deployments(ns).Get(ctx, deploy, metav1.GetOptions{})
   if err != nil {
     return "", fmt.Errorf("getting deployment %s/%s: %w", ns, deploy, err)
@@ -135,7 +134,6 @@ func (k *RealKubeClient) ExecInDeployment(ctx context.Context, ns, deploy string
     return "", fmt.Errorf("listing pods for deployment %s/%s: %w", ns, deploy, err)
   }
 
-  // Find the first ready pod.
   var targetPod string
   for _, pod := range pods.Items {
     if isPodReady(&pod) {
@@ -239,7 +237,6 @@ func (k *RealKubeClient) GetNodes(ctx context.Context) ([]Node, error) {
         break
       }
     }
-    // Extract the InternalIP address from node status.
     var ip string
     for _, addr := range n.Status.Addresses {
       if addr.Type == corev1.NodeInternalIP {
@@ -351,7 +348,6 @@ func (k *RealKubeClient) DeletePod(ctx context.Context, ns, name string, gracePe
 	return nil
 }
 
-// isPodReady returns true if the pod is running and its Ready condition is true.
 func isPodReady(pod *corev1.Pod) bool {
   if pod.Status.Phase != corev1.PodRunning {
     return false
@@ -364,5 +360,4 @@ func isPodReady(pod *corev1.Pod) bool {
   return false
 }
 
-// Compile-time interface conformance check.
 var _ KubeClient = (*RealKubeClient)(nil)

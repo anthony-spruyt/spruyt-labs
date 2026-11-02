@@ -37,8 +37,8 @@ func (p *DrainPhase) CordonWorkers(ctx context.Context, workerNames []string) er
 }
 
 // EvictWorkloads deletes non-DaemonSet pods (excluding specified namespaces) from
-// worker nodes and waits for them to terminate. Excluded namespaces (rook-ceph,
-// kube-system, nut-system, kyverno) contain pods that must remain running during drain.
+// worker nodes and waits for them to terminate. Pods in the excluded namespaces
+// must remain running during drain.
 func (p *DrainPhase) EvictWorkloads(ctx context.Context, workerNames []string, excludeNamespaces []string, gracePeriod int64) error {
 	excludeSet := make(map[string]bool, len(excludeNamespaces))
 	for _, ns := range excludeNamespaces {
@@ -79,9 +79,10 @@ func (p *DrainPhase) UncordonWorkers(ctx context.Context, workerNames []string) 
 	return nil
 }
 
-// isFinished reports whether a pod has run to completion; it holds no mounts.
+// isFinished reports whether a pod completed before the drain; it holds no mounts.
+// A deleted pod turns Succeeded/Failed before the kubelet unmounts its volumes, so it does not count.
 func isFinished(pod clients.PodInfo) bool {
-	return pod.Phase == string(corev1.PodSucceeded) || pod.Phase == string(corev1.PodFailed)
+	return !pod.Terminating && (pod.Phase == string(corev1.PodSucceeded) || pod.Phase == string(corev1.PodFailed))
 }
 
 // waitForPodsGone polls until no evictable pods remain on the given nodes,
@@ -89,10 +90,12 @@ func isFinished(pod clients.PodInfo) bool {
 func (p *DrainPhase) waitForPodsGone(ctx context.Context, workerNames []string, excludeSet map[string]bool, gracePeriod int64) error {
 	for {
 		remaining := 0
+		listFailed := false
 		for _, nodeName := range workerNames {
 			pods, err := p.kube.GetPodsOnNode(ctx, nodeName)
 			if err != nil {
 				p.logger.Warn("error listing pods during drain wait", "node", nodeName, "error", err)
+				listFailed = true
 				continue
 			}
 			for _, pod := range pods {
@@ -105,16 +108,16 @@ func (p *DrainPhase) waitForPodsGone(ctx context.Context, workerNames []string, 
 				}
 			}
 		}
-		if remaining == 0 {
+		if remaining == 0 && !listFailed {
 			p.logger.Info("all evictable pods terminated")
 			return nil
 		}
-		p.logger.Info("waiting for pods to terminate", "remaining", remaining)
+		p.logger.Info("waiting for pods to terminate", "remaining", remaining, "listFailed", listFailed)
 		timer := time.NewTimer(p.pollInterval)
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return fmt.Errorf("drain timed out with %d pods still running: %w", remaining, ctx.Err())
+			return fmt.Errorf("drain timed out with %d pods still running (pod list failed on a node: %t): %w", remaining, listFailed, ctx.Err())
 		case <-timer.C:
 		}
 	}

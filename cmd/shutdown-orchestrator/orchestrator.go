@@ -72,7 +72,6 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
     workerNames[i] = w.Name
   }
 
-  // Check whether we have enough budget for non-critical phases.
   skipNonCritical := false
   if deadline, ok := ctx.Deadline(); ok {
     remaining := time.Until(deadline)
@@ -187,7 +186,6 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
   }
 
-  // Verify cluster health — log warning only, do not fail recovery.
   if err := o.verifyHealth(ctx); err != nil {
     o.logger.Warn("post-recovery health check failed", "error", err)
   }
@@ -410,7 +408,6 @@ func (o *Orchestrator) uncordonWorkers(ctx context.Context) error {
 // nodeConfig builds a NodeConfig from the orchestrator's Config.
 // It resolves configured IPs to real Kubernetes node names via the API.
 func (o *Orchestrator) nodeConfig(ctx context.Context) (phases.NodeConfig, error) {
-  // Build IP-to-name map from the Kubernetes API.
   ipToName, err := o.resolveNodeNames(ctx)
   if err != nil {
     return phases.NodeConfig{}, fmt.Errorf("resolving node names: %w", err)

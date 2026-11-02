@@ -337,7 +337,7 @@ func TestOrchestratorShutdownLeavesKyvernoRunningDuringDrain(t *testing.T) {
     t.Errorf("drain should delete default/app, calls: %v", calls)
   }
   if slices.Contains(calls, "DeletePod:kyverno/kyverno-admission-controller") {
-    t.Error("drain must leave the kyverno namespace running: its webhook gates pod deletes")
+    t.Error("drain must leave the kyverno namespace running: its fail-closed webhooks gate pod writes")
   }
 }
 

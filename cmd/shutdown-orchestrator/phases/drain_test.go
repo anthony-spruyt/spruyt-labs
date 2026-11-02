@@ -11,14 +11,16 @@ import (
 
 // drainMockKube implements clients.KubeClient for drain phase tests.
 type drainMockKube struct {
-	cordonedNodes   []string
-	uncordonedNodes []string
-	deletedPods     []string
-	podsByNode      map[string][]clients.PodInfo
-	cordonErr       error
-	uncordonErr     error
-	neverTerminate  bool           // if true, DeletePod leaves pods in podsByNode, marked Terminating
-	refuseDeletes   map[string]int // ns/name -> number of DeletePod calls to refuse before accepting
+	cordonedNodes       []string
+	uncordonedNodes     []string
+	deletedPods         []string
+	podsByNode          map[string][]clients.PodInfo
+	cordonErr           error
+	uncordonErr         error
+	deleteGraces        []int64
+	neverTerminate      bool           // if true, DeletePod leaves pods in podsByNode, marked Terminating
+	refuseDeletes       map[string]int // ns/name -> number of DeletePod calls to refuse before accepting
+	failListAfterDelete bool           // if true, GetPodsOnNode errors once any pod has been deleted
 }
 
 func (m *drainMockKube) CordonNode(_ context.Context, name string) error {
@@ -38,11 +40,15 @@ func (m *drainMockKube) UncordonNode(_ context.Context, name string) error {
 }
 
 func (m *drainMockKube) GetPodsOnNode(_ context.Context, nodeName string) ([]clients.PodInfo, error) {
+	if m.failListAfterDelete && len(m.deletedPods) > 0 {
+		return nil, errors.New("apiserver unavailable")
+	}
 	return m.podsByNode[nodeName], nil
 }
 
-func (m *drainMockKube) DeletePod(_ context.Context, ns, name string, _ int64) error {
+func (m *drainMockKube) DeletePod(_ context.Context, ns, name string, gracePeriod int64) error {
 	m.deletedPods = append(m.deletedPods, ns+"/"+name)
+	m.deleteGraces = append(m.deleteGraces, gracePeriod)
 	if m.refuseDeletes[ns+"/"+name] > 0 {
 		m.refuseDeletes[ns+"/"+name]--
 		return errors.New("admission webhook denied the request")
@@ -192,7 +198,9 @@ func TestDrainEvictWorkloadsSkipsFinishedPods(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	_ = phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30)
+	if err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30); err != nil {
+		t.Fatalf("EvictWorkloads() error: %v", err)
+	}
 	if len(mock.deletedPods) != 1 || mock.deletedPods[0] != "default/app-pod" {
 		t.Errorf("deleted pods = %v, want only default/app-pod", mock.deletedPods)
 	}
@@ -214,6 +222,26 @@ func TestDrainEvictWorkloadsDoesNotWaitOnFinishedPods(t *testing.T) {
 
 	if err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30); err != nil {
 		t.Fatalf("EvictWorkloads() error: %v", err)
+	}
+}
+
+func TestDrainEvictWorkloadsWaitsOnDeletedPodInTerminalPhase(t *testing.T) {
+	mock := &drainMockKube{
+		podsByNode: map[string][]clients.PodInfo{
+			"worker-1": {
+				{Namespace: "databases", Name: "pg-1", NodeName: "worker-1", Phase: "Failed", Terminating: true},
+			},
+		},
+		neverTerminate: true,
+	}
+	phase := NewDrainPhase(mock, newNodeTestLogger())
+	phase.pollInterval = 10 * time.Millisecond
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	if err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30); err == nil {
+		t.Fatal("EvictWorkloads() returned before a deleted pod was gone: the kubelet sets its terminal phase before unmounting volumes")
 	}
 }
 
@@ -259,6 +287,11 @@ func TestDrainEvictWorkloadsRetriesRefusedDelete(t *testing.T) {
 	if len(mock.deletedPods) != 3 {
 		t.Errorf("expected 3 delete attempts (2 refused, 1 accepted), got %d: %v", len(mock.deletedPods), mock.deletedPods)
 	}
+	for i, grace := range mock.deleteGraces {
+		if grace != 30 {
+			t.Errorf("delete attempt %d used grace period %d, want 30", i, grace)
+		}
+	}
 }
 
 func TestDrainEvictWorkloadsDoesNotRedeleteTerminatingPods(t *testing.T) {
@@ -301,6 +334,30 @@ func TestDrainEvictWorkloadsTimeout(t *testing.T) {
 	err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30)
 	if err == nil {
 		t.Fatal("EvictWorkloads() should return error when context cancelled with stuck pods")
+	}
+}
+
+func TestDrainEvictWorkloadsFailedListIsNotSuccess(t *testing.T) {
+	mock := &drainMockKube{
+		podsByNode: map[string][]clients.PodInfo{
+			"worker-1": {
+				{Namespace: "default", Name: "app-pod", NodeName: "worker-1", Phase: "Running"},
+			},
+		},
+		failListAfterDelete: true,
+	}
+	phase := NewDrainPhase(mock, newNodeTestLogger())
+	phase.pollInterval = 10 * time.Millisecond
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	err := phase.EvictWorkloads(ctx, []string{"worker-1"}, nil, 30)
+	if err == nil {
+		t.Fatal("EvictWorkloads() returned nil although no pod list succeeded after the delete")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("EvictWorkloads() error = %v, want context deadline exceeded", err)
 	}
 }
 
