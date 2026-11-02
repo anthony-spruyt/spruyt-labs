@@ -60,14 +60,14 @@ Labels left by an earlier verdict stay until the skill merges the PR or adds a n
 
 **SAFE**
 
-1. Check CI: `gh pr checks <N>`. Ignore `renovate/stability-days`, `Mergify` (they never clear on early-triggered PRs) and `Agent triage` (not CI); none blocks a direct merge. If other checks are pending, re-check every minute until they finish (don't use `--watch`, it waits on the ignored checks too). If any other check fails, treat as not SAFE and follow the **NEEDS_REVIEW** steps (label and comment).
+1. Check CI: have a background `chore-runner` run `ci-status.sh --wait --repo anthony-spruyt/spruyt-labs --pr <N>`. It ignores `renovate/stability-days`, the Mergify checks and `Agent triage`, none of which blocks a direct merge. Green: go on. Failed: treat as not SAFE and follow the **NEEDS_REVIEW** steps (label and comment). Pending or not-started: run it once more, then tell the user if it still isn't green.
 2. Remove stale labels (above), then merge: `gh pr merge <N> --squash`. If branch rules block it, approve with `gh pr review <N> --approve` and merge again.
 3. If the PR touched `cluster/`, run `cluster-validator` (no issue number needed). If one is already running, wait for it to finish, then run.
 
 **FIXABLE**
 
 1. Comment on the PR with the verdict, summary, fix, and reasons: `gh pr comment <N> --body-file -`
-2. Do not merge or label. Offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, fix on the PR branch, qa-validator, push, then re-run this skill.
+2. Do not merge or label. Offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, a `builder` fixes it on the PR branch, qa-validator, a fresh reviewer READY, `push-reviewed.sh` to the PR branch, then re-run this skill.
 
 **BLOCKED**
 

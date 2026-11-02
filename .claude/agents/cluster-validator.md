@@ -321,7 +321,7 @@ If the test job fails or times out: severity is HIGH, default action is ROLLBACK
 [exact cause]
 ### Required Fix
 1. **File**: path/to/file.yaml — **Problem**: [error] — **Fix**: [exact change]
-2. Commit and push the fix
+2. Land the fix per the `orchestration` skill
 3. Re-invoke cluster-validator to confirm
 ### Why Roll-Forward
 [isolated issue, clear fix, low impact]
