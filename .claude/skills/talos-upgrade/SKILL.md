@@ -154,7 +154,7 @@ If you can't finish this phase in the session (for example the pin isn't on main
 
 ### Phase 9: Final Report
 
-1. If the pin PR touched `cluster/`, run cluster-validator per `.claude/rules/validation.md` with the upgrade issue number and the range from the last validated `origin/main` sha (the start of the first range `push-reviewed.sh` printed in this run, else `origin/main` before the pin merged) to `origin/main`.
+1. If the pin PR touched `cluster/`, run cluster-validator per `.claude/rules/validation.md` with the upgrade issue number and the base sha `.claude/rules/orchestration-local.md` defines.
 2. Post the completion report ("Upgrade Complete" in [references/templates.md](references/templates.md)) to the issue.
 3. Close the tracking issue after cluster-validator confirms, or once the report is posted if it didn't need to run.
 
