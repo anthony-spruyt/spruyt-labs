@@ -205,3 +205,6 @@ service:
       bedrock-tcp:
         port: 19132
         protocol: TCP
+      bedrock-tcp-8:
+        port: 19139
+        protocol: TCP

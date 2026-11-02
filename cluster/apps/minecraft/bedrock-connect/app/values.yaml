@@ -60,6 +60,11 @@ configMaps:
             "name": "Chicken",
             "address": "minecraft.${EXTERNAL_DOMAIN}",
             "port": 19132
+          },
+          {
+            "name": "Fambam",
+            "address": "minecraft.${EXTERNAL_DOMAIN}",
+            "port": 19139
           }
         ]
       config.yml: |-
