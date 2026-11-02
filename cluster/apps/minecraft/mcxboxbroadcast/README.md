@@ -33,7 +33,7 @@ The bot advertises a session to its friends. When one joins, it relays the clien
 
 ### Configuration
 
-While Chicken answers, the session's host and world names come from Chicken itself (its `server-name` and `level-name`). The `session-info` names in `app/values.yaml` show only when Chicken doesn't answer. Don't rename Chicken's `level-name`, because it names the world folder.
+While Chicken answers, the session's names come from Chicken itself: the host name comes from its `level-name` and the world name from its `server-name`. The `session-info` names in `app/values.yaml` show only when Chicken doesn't answer. Don't rename Chicken's `level-name`, because it names the world folder.
 
 The init container copies `config.yml` from the `mcxboxbroadcast` ConfigMap over the PVC copy on every start, because the app rewrites that file when it migrates the config version. Change settings in `app/values.yaml`, not on the PVC. Keep `config-version` equal to the `CONFIG_VERSION` the pinned image expects.
 
