@@ -17,13 +17,15 @@
   "search.useGlobalIgnoreFiles": false,
   "files.autoSave": "afterDelay",
   "files.autoSaveWorkspaceFilesOnly": true,
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
+  "yaml.format.enable": false,
   "editor.codeActions.triggerOnFocusChange": false,
   "explorer.sortOrder": "type",
   "editor.tabSize": 2,
   "chat.agent.enabled": false,
   "workbench.colorTheme": "Forest Ash Sumi Moon",
   "[terraform]": {
-    "editor.defaultFormatter": "hashicorp.terraform"
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true
   }
 }
