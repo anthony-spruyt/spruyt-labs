@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.31](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.30...shutdown-orchestrator/v1.1.31) (2026-11-03)
+
+
+### Bug Fixes
+
+* **shutdown-orchestrator:** uncordon workers at startup before preflight ([14930e2](https://github.com/anthony-spruyt/spruyt-labs/commit/14930e2e71e9679d03922f8456c38f053bb40572)), closes [#4085](https://github.com/anthony-spruyt/spruyt-labs/issues/4085)
+* **shutdown-orchestrator:** uncordon workers first and wait for OSDs in recovery ([04e1c2c](https://github.com/anthony-spruyt/spruyt-labs/commit/04e1c2c3e579537244448d7a4518c672b544ec7c)), closes [#4085](https://github.com/anthony-spruyt/spruyt-labs/issues/4085)
+
 ## [1.1.30](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.29...shutdown-orchestrator/v1.1.30) (2026-11-02)
 
 
