@@ -21,14 +21,12 @@ type orchestratorMockKube struct {
   mu    sync.Mutex
   calls []string
 
-  // CNPG config
   clusters          []clients.CNPGCluster
   getClustersErr    error
   getClustersBlocks bool
   // Track hibernation state changes so Wake sees hibernated=true after Hibernate
   hibernationState map[string]bool
 
-  // Ceph config
   toolsExists        bool
   cephHealth         string
   isCephNooutResult  bool
@@ -37,7 +35,6 @@ type orchestratorMockKube struct {
   replicasErr        error
   scaleErr           error
 
-  // Node config
   nodes        []clients.Node
   nodesErr     error
   uncordonErrs map[string]error
