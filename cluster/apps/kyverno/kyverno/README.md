@@ -7,6 +7,8 @@ Admission controller for the cluster's mutating and validating policies (see [ky
 ## Operations
 
 - **`kube-system` and `kyverno` are never mutated.** The chart excludes both from the webhooks to avoid a control-plane deadlock, so no policy - including the HelmRelease defaults - applies to resources there. Set fields explicitly.
+- **Pods in `rook-ceph` and `nut-system` skip Kyverno admission.** `config.matchConditions` makes the API server skip the `ClusterPolicy` webhooks for them, so power-cut recovery can start the Ceph pods and the shutdown orchestrator before Kyverno is up. Admission applies no policy to those Pods, including new ones.
+- **New Pod policies must keep that skip.** A `ClusterPolicy` that sets its own `webhookConfiguration.matchConditions` replaces it for its webhook, so add the same condition to that list. The CEL policy kinds (such as `ValidatingPolicy`) build their own webhooks; give a Pod-matching one a `matchConstraints.namespaceSelector` that excludes both namespaces.
 - **`crdWatcher: true`** is what lets policies match CRD kinds such as `HelmRelease`; without it the webhook never registers them and CRD-targeted policies silently do nothing.
 - **Validate rules that match `Pod` set `operations: [CREATE, UPDATE]`.** With no `operations`, Kyverno also registers pod `DELETE` on its fail-closed webhook, and once the admission controller is gone (node drain, UPS shutdown) the kubelet's final pod delete is refused and pods stay `Terminating`.
 - **Cleanup controller RBAC**: `cleanupController.rbac.clusterRole.extraResources` grants pod `delete`. The chart does not, and `ClusterCleanupPolicy` objects that target pods (the agent pod cleanup) fail without it.

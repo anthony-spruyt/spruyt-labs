@@ -3,7 +3,12 @@
 # Documentation: https://github.com/kyverno/kyverno/blob/main/charts/kyverno/README.md
 # Default values: https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml
 
-# Admission controller configuration
+config:
+  matchConditions:
+    # Recovery must start these pods while Kyverno is down
+    - name: skip-boot-critical-pods
+      expression: "!(request.kind.group == '' && request.kind.kind == 'Pod' && request.namespace in ['rook-ceph', 'nut-system'])"
+
 admissionController:
   # Enable CRD watcher so Kyverno discovers CRD-based resources (e.g. HelmRelease)
   # and registers them in its admission webhook
@@ -20,7 +25,6 @@ admissionController:
   serviceMonitor:
     enabled: true
 
-# Background controller configuration
 backgroundController:
   priorityClassName: critical-infrastructure
   replicas: 1
@@ -33,7 +37,6 @@ backgroundController:
   serviceMonitor:
     enabled: true
 
-# Cleanup controller configuration
 cleanupController:
   priorityClassName: critical-infrastructure
   replicas: 1
@@ -58,7 +61,6 @@ cleanupController:
   serviceMonitor:
     enabled: true
 
-# Reports controller configuration
 reportsController:
   priorityClassName: critical-infrastructure
   replicas: 1
