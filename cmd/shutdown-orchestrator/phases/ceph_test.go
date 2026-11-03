@@ -2,6 +2,7 @@ package phases
 
 import (
   "context"
+  "errors"
   "fmt"
   "io"
   "log/slog"
@@ -26,6 +27,7 @@ type mockCephKubeClient struct {
   deploymentExistsErr    map[string]error
   execInDeploymentResult map[string]string
   execInDeploymentErr    map[string]error
+  execFunc               func(cmd []string) (string, error)
   scaleDeploymentErr     map[string]error
   listDeploymentResult   map[string][]string
   listDeploymentErr      map[string]error
@@ -83,6 +85,9 @@ func (m *mockCephKubeClient) DeploymentExists(ctx context.Context, ns, name stri
 
 func (m *mockCephKubeClient) ExecInDeployment(ctx context.Context, ns, deploy string, cmd []string) (string, error) {
   m.execInDeploymentCalls = append(m.execInDeploymentCalls, execInDeploymentCall{ns, deploy, cmd})
+  if m.execFunc != nil {
+    return m.execFunc(cmd)
+  }
   key := ns + "/" + deploy
   if err, ok := m.execInDeploymentErr[key]; ok {
     return "", err
@@ -416,17 +421,107 @@ func TestCephWaitForCephHealthyOK(t *testing.T) {
   }
 }
 
-func TestCephWaitForCephHealthyWarn(t *testing.T) {
+const (
+  osdStatAllUp   = `{"epoch":16020,"num_osds":3,"num_up_osds":3,"num_in_osds":3}`
+  osdStatNoneUp  = `{"epoch":16020,"num_osds":3,"num_up_osds":0,"num_in_osds":3}`
+  osdStatNoOSDs  = `{"epoch":1,"num_osds":0,"num_up_osds":0,"num_in_osds":0}`
+  healthOSDsDown = "HEALTH_WARN noout flag(s) set; 3 osds down; 3 hosts (3 osds) down"
+  healthNooutSet = "HEALTH_WARN noout flag(s) set"
+)
+
+func fakeCephStatus(health string, osdStat func(call int) (string, error)) (func(cmd []string) (string, error), *int) {
+  statCalls := 0
+  fn := func(cmd []string) (string, error) {
+    switch strings.Join(cmd, " ") {
+    case "ceph health":
+      return health, nil
+    case "ceph osd stat -f json":
+      statCalls++
+      return osdStat(statCalls)
+    }
+    return "", fmt.Errorf("unexpected command %v", cmd)
+  }
+  return fn, &statCalls
+}
+
+func TestCephWaitForCephHealthyWarnKeepsWaitingWhileOSDsDown(t *testing.T) {
   mock := newMockCephKubeClient()
-  mock.execInDeploymentResult["rook-ceph/rook-ceph-tools"] = "HEALTH_WARN noout flag(s) set"
+  mock.execFunc, _ = fakeCephStatus(healthOSDsDown, func(int) (string, error) { return osdStatNoneUp, nil })
   phase := NewCephPhase(mock, testLogger())
+  phase.healthBackoff = time.Millisecond
+
+  ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+  defer cancel()
+
+  err := phase.WaitForCephHealthy(ctx)
+  if !errors.Is(err, context.DeadlineExceeded) {
+    t.Fatalf("WaitForCephHealthy() = %v, want a timeout while all OSDs are down", err)
+  }
+}
+
+func TestCephWaitForCephHealthyWarnPassesOnceOSDsUp(t *testing.T) {
+  mock := newMockCephKubeClient()
+  fn, statCalls := fakeCephStatus(healthOSDsDown, func(call int) (string, error) {
+    if call < 3 {
+      return osdStatNoneUp, nil
+    }
+    return osdStatAllUp, nil
+  })
+  mock.execFunc = fn
+  phase := NewCephPhase(mock, testLogger())
+  phase.healthBackoff = time.Millisecond
 
   ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
   defer cancel()
 
-  err := phase.WaitForCephHealthy(ctx)
-  if err != nil {
+  if err := phase.WaitForCephHealthy(ctx); err != nil {
     t.Fatalf("WaitForCephHealthy() returned error: %v", err)
+  }
+  if *statCalls != 3 {
+    t.Errorf("osd stat polled %d times, want 3 (two with OSDs down, one with all up)", *statCalls)
+  }
+}
+
+func TestCephWaitForCephHealthyWarnOnlyNooutAllOSDsUp(t *testing.T) {
+  mock := newMockCephKubeClient()
+  mock.execFunc, _ = fakeCephStatus(healthNooutSet, func(int) (string, error) { return osdStatAllUp, nil })
+  phase := NewCephPhase(mock, testLogger())
+  phase.healthBackoff = time.Millisecond
+
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  defer cancel()
+
+  if err := phase.WaitForCephHealthy(ctx); err != nil {
+    t.Fatalf("WaitForCephHealthy() returned error: %v", err)
+  }
+}
+
+func TestCephWaitForCephHealthyNeverPasses(t *testing.T) {
+  tests := []struct {
+    name    string
+    health  string
+    osdStat func(int) (string, error)
+  }{
+    {"HEALTH_ERR with all OSDs up", "HEALTH_ERR 1 pgs inactive", func(int) (string, error) { return osdStatAllUp, nil }},
+    {"HEALTH_WARN with zero OSDs", healthNooutSet, func(int) (string, error) { return osdStatNoOSDs, nil }},
+    {"HEALTH_WARN with unparsable osd stat", healthNooutSet, func(int) (string, error) { return "not json", nil }},
+    {"HEALTH_WARN with osd stat exec error", healthNooutSet, func(int) (string, error) { return "", errors.New("exec failed") }},
+  }
+  for _, tt := range tests {
+    t.Run(tt.name, func(t *testing.T) {
+      mock := newMockCephKubeClient()
+      mock.execFunc, _ = fakeCephStatus(tt.health, tt.osdStat)
+      phase := NewCephPhase(mock, testLogger())
+      phase.healthBackoff = time.Millisecond
+
+      ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+      defer cancel()
+
+      err := phase.WaitForCephHealthy(ctx)
+      if !errors.Is(err, context.DeadlineExceeded) {
+        t.Fatalf("WaitForCephHealthy() = %v, want a timeout", err)
+      }
+    })
   }
 }
 

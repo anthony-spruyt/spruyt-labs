@@ -30,6 +30,7 @@ type orchestratorMockKube struct {
 
   // Ceph config
   toolsExists        bool
+  cephHealth         string
   isCephNooutResult  bool
   isCephNooutErr     error
   deploymentReplicas map[string]int32
@@ -107,6 +108,9 @@ func (m *orchestratorMockKube) ExecInDeployment(ctx context.Context, ns, deploy 
     m.record("ExecInDeployment:" + cmd[2] + ":" + cmd[3])
   case len(cmd) == 2 && cmd[0] == "ceph" && cmd[1] == "health":
     m.record("ExecInDeployment:ceph:health")
+    if m.cephHealth != "" {
+      return m.cephHealth, nil
+    }
     return "HEALTH_OK", nil
   default:
     m.record("ExecInDeployment")
@@ -798,5 +802,95 @@ func TestOrchestratorIsCephScaledDownError(t *testing.T) {
   }
   if scaled {
     t.Error("IsCephScaledDown() = true, want false when the replicas check fails")
+  }
+}
+
+func assertUncordonBeforeCeph(t *testing.T, calls []string) {
+  t.Helper()
+
+  uncordonIdx := slices.Index(calls, "UncordonNode:ms-01-1")
+  cephIdx := slices.IndexFunc(calls, func(c string) bool {
+    return strings.HasPrefix(c, "ScaleDeployment:") || strings.HasPrefix(c, "ListDeploymentNames:") ||
+      strings.HasPrefix(c, "ExecInDeployment") || strings.HasPrefix(c, "DeploymentExists:")
+  })
+  if uncordonIdx == -1 {
+    t.Fatalf("workers were not uncordoned, calls: %v", calls)
+  }
+  if cephIdx == -1 {
+    t.Fatalf("no Ceph call found, calls: %v", calls)
+  }
+  if uncordonIdx > cephIdx {
+    t.Errorf("uncordon (idx %d) must come before the first Ceph call (idx %d): Ceph pods are pinned to the cordoned workers", uncordonIdx, cephIdx)
+  }
+}
+
+func TestOrchestratorRecoverFromZeroUncordonsWorkersBeforeCeph(t *testing.T) {
+  kube := &orchestratorMockKube{toolsExists: true}
+  orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+
+  if err := orch.RecoverFromZero(context.Background()); err != nil {
+    t.Fatalf("RecoverFromZero() error: %v", err)
+  }
+
+  assertUncordonBeforeCeph(t, kube.getCalls())
+}
+
+func TestOrchestratorRecoverUncordonsWorkersBeforeCeph(t *testing.T) {
+  kube := &orchestratorMockKube{toolsExists: true}
+  orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+
+  if err := orch.Recover(context.Background()); err != nil {
+    t.Fatalf("Recover() error: %v", err)
+  }
+
+  assertUncordonBeforeCeph(t, kube.getCalls())
+}
+
+func TestOrchestratorRecoveryUnsetsNooutOnlyAfterHealthWait(t *testing.T) {
+  recoveries := []struct {
+    name string
+    run  func(*Orchestrator, context.Context) error
+  }{
+    {"Recover", (*Orchestrator).Recover},
+    {"RecoverFromZero", (*Orchestrator).RecoverFromZero},
+  }
+  healths := []struct {
+    name       string
+    health     string
+    wantUnset  bool
+    wantErrMsg string
+  }{
+    {"healthy", "HEALTH_OK", true, ""},
+    {"health wait fails", "HEALTH_ERR 3 osds down", false, "ceph-health-wait"},
+  }
+
+  for _, rec := range recoveries {
+    for _, h := range healths {
+      t.Run(rec.name+"/"+h.name, func(t *testing.T) {
+        kube := &orchestratorMockKube{
+          toolsExists: true,
+          cephHealth:  h.health,
+          clusters:    []clients.CNPGCluster{{Namespace: "db", Name: "pg-main", Hibernated: true}},
+        }
+        orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+        orch.cfg.CephHealthWaitTimeout = 50 * time.Millisecond
+
+        err := rec.run(orch, context.Background())
+        if h.wantErrMsg == "" && err != nil {
+          t.Fatalf("%s() error: %v", rec.name, err)
+        }
+        if h.wantErrMsg != "" && (err == nil || !strings.Contains(err.Error(), h.wantErrMsg)) {
+          t.Fatalf("%s() error = %v, want it to contain %q", rec.name, err, h.wantErrMsg)
+        }
+
+        calls := kube.getCalls()
+        if got := slices.Contains(calls, "ExecInDeployment:unset:noout"); got != h.wantUnset {
+          t.Errorf("noout unset = %t, want %t", got, h.wantUnset)
+        }
+        if !slices.Contains(calls, "SetCNPGHibernation:false") {
+          t.Error("cnpg-cleanup must run even when an earlier Ceph phase fails")
+        }
+      })
+    }
   }
 }

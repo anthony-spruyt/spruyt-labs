@@ -135,14 +135,22 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
 }
 
 // Recover runs the full recovery sequence:
-// 1. Wait for Ceph tools pod
-// 2. Ceph scale up
-// 3. Ceph unset noout
-// 4. CNPG cleanup (backward compat: clears hibernation annotations left by older versions)
+// 1. Uncordon workers (first: Ceph mon/OSD pods are pinned to them)
+// 2. Wait for Ceph tools pod
+// 3. Ceph scale up
+// 4. Ceph health wait (HEALTH_OK, or HEALTH_WARN with every OSD up)
+// 5. Ceph unset noout (skipped if the health wait failed, so noout stays set)
+// 6. CNPG cleanup (backward compat: clears hibernation annotations left by older versions)
 func (o *Orchestrator) Recover(ctx context.Context) error {
   o.logger.Info("starting recovery sequence")
 
   var errs []error
+
+  if err := runPhase(ctx, o.logger, "uncordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    return o.uncordonWorkers(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
+  }
 
   if err := runPhase(ctx, o.logger, "ceph-wait-tools", o.cfg.CephWaitToolsTimeout, func(pctx context.Context) error {
     return o.ceph.WaitForToolsPod(pctx)
@@ -165,9 +173,8 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
       return o.ceph.WaitForCephHealthy(pctx)
     }); err != nil {
       errs = append(errs, fmt.Errorf("ceph-health-wait: %w", err))
-    }
-
-    if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+      o.logger.Warn("skipping ceph noout unset because ceph is not healthy")
+    } else if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
       return o.ceph.UnsetNoout(pctx)
     }); err != nil {
       errs = append(errs, fmt.Errorf("ceph-unset-noout: %w", err))
@@ -178,12 +185,6 @@ func (o *Orchestrator) Recover(ctx context.Context) error {
     return o.cnpg.Cleanup(pctx)
   }); err != nil {
     errs = append(errs, fmt.Errorf("cnpg-cleanup: %w", err))
-  }
-
-  if err := runPhase(ctx, o.logger, "uncordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
-    return o.uncordonWorkers(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
   }
 
   if err := o.verifyHealth(ctx); err != nil {
@@ -234,14 +235,23 @@ func (o *Orchestrator) IsCephScaledDown(ctx context.Context) (bool, error) {
   return o.ceph.IsCephScaledDown(ctx)
 }
 
-// RecoverFromZero runs recovery when Ceph is at 0 replicas. Unlike Recover(),
-// this scales up Ceph FIRST (pure kube API, no exec needed), then waits for
-// the tools pod to become ready. This is necessary because the tools pod
-// depends on running MONs for Ceph connectivity.
+// RecoverFromZero runs recovery when Ceph is at 0 replicas:
+// 1. Uncordon workers (first: Ceph mon/OSD pods are pinned to them)
+// 2. Ceph scale up (pure kube API, no exec needed)
+// 3. Wait for Ceph tools pod (it depends on running MONs for Ceph connectivity)
+// 4. Ceph health wait (HEALTH_OK, or HEALTH_WARN with every OSD up)
+// 5. Ceph unset noout (skipped if the health wait failed, so noout stays set)
+// 6. CNPG cleanup
 func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
   o.logger.Info("starting recovery from Ceph-at-zero")
 
   var errs []error
+
+  if err := runPhase(ctx, o.logger, "uncordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    return o.uncordonWorkers(pctx)
+  }); err != nil {
+    errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
+  }
 
   if err := runPhase(ctx, o.logger, "ceph-scale-up", o.cfg.CephScalePhaseTimeout, func(pctx context.Context) error {
     return o.ceph.ScaleUp(pctx)
@@ -261,9 +271,8 @@ func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
       return o.ceph.WaitForCephHealthy(pctx)
     }); err != nil {
       errs = append(errs, fmt.Errorf("ceph-health-wait: %w", err))
-    }
-
-    if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+      o.logger.Warn("skipping ceph noout unset because ceph is not healthy")
+    } else if err := runPhase(ctx, o.logger, "ceph-unset-noout", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
       return o.ceph.UnsetNoout(pctx)
     }); err != nil {
       errs = append(errs, fmt.Errorf("ceph-unset-noout: %w", err))
@@ -274,12 +283,6 @@ func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
     return o.cnpg.Cleanup(pctx)
   }); err != nil {
     errs = append(errs, fmt.Errorf("cnpg-cleanup: %w", err))
-  }
-
-  if err := runPhase(ctx, o.logger, "uncordon-workers", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
-    return o.uncordonWorkers(pctx)
-  }); err != nil {
-    errs = append(errs, fmt.Errorf("uncordon-workers: %w", err))
   }
 
   if err := o.verifyHealth(ctx); err != nil {

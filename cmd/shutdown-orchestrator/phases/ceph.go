@@ -2,6 +2,7 @@ package phases
 
 import (
   "context"
+  "encoding/json"
   "errors"
   "fmt"
   "log/slog"
@@ -19,15 +20,17 @@ const (
 
 // CephPhase handles Ceph cluster shutdown and recovery operations.
 type CephPhase struct {
-  kube   clients.KubeClient
-  logger *slog.Logger
+  kube          clients.KubeClient
+  logger        *slog.Logger
+  healthBackoff time.Duration
 }
 
 // NewCephPhase creates a new CephPhase.
 func NewCephPhase(kube clients.KubeClient, logger *slog.Logger) *CephPhase {
   return &CephPhase{
-    kube:   kube,
-    logger: logger,
+    kube:          kube,
+    logger:        logger,
+    healthBackoff: 2 * time.Second,
   }
 }
 
@@ -192,30 +195,38 @@ func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
 }
 
 // WaitForCephHealthy polls "ceph health" via the tools pod until the cluster
-// reports HEALTH_OK or HEALTH_WARN (excluding the noout warning which is
-// expected during recovery). Uses exponential backoff (2s, 4s, 8s, ... max 30s).
+// reports HEALTH_OK, or HEALTH_WARN with every OSD up (the warnings left, such
+// as noout, are expected during recovery). HEALTH_WARN with any OSD down,
+// HEALTH_ERR, exec errors and unparsable output keep it polling.
+// Uses exponential backoff (2s, 4s, 8s, ... max 30s).
 // The timeout is controlled by the context passed in from the caller.
 func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
   maxBackoff := 30 * time.Second
-  backoff := 2 * time.Second
+  backoff := p.healthBackoff
 
   for {
     output, err := p.kube.ExecInDeployment(ctx, cephNamespace, cephToolsDeploy, []string{"ceph", "health"})
     if err == nil {
-      // Accept HEALTH_OK or HEALTH_WARN. During recovery, HEALTH_WARN
-      // with only the noout flag is expected and safe to proceed.
-      // Log the full status so operators can review what warnings are active.
       trimmed := strings.TrimSpace(output)
       if strings.HasPrefix(trimmed, "HEALTH_OK") {
         p.logger.Info("ceph cluster is healthy", "status", trimmed)
         return nil
       }
       if strings.HasPrefix(trimmed, "HEALTH_WARN") {
-        p.logger.Warn("ceph cluster has warnings, proceeding with recovery",
-          "status", trimmed)
-        return nil
+        allUp, upErr := p.allOSDsUp(ctx)
+        switch {
+        case upErr != nil:
+          p.logger.Warn("failed to check ceph osd status", "error", upErr)
+        case allUp:
+          p.logger.Warn("ceph cluster has warnings but every osd is up, proceeding with recovery",
+            "status", trimmed)
+          return nil
+        default:
+          p.logger.Info("ceph cluster has osds down", "status", trimmed)
+        }
+      } else {
+        p.logger.Info("ceph cluster not yet healthy", "status", trimmed)
       }
-      p.logger.Info("ceph cluster not yet healthy", "status", trimmed)
     } else {
       p.logger.Warn("failed to check ceph health", "error", err)
     }
@@ -238,6 +249,23 @@ func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
       backoff = maxBackoff
     }
   }
+}
+
+// allOSDsUp reports whether the cluster has OSDs and every one of them is up.
+func (p *CephPhase) allOSDsUp(ctx context.Context) (bool, error) {
+  output, err := p.kube.ExecInDeployment(ctx, cephNamespace, cephToolsDeploy, []string{"ceph", "osd", "stat", "-f", "json"})
+  if err != nil {
+    return false, err
+  }
+
+  var stat struct {
+    NumOSDs   int `json:"num_osds"`
+    NumUpOSDs int `json:"num_up_osds"`
+  }
+  if err := json.Unmarshal([]byte(output), &stat); err != nil {
+    return false, fmt.Errorf("parsing ceph osd stat JSON: %w", err)
+  }
+  return stat.NumOSDs > 0 && stat.NumUpOSDs == stat.NumOSDs, nil
 }
 
 // NeedsRecovery checks if the Ceph noout flag is set, indicating a

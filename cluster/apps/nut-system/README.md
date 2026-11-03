@@ -62,7 +62,15 @@ the UPS's reported runtime (`network_ups_tools_battery_runtime`) stays above it 
 
 ### Recovery
 
-On startup the orchestrator checks for leftover shutdown state (Ceph deployments at 0 replicas, or any CNPG cluster with `cnpg.io/hibernation: "on"`) and runs recovery: wait for the tools pod, scale MON -> MGR -> OSD -> MDS -> operator back to 1, wait for `HEALTH_OK`, unset `noout`, clear CNPG hibernation, uncordon workers.
+On startup the orchestrator checks for leftover shutdown state (Ceph deployments at 0 replicas, the `noout` flag set, or any CNPG cluster with `cnpg.io/hibernation: "on"`) and runs recovery in this order:
+
+1. Uncordon workers (the Ceph mon and OSD pods and Kyverno only run on them).
+2. Scale MON -> MGR -> OSD -> MDS -> operator back to 1 and wait for the tools pod. When Ceph is at 0, the scale-up comes first because the tools pod needs the MONs.
+3. Wait for Ceph health: `HEALTH_OK`, or `HEALTH_WARN` once every OSD is up.
+4. Unset `noout`.
+5. Clear CNPG hibernation.
+
+If the health wait times out (`CEPH_HEALTH_WAIT_TIMEOUT`), `noout` stays set and the remaining steps still run. The next orchestrator start retries, or unset `noout` by hand once the OSDs are up.
 
 > The CNPG check does not distinguish a cluster hibernated on purpose. If one is hibernated in Git, every orchestrator restart "recovers" it by clearing the annotation, and Flux sets it back on the next reconcile.
 
@@ -71,13 +79,13 @@ On startup the orchestrator checks for leftover shutdown state (Ceph deployments
 If the orchestrator is not running or recovery failed:
 
 ```bash
+kubectl uncordon ms-01-1 ms-01-2 ms-01-3
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mon --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mgr --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-osd --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mds --replicas=1
 kubectl -n rook-ceph scale deploy rook-ceph-operator --replicas=1
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
-kubectl uncordon ms-01-1 ms-01-2 ms-01-3
 ```
 
 ## Troubleshooting
