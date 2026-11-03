@@ -7,7 +7,7 @@ config:
   matchConditions:
     # Recovery must start these pods while Kyverno is down
     - name: skip-boot-critical-pods
-      expression: "!(request.kind.group == '' && request.kind.kind == 'Pod' && request.namespace in ['rook-ceph', 'nut-system'])"
+      expression: "!(request.kind.group == '' && request.kind.kind == 'Pod' && has(request.namespace) && request.namespace in ['rook-ceph', 'nut-system'])"
 
 admissionController:
   # Enable CRD watcher so Kyverno discovers CRD-based resources (e.g. HelmRelease)
