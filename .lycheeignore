@@ -26,6 +26,9 @@ https://127\.0\.0\.1.*
 # Schema store times out intermittently in CI
 https://json\.schemastore\.org/.*
 
+# Trivy docs site fails the TLS handshake (unrecognized name) intermittently
+https://trivy\.dev/.*
+
 
 # Object storage and internal protocols
 s3:*
