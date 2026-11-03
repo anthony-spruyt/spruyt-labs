@@ -248,7 +248,7 @@ For details on the security posture (seccomp, `agent-run` wrapper, registry enfo
 
 Auto-installed in both local and Coder workspaces:
 
-Claude Code, Markdown Mermaid, Better JSON5, Prettier, Git Graph, YAML, GitHub Actions, Go, Terraform, Bats, Task Runner, Helm Intellisense
+Claude Code, Markdown Mermaid, Better JSON5, Git Graph, Forest Ash Theme, YAML, GitHub Actions, Go, Terraform, Bats, Task Runner, Helm Intellisense
 
 ## Troubleshooting
 

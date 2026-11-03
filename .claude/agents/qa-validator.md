@@ -148,7 +148,7 @@ YAML/JSON syntax is handled by MegaLinter (step 4). This step focuses on Kuberne
 
 ### 4. Local Linting (MegaLinter)
 
-First run `pre-commit run --files <in-scope files>`, then run it again: the first pass applies the auto-fixers (mdformat, shfmt, terraform fmt, whitespace) and exits non-zero when it rewrites anything. Only failures left on the second pass count. List the rewritten files in the report as fixes applied, never as blockers.
+First run `pre-commit run --files <in-scope files>`, then run it again: the first pass applies the auto-fixers (markdownlint, shfmt, terraform fmt, whitespace) and exits non-zero when it rewrites anything. Only failures left on the second pass count. List the rewritten files in the report as fixes applied, never as blockers.
 
 Then run MegaLinter with `task dev-env:lint`, or `APPLY_FIXES=none ./lint.sh` when the caller says not to edit files. Read results from `.output/` directory.
 

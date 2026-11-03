@@ -203,7 +203,7 @@ See the dedicated [Troubleshooting](#troubleshooting) section for common remedia
 - `task terraform:validate` — executes aggregate validation scripts across modules and workspaces.
 - `tflint` — enforces Terraform style and policy rules locally before raising pull requests.
 - `terraform validate` — confirms syntactic correctness within the active workspace.
-- GitHub Actions mega-linter (`.github/workflows/lint.yaml`) runs `terraform fmt`, `terraform validate`, and `tflint` on pull requests.
+- On pull requests, CI runs MegaLinter (`terraform fmt` and `tflint`), and `.github/workflows/ci-repo.yaml` runs `terraform validate`.
 - Manual post-apply checks:
   - `aws s3api get-bucket-versioning --bucket <bucket>` to confirm versioning.
   - `aws iam get-user --user-name <user>` to verify IAM configuration.
