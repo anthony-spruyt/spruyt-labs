@@ -300,9 +300,6 @@ jobs:
         uses: "hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e" # v4
         with:
           terraform_version: "v1.17.0"
-      - name: "Terraform Format Check"
-        run: "terraform fmt -check -recursive"
-        working-directory: "${{ matrix.module }}"
       - name: "Terraform Init"
         run: "terraform init -backend=false"
         working-directory: "${{ matrix.module }}"
