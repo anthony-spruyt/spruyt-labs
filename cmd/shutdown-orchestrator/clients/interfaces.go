@@ -9,11 +9,16 @@ type CNPGCluster struct {
   Hibernated bool
 }
 
+// CordonAnnotation marks a node that Shutdown cordoned while it was schedulable.
+// Startup uncordons only marked nodes, so a node cordoned by hand stays cordoned.
+const CordonAnnotation = "shutdown-orchestrator.spruyt-labs/cordoned"
+
 // Node represents a Kubernetes node.
 type Node struct {
-  Name  string
-  IP    string
-  Ready bool
+  Name               string
+  IP                 string
+  Ready              bool
+  CordonedByShutdown bool
 }
 
 // PodInfo represents metadata about a Kubernetes pod.

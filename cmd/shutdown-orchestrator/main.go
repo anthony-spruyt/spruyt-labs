@@ -117,6 +117,8 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
 
   orch := buildOrchestrator(kube, talos, cfg, logger)
 
+  orch.UncordonAtStartup(ctx, ups)
+
   // Before preflight: detect if Ceph was scaled to 0 by a previous shutdown.
   // Uses only the Kubernetes API (no Ceph exec) so it works when Ceph is down.
   cephDown, err := orch.IsCephScaledDown(ctx)
@@ -136,7 +138,6 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
     }
   }
 
-  // Run preflight checks. If any fail, refuse to start monitoring.
   checker := NewPreflightChecker(kube, talos, ups, cfg, logger)
   results := checker.RunAll(ctx)
   failed := 0
@@ -151,7 +152,6 @@ func runMonitor(ctx context.Context, cfg Config, logger *slog.Logger) error {
   }
   logger.Info("all preflight checks passed")
 
-  // Check for additional recovery signals (CNPG hibernation, noout flag).
   needsRecovery, err := orch.NeedsRecovery(ctx)
   if err != nil {
     logger.Warn("failed to check recovery state", "error", err)

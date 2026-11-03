@@ -188,12 +188,10 @@ func TestCephSetNooutToolsPodMissing(t *testing.T) {
   phase := NewCephPhase(mock, testLogger())
 
   err := phase.SetNoout(context.Background())
-  // Should NOT return error when tools pod is missing (warning only)
   if err != nil {
     t.Fatalf("SetNoout() returned error: %v, want nil (warning only)", err)
   }
 
-  // Should not have attempted exec
   if len(mock.execInDeploymentCalls) != 0 {
     t.Errorf("expected 0 exec calls when tools pod missing, got %d", len(mock.execInDeploymentCalls))
   }
@@ -232,24 +230,20 @@ func TestCephScaleDown(t *testing.T) {
     t.Fatalf("ScaleDown() returned error: %v", err)
   }
 
-  // Verify correct order: operator -> MDSs -> OSDs -> monitors -> managers
   if len(mock.scaleDeploymentCalls) < 5 {
     t.Fatalf("expected at least 5 scale calls, got %d", len(mock.scaleDeploymentCalls))
   }
 
-  // First call should be operator
   if mock.scaleDeploymentCalls[0].Name != "rook-ceph-operator" {
     t.Errorf("first scale call = %q, want rook-ceph-operator", mock.scaleDeploymentCalls[0].Name)
   }
 
-  // All replicas should be 0
   for _, call := range mock.scaleDeploymentCalls {
     if call.Replicas != 0 {
       t.Errorf("scale %q replicas = %d, want 0", call.Name, call.Replicas)
     }
   }
 
-  // Verify order: operator, then MDS, then OSD, then mon, then mgr
   names := make([]string, len(mock.scaleDeploymentCalls))
   for i, c := range mock.scaleDeploymentCalls {
     names[i] = c.Name
@@ -290,7 +284,6 @@ func TestCephScaleDownMultipleOSDs(t *testing.T) {
     t.Fatalf("ScaleDown() returned error: %v", err)
   }
 
-  // Count OSD scale calls
   osdCount := 0
   for _, call := range mock.scaleDeploymentCalls {
     if strings.HasPrefix(call.Name, "rook-ceph-osd-") {
@@ -311,7 +304,6 @@ func TestCephScaleDownOperatorFails(t *testing.T) {
   mock.listDeploymentResult["rook-ceph/app=rook-ceph-mds"] = []string{"rook-ceph-mds-fs-a"}
   phase := NewCephPhase(mock, testLogger())
 
-  // Should return error summarizing failures, but still continue to all components.
   err := phase.ScaleDown(context.Background())
   if err == nil {
     t.Fatal("ScaleDown() returned nil, want error when operator scale fails")
@@ -320,7 +312,6 @@ func TestCephScaleDownOperatorFails(t *testing.T) {
     t.Errorf("error should contain 'scale failed', got: %v", err)
   }
 
-  // Should still attempt to scale other components
   if len(mock.scaleDeploymentCalls) < 5 {
     t.Errorf("expected at least 5 scale calls (including failed operator), got %d", len(mock.scaleDeploymentCalls))
   }
@@ -339,19 +330,16 @@ func TestCephScaleUp(t *testing.T) {
     t.Fatalf("ScaleUp() returned error: %v", err)
   }
 
-  // Verify correct order: monitors -> managers -> OSDs -> MDSs -> operator
   if len(mock.scaleDeploymentCalls) < 5 {
     t.Fatalf("expected at least 5 scale calls, got %d", len(mock.scaleDeploymentCalls))
   }
 
-  // All replicas should be 1
   for _, call := range mock.scaleDeploymentCalls {
     if call.Replicas != 1 {
       t.Errorf("scale %q replicas = %d, want 1", call.Name, call.Replicas)
     }
   }
 
-  // Verify order: mon, mgr, osd, mds, operator
   names := make([]string, len(mock.scaleDeploymentCalls))
   for i, c := range mock.scaleDeploymentCalls {
     names[i] = c.Name
@@ -422,11 +410,13 @@ func TestCephWaitForCephHealthyOK(t *testing.T) {
 }
 
 const (
-  osdStatAllUp   = `{"epoch":16020,"num_osds":3,"num_up_osds":3,"num_in_osds":3}`
-  osdStatNoneUp  = `{"epoch":16020,"num_osds":3,"num_up_osds":0,"num_in_osds":3}`
-  osdStatNoOSDs  = `{"epoch":1,"num_osds":0,"num_up_osds":0,"num_in_osds":0}`
-  healthOSDsDown = "HEALTH_WARN noout flag(s) set; 3 osds down; 3 hosts (3 osds) down"
-  healthNooutSet = "HEALTH_WARN noout flag(s) set"
+  osdStatAllUp    = `{"epoch":16020,"num_osds":3,"num_up_osds":3,"num_in_osds":3}`
+  osdStatNoneUp   = `{"epoch":16020,"num_osds":3,"num_up_osds":0,"num_in_osds":3}`
+  osdStatPartlyUp = `{"epoch":16020,"num_osds":3,"num_up_osds":2,"num_in_osds":3}`
+  osdStatNoOSDs   = `{"epoch":1,"num_osds":0,"num_up_osds":0,"num_in_osds":0}`
+  healthOSDsDown  = "HEALTH_WARN noout flag(s) set; 3 osds down; 3 hosts (3 osds) down"
+  healthNooutSet  = "HEALTH_WARN noout flag(s) set"
+  healthErr       = "HEALTH_ERR Module 'x' has failed: boom"
 )
 
 func fakeCephStatus(health string, osdStat func(call int) (string, error)) (func(cmd []string) (string, error), *int) {
@@ -496,13 +486,31 @@ func TestCephWaitForCephHealthyWarnOnlyNooutAllOSDsUp(t *testing.T) {
   }
 }
 
+func TestCephWaitForCephHealthyErrPassesWhenAllOSDsUp(t *testing.T) {
+  mock := newMockCephKubeClient()
+  mock.execFunc, _ = fakeCephStatus(healthErr, func(int) (string, error) { return osdStatAllUp, nil })
+  phase := NewCephPhase(mock, testLogger())
+  phase.healthBackoff = time.Millisecond
+
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  defer cancel()
+
+  if err := phase.WaitForCephHealthy(ctx); err != nil {
+    t.Fatalf("WaitForCephHealthy() returned error: %v, want a lasting HEALTH_ERR to pass once every OSD is up", err)
+  }
+}
+
 func TestCephWaitForCephHealthyNeverPasses(t *testing.T) {
   tests := []struct {
     name    string
     health  string
     osdStat func(int) (string, error)
   }{
-    {"HEALTH_ERR with all OSDs up", "HEALTH_ERR 1 pgs inactive", func(int) (string, error) { return osdStatAllUp, nil }},
+    {"HEALTH_ERR with some OSDs down", healthErr, func(int) (string, error) { return osdStatPartlyUp, nil }},
+    {"HEALTH_ERR with zero OSDs", healthErr, func(int) (string, error) { return osdStatNoOSDs, nil }},
+    {"HEALTH_ERR with unparsable osd stat", healthErr, func(int) (string, error) { return "not json", nil }},
+    {"HEALTH_ERR with osd stat exec error", healthErr, func(int) (string, error) { return "", errors.New("exec failed") }},
+    {"HEALTH_WARN with some OSDs down", healthOSDsDown, func(int) (string, error) { return osdStatPartlyUp, nil }},
     {"HEALTH_WARN with zero OSDs", healthNooutSet, func(int) (string, error) { return osdStatNoOSDs, nil }},
     {"HEALTH_WARN with unparsable osd stat", healthNooutSet, func(int) (string, error) { return "not json", nil }},
     {"HEALTH_WARN with osd stat exec error", healthNooutSet, func(int) (string, error) { return "", errors.New("exec failed") }},
@@ -527,7 +535,6 @@ func TestCephWaitForCephHealthyNeverPasses(t *testing.T) {
 
 func TestCephWaitForCephHealthyTimeout(t *testing.T) {
   mock := newMockCephKubeClient()
-  // Return HEALTH_ERR to force retry until timeout
   mock.execInDeploymentResult["rook-ceph/rook-ceph-tools"] = "HEALTH_ERR 1 osds down"
   phase := NewCephPhase(mock, testLogger())
 
@@ -540,7 +547,6 @@ func TestCephWaitForCephHealthyTimeout(t *testing.T) {
   }
 }
 
-// indexOf returns the index of s in slice, or -1.
 func indexOf(slice []string, s string) int {
   for i, v := range slice {
     if v == s {

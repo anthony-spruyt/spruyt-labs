@@ -21,7 +21,7 @@ import (
 
 // RealKubeClient implements KubeClient using the real Kubernetes API.
 type RealKubeClient struct {
-  clientset     *kubernetes.Clientset
+  clientset     kubernetes.Interface
   dynamicClient dynamic.Interface
   restConfig    *rest.Config
 }
@@ -245,10 +245,13 @@ func (k *RealKubeClient) GetNodes(ctx context.Context) ([]Node, error) {
       }
     }
 
+    _, marked := n.Annotations[CordonAnnotation]
+
     nodes = append(nodes, Node{
-      Name:  n.Name,
-      IP:    ip,
-      Ready: ready,
+      Name:               n.Name,
+      IP:                 ip,
+      Ready:              ready,
+      CordonedByShutdown: marked,
     })
   }
 
@@ -278,24 +281,50 @@ func (k *RealKubeClient) IsCephNooutSet(ctx context.Context) (bool, error) {
   return false, nil
 }
 
-// CordonNode marks a node as unschedulable.
+// CordonNode cordons a schedulable node and sets CordonAnnotation in the same patch.
+// A node that is already cordoned is left untouched, so one cordoned by hand never gets the annotation.
 func (k *RealKubeClient) CordonNode(ctx context.Context, name string) error {
-	patch := []byte(`{"spec":{"unschedulable":true}}`)
-	_, err := k.clientset.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
+	node, err := k.clientset.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("getting node %s to cordon: %w", name, err)
+	}
+	if node.Spec.Unschedulable {
+		return nil
+	}
+
+	patch, err := nodeCordonPatch(true)
+	if err != nil {
+		return fmt.Errorf("cordoning node %s: %w", name, err)
+	}
+	_, err = k.clientset.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("cordoning node %s: %w", name, err)
 	}
 	return nil
 }
 
-// UncordonNode marks a node as schedulable.
+// UncordonNode marks a node as schedulable and removes CordonAnnotation in the same patch.
 func (k *RealKubeClient) UncordonNode(ctx context.Context, name string) error {
-	patch := []byte(`{"spec":{"unschedulable":false}}`)
-	_, err := k.clientset.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
+	patch, err := nodeCordonPatch(false)
+	if err != nil {
+		return fmt.Errorf("uncordoning node %s: %w", name, err)
+	}
+	_, err = k.clientset.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("uncordoning node %s: %w", name, err)
 	}
 	return nil
+}
+
+func nodeCordonPatch(cordon bool) ([]byte, error) {
+	var mark any
+	if cordon {
+		mark = "true"
+	}
+	return json.Marshal(map[string]any{
+		"metadata": map[string]any{"annotations": map[string]any{CordonAnnotation: mark}},
+		"spec":     map[string]any{"unschedulable": cordon},
+	})
 }
 
 // GetPodsOnNode lists all pods scheduled on a specific node.

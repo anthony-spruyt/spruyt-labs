@@ -34,8 +34,8 @@ UPS --USB--> nut-server (UPS node) --:3493--> LoadBalancer ${NUT_IP4} --> Home A
 After `SHUTDOWN_DELAY` seconds on battery (`OB` status):
 
 1. `ceph osd set noout`
-2. Cordon workers, then evict workloads on them (excluding `rook-ceph`, `kube-system`, `nut-system`, `kyverno`) so RBD mounts are released before storage goes away. `kyverno` stays up until its node shuts down because its fail-closed webhooks gate pod creates and updates. Pods that finished before the drain (`Succeeded`/`Failed`, not being deleted) are skipped, and a refused delete is retried on
-   every poll while the drain waits. If the drain fails, the Ceph scale-down is skipped.
+2. Cordon workers (marking each one it cordons, see Recovery), then evict workloads on them (excluding `rook-ceph`, `kube-system`, `nut-system`, `kyverno`) so RBD mounts are released before storage goes away. `kyverno` stays up until its node shuts down because its fail-closed webhooks gate pod creates and updates.
+   Pods that finished before the drain (`Succeeded`/`Failed`, not being deleted) are skipped, and a refused delete is retried on every poll while the drain waits. If the drain fails, the Ceph scale-down is skipped.
 3. Scale Ceph to 0: operator -> MDS -> OSD -> MON -> MGR.
 4. Shut down workers concurrently, then control-plane nodes one at a time. The node the orchestrator runs on goes last.
 
@@ -62,15 +62,22 @@ the UPS's reported runtime (`network_ups_tools_battery_runtime`) stays above it 
 
 ### Recovery
 
-On startup the orchestrator checks for leftover shutdown state (Ceph deployments at 0 replicas, the `noout` flag set, or any CNPG cluster with `cnpg.io/hibernation: "on"`) and runs recovery in this order:
+On every start the orchestrator first uncordons the workers its own shutdown cordoned. Shutdown marks each worker it cordons with the annotation `shutdown-orchestrator.spruyt-labs/cordoned`, set in the same patch that cordons it; a worker that was already cordoned is not marked.
+The startup step needs no Ceph tools pod: it uncordons every node carrying the annotation and removes the annotation, so a shutdown that stopped before the Ceph scale-down (a failed drain) cannot leave the workers cordoned with the Ceph pods that preflight needs stuck `Pending`.
+It does nothing while the UPS reports battery power (a UPS read error does not block it), and errors are logged, not fatal. Workers cordoned by hand carry no annotation and stay cordoned at startup.
+
+It then checks for leftover shutdown state. Ceph deployments at 0 replicas are detected before preflight. The `noout` flag and any CNPG cluster with `cnpg.io/hibernation: "on"` are checked only after preflight passes, because they need the Ceph tools pod. Recovery runs in this order and uncordons every worker, including ones cordoned by hand:
 
 1. Uncordon workers (the Ceph mon and OSD pods and Kyverno only run on them).
-2. Scale MON -> MGR -> OSD -> MDS -> operator back to 1 and wait for the tools pod. When Ceph is at 0, the scale-up comes first because the tools pod needs the MONs.
-3. Wait for Ceph health: `HEALTH_OK`, or `HEALTH_WARN` once every OSD is up.
+2. Wait for the tools pod, then scale MON -> MGR -> OSD -> MDS -> operator back to 1. When Ceph is at 0, scale up first: the tools pod needs the MONs.
+3. Wait for Ceph health: `HEALTH_OK`, or every OSD up at any other health level (a lasting warning or error elsewhere, such as a failed mgr module, does not keep `noout` set).
 4. Unset `noout`.
 5. Clear CNPG hibernation.
 
-If the health wait times out (`CEPH_HEALTH_WAIT_TIMEOUT`), `noout` stays set and the remaining steps still run. The next orchestrator start retries, or unset `noout` by hand once the OSDs are up.
+If the health wait times out (`CEPH_HEALTH_WAIT_TIMEOUT`), `noout` stays set and the remaining steps still run. The retry depends on where recovery ran:
+
+- Ceph at 0, before preflight: a failed recovery exits the orchestrator, the pod restarts and the next start runs recovery again (it finds `noout` set once preflight passes).
+- After preflight: a failed recovery is logged and the orchestrator keeps monitoring the UPS. `noout` stays set until the next restart, or until you unset it by hand once the OSDs are up.
 
 > The CNPG check does not distinguish a cluster hibernated on purpose. If one is hibernated in Git, every orchestrator restart "recovers" it by clearing the annotation, and Flux sets it back on the next reconcile.
 
@@ -80,11 +87,14 @@ If the orchestrator is not running or recovery failed:
 
 ```bash
 kubectl uncordon ms-01-1 ms-01-2 ms-01-3
+kubectl annotate node ms-01-1 ms-01-2 ms-01-3 shutdown-orchestrator.spruyt-labs/cordoned-
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mon --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mgr --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-osd --replicas=1
 kubectl -n rook-ceph scale deploy -l app=rook-ceph-mds --replicas=1
 kubectl -n rook-ceph scale deploy rook-ceph-operator --replicas=1
+# repeat until every OSD is up
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd stat
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
 ```
 
@@ -97,7 +107,7 @@ kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd unset noout
 
 2. **Recovery fails at `uncordon-workers` with `cannot patch resource "nodes"`**
 
-   - **Cause**: The ClusterRole in `shutdown-orchestrator/app/rbac.yaml` lost `patch` on `nodes` or `list`/`delete` on `pods`. The drain phases need both (#3181).
+   - **Cause**: The ClusterRole in `shutdown-orchestrator/app/rbac.yaml` lost `get` or `patch` on `nodes` or `list`/`delete` on `pods`. The drain phases need both (#3181).
    - **Impact**: Without them a real shutdown fails cordon and drain, so the Ceph scale-down is skipped and nodes go down with Ceph still running.
 
 ## References

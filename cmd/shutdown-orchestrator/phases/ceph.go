@@ -84,7 +84,6 @@ func (p *CephPhase) UnsetNoout(ctx context.Context) error {
 func (p *CephPhase) ScaleDown(ctx context.Context) error {
   var errs []error
 
-  // 1. Operator
   if err := p.scaleComponent(ctx, cephOperatorDeploy, 0); err != nil {
     errs = append(errs, err)
   }
@@ -92,25 +91,21 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 2. MDSs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mds", 0)...)
   if ctx.Err() != nil {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 3. OSDs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 0)...)
   if ctx.Err() != nil {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 4. Monitors
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mon", 0)...)
   if ctx.Err() != nil {
     return errors.Join(append(errs, ctx.Err())...)
   }
 
-  // 5. Managers
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mgr", 0)...)
 
   return errors.Join(errs...)
@@ -136,19 +131,11 @@ func (p *CephPhase) ScaleDown(ctx context.Context) error {
 func (p *CephPhase) ScaleUp(ctx context.Context) error {
   var errs []error
 
-  // 1. Monitors
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mon", 1)...)
-
-  // 2. Managers
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mgr", 1)...)
-
-  // 3. OSDs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-osd", 1)...)
-
-  // 4. MDSs
   errs = append(errs, p.scaleByLabel(ctx, "app=rook-ceph-mds", 1)...)
 
-  // 5. Operator
   if err := p.scaleComponent(ctx, cephOperatorDeploy, 1); err != nil {
     errs = append(errs, err)
   }
@@ -195,9 +182,9 @@ func (p *CephPhase) WaitForToolsPod(ctx context.Context) error {
 }
 
 // WaitForCephHealthy polls "ceph health" via the tools pod until the cluster
-// reports HEALTH_OK, or HEALTH_WARN with every OSD up (the warnings left, such
-// as noout, are expected during recovery). HEALTH_WARN with any OSD down,
-// HEALTH_ERR, exec errors and unparsable output keep it polling.
+// reports HEALTH_OK, or every OSD is up at any other health level: noout only
+// concerns OSDs, so a lasting warning or error elsewhere (a failed mgr module)
+// must not keep it set. Any OSD down, exec errors and unparsable output keep it polling.
 // Uses exponential backoff (2s, 4s, 8s, ... max 30s).
 // The timeout is controlled by the context passed in from the caller.
 func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
@@ -212,20 +199,16 @@ func (p *CephPhase) WaitForCephHealthy(ctx context.Context) error {
         p.logger.Info("ceph cluster is healthy", "status", trimmed)
         return nil
       }
-      if strings.HasPrefix(trimmed, "HEALTH_WARN") {
-        allUp, upErr := p.allOSDsUp(ctx)
-        switch {
-        case upErr != nil:
-          p.logger.Warn("failed to check ceph osd status", "error", upErr)
-        case allUp:
-          p.logger.Warn("ceph cluster has warnings but every osd is up, proceeding with recovery",
-            "status", trimmed)
-          return nil
-        default:
-          p.logger.Info("ceph cluster has osds down", "status", trimmed)
-        }
-      } else {
-        p.logger.Info("ceph cluster not yet healthy", "status", trimmed)
+      allUp, upErr := p.allOSDsUp(ctx)
+      switch {
+      case upErr != nil:
+        p.logger.Warn("failed to check ceph osd status", "error", upErr)
+      case allUp:
+        p.logger.Warn("ceph cluster is not HEALTH_OK but every osd is up, proceeding with recovery",
+          "status", trimmed)
+        return nil
+      default:
+        p.logger.Info("ceph cluster has osds down", "status", trimmed)
       }
     } else {
       p.logger.Warn("failed to check ceph health", "error", err)

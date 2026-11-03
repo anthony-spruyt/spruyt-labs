@@ -38,8 +38,9 @@ type orchestratorMockKube struct {
   scaleErr           error
 
   // Node config
-  nodes    []clients.Node
-  nodesErr error
+  nodes        []clients.Node
+  nodesErr     error
+  uncordonErrs map[string]error
 
   // Pods per node, removed on DeletePod
   podsByNode map[string][]clients.PodInfo
@@ -175,7 +176,7 @@ func (m *orchestratorMockKube) CordonNode(_ context.Context, name string) error 
 
 func (m *orchestratorMockKube) UncordonNode(_ context.Context, name string) error {
   m.record("UncordonNode:" + name)
-  return nil
+  return m.uncordonErrs[name]
 }
 
 func (m *orchestratorMockKube) GetPodsOnNode(_ context.Context, nodeName string) ([]clients.PodInfo, error) {
@@ -892,5 +893,79 @@ func TestOrchestratorRecoveryUnsetsNooutOnlyAfterHealthWait(t *testing.T) {
         }
       })
     }
+  }
+}
+
+func uncordonCalls(kube *orchestratorMockKube) []string {
+  var out []string
+  for _, c := range kube.getCalls() {
+    if strings.HasPrefix(c, "UncordonNode:") {
+      out = append(out, c)
+    }
+  }
+  return out
+}
+
+func startupKube() *orchestratorMockKube {
+  return &orchestratorMockKube{
+    nodes: []clients.Node{
+      {Name: "ms-01-1", IP: "198.51.100.1", Ready: true, CordonedByShutdown: true},
+      {Name: "ms-01-2", IP: "198.51.100.2", Ready: true, CordonedByShutdown: true},
+      {Name: "ms-01-3", IP: "198.51.100.3", Ready: true},
+      {Name: "e2-1", IP: "198.51.100.10", Ready: true},
+    },
+  }
+}
+
+func TestUncordonAtStartupUncordonsOnlyMarkedNodes(t *testing.T) {
+  kube := startupKube()
+  orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+
+  orch.UncordonAtStartup(context.Background(), &mockUPSClient{statuses: []string{"OL"}})
+
+  want := []string{"UncordonNode:ms-01-1", "UncordonNode:ms-01-2"}
+  if got := uncordonCalls(kube); !slices.Equal(got, want) {
+    t.Errorf("uncordoned %v, want only the marked nodes %v: a node cordoned by hand must stay cordoned", got, want)
+  }
+}
+
+func TestUncordonAtStartupSkipsWhileUPSOnBattery(t *testing.T) {
+  kube := startupKube()
+  orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+
+  orch.UncordonAtStartup(context.Background(), &mockUPSClient{statuses: []string{"OB DISCHRG"}})
+
+  if got := uncordonCalls(kube); len(got) != 0 {
+    t.Errorf("uncordoned %v while the UPS is on battery, want none", got)
+  }
+}
+
+func TestUncordonAtStartupProceedsWhenUPSReadFails(t *testing.T) {
+  kube := startupKube()
+  orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+
+  orch.UncordonAtStartup(context.Background(), &mockUPSClient{err: errors.New("nut unreachable")})
+
+  if got := uncordonCalls(kube); len(got) != 2 {
+    t.Errorf("uncordoned %v, want both marked nodes: a UPS read error must not block", got)
+  }
+}
+
+func TestUncordonAtStartupContinuesAfterErrors(t *testing.T) {
+  kube := startupKube()
+  kube.uncordonErrs = map[string]error{"ms-01-1": errors.New("patch refused")}
+  orch := newTestOrchestrator(kube, &orchestratorMockTalos{})
+
+  orch.UncordonAtStartup(context.Background(), &mockUPSClient{statuses: []string{"OL"}})
+
+  if !slices.Contains(uncordonCalls(kube), "UncordonNode:ms-01-2") {
+    t.Error("a failed uncordon must not stop the remaining marked nodes")
+  }
+
+  failing := &orchestratorMockKube{nodesErr: errors.New("apiserver unavailable")}
+  orch = newTestOrchestrator(failing, &orchestratorMockTalos{})
+  orch.UncordonAtStartup(context.Background(), &mockUPSClient{statuses: []string{"OL"}})
+  if got := uncordonCalls(failing); len(got) != 0 {
+    t.Errorf("uncordoned %v after the node list failed, want none", got)
   }
 }

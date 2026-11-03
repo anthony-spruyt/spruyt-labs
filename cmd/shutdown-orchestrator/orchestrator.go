@@ -52,7 +52,7 @@ const minNodeBudget = 60 * time.Second
 
 // Shutdown runs the full shutdown sequence:
 // 1. Ceph set noout       (skipped if budget is low)
-// 2. Cordon workers       (skipped if budget is low)
+// 2. Cordon workers       (skipped if budget is low) — marks each one it cordons, for the startup uncordon
 // 3. Drain workers        (skipped if budget is low) — ensures RBD mounts released before Ceph goes down
 // 4. Ceph scale down      (skipped if budget is low)
 // 5. Worker shutdown      (always runs)
@@ -138,7 +138,7 @@ func (o *Orchestrator) Shutdown(ctx context.Context) error {
 // 1. Uncordon workers (first: Ceph mon/OSD pods are pinned to them)
 // 2. Wait for Ceph tools pod
 // 3. Ceph scale up
-// 4. Ceph health wait (HEALTH_OK, or HEALTH_WARN with every OSD up)
+// 4. Ceph health wait (HEALTH_OK, or every OSD up at any health level)
 // 5. Ceph unset noout (skipped if the health wait failed, so noout stays set)
 // 6. CNPG cleanup (backward compat: clears hibernation annotations left by older versions)
 func (o *Orchestrator) Recover(ctx context.Context) error {
@@ -239,7 +239,7 @@ func (o *Orchestrator) IsCephScaledDown(ctx context.Context) (bool, error) {
 // 1. Uncordon workers (first: Ceph mon/OSD pods are pinned to them)
 // 2. Ceph scale up (pure kube API, no exec needed)
 // 3. Wait for Ceph tools pod (it depends on running MONs for Ceph connectivity)
-// 4. Ceph health wait (HEALTH_OK, or HEALTH_WARN with every OSD up)
+// 4. Ceph health wait (HEALTH_OK, or every OSD up at any health level)
 // 5. Ceph unset noout (skipped if the health wait failed, so noout stays set)
 // 6. CNPG cleanup
 func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
@@ -295,6 +295,41 @@ func (o *Orchestrator) RecoverFromZero(ctx context.Context) error {
     o.logger.Info("recovery from zero complete")
   }
   return errors.Join(errs...)
+}
+
+// UncordonAtStartup uncordons nodes marked with clients.CordonAnnotation unless the UPS is on battery.
+// Kube API only, so it runs before preflight; nodes cordoned by hand carry no mark and stay cordoned.
+func (o *Orchestrator) UncordonAtStartup(ctx context.Context, ups clients.UPSClient) {
+  upsCtx, cancel := context.WithTimeout(ctx, o.cfg.CephFlagPhaseTimeout)
+  status, upsErr := ups.GetStatus(upsCtx)
+  cancel()
+  if upsErr == nil && isOnBattery(status) {
+    o.logger.Warn("UPS on battery, leaving cordoned workers cordoned", "status", status)
+    return
+  }
+
+  err := runPhase(ctx, o.logger, "startup-uncordon", o.cfg.CephFlagPhaseTimeout, func(pctx context.Context) error {
+    nodes, err := o.kube.GetNodes(pctx)
+    if err != nil {
+      return fmt.Errorf("listing nodes: %w", err)
+    }
+
+    var errs []error
+    for _, n := range nodes {
+      if !n.CordonedByShutdown {
+        continue
+      }
+      if err := o.kube.UncordonNode(pctx, n.Name); err != nil {
+        errs = append(errs, err)
+        continue
+      }
+      o.logger.Info("uncordoned node cordoned by a previous shutdown", "name", n.Name)
+    }
+    return errors.Join(errs...)
+  })
+  if err != nil {
+    o.logger.Warn("startup uncordon incomplete, continuing", "error", err)
+  }
 }
 
 // RunTest runs a full shutdown followed by recovery for test/validation.
