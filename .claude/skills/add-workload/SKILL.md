@@ -55,7 +55,7 @@ Mirror a recent app with the same needs instead of writing manifests from memory
 ## 6. Validate and ship
 
 1. Run qa-validator with the issue number and changed files; fix until APPROVED.
-2. Land it per the `orchestration` skill: commit in a `workspace.sh` clone, staging each file by name and SOPS files by directory (see the SOPS section of `constraints.md`), with `Ref #<issue>`; get a fresh reviewer READY unless only `cluster/` YAML changed (`orchestration-local.md`); push with `push-reviewed.sh`.
+2. Land it per the `orchestration` skill: commit in a `workspace.sh` clone, staging each file by name and SOPS files by directory (see the SOPS section of `constraints.md`), with `Ref #<issue>`; get a fresh reviewer READY unless `orchestration-local.md` lets qa-validator APPROVED stand in; push with `push-reviewed.sh`.
 3. Run cluster-validator with the issue number and the base sha `.claude/rules/orchestration-local.md` defines.
 4. Check the pods are healthy. If anything can't connect, run cnp-drop-investigator.
 5. Close the issue once validation passes.
