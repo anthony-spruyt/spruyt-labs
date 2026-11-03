@@ -67,7 +67,7 @@ Labels left by an earlier verdict stay until the skill merges the PR or adds a n
 **FIXABLE**
 
 1. Comment on the PR with the verdict, summary, fix, and reasons: `gh pr comment <N> --body-file -`
-2. Do not merge or label. Offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, fix it on the PR branch per the `orchestration` skill (qa-validator, a fresh reviewer READY, `push-reviewed.sh <base> <sha> <pr-branch>`), then re-run this skill.
+2. Do not merge or label. Offer to fix it: issue from `.github/ISSUE_TEMPLATE/chore.yml`, fix it on the PR branch per the `orchestration` skill (qa-validator, a fresh reviewer READY unless `orchestration-local.md` lets qa-validator APPROVED stand in, `push-reviewed.sh <base> <sha> <pr-branch>`), then re-run this skill.
 
 **BLOCKED**
 
