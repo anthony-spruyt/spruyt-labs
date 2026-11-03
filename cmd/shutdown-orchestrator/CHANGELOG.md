@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.32](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.31...shutdown-orchestrator/v1.1.32) (2026-11-03)
+
+
+### Bug Fixes
+
+* **deps:** update talos group to v1.14.5 ([#3780](https://github.com/anthony-spruyt/spruyt-labs/issues/3780)) ([d3cb4c3](https://github.com/anthony-spruyt/spruyt-labs/commit/d3cb4c3996efd673412f716aa7db3e077b676c35))
+
 ## [1.1.31](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.30...shutdown-orchestrator/v1.1.31) (2026-11-03)
 
 
