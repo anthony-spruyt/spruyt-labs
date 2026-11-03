@@ -2,20 +2,6 @@
 
 Talos Linux homelab GitOps repository on bare metal. No SSH to Talos nodes - use `talosctl`, Flux, or Kubernetes APIs.
 
-## Architecture
-
-| Layer         | Technology                             | Purpose                                |
-| ------------- | -------------------------------------- | -------------------------------------- |
-| OS            | Talos Linux                            | Immutable, API-driven Kubernetes OS    |
-| GitOps        | FluxCD                                 | Reconciles `cluster/` to cluster state |
-| CNI           | Cilium                                 | Networking, network policies, BGP      |
-| Ingress       | Traefik + Cloudflare Tunnel            | Routing, no direct public ingress      |
-| Storage       | Rook Ceph                              | Block and object storage               |
-| Backup        | Velero + S3                            | Disaster recovery                      |
-| Cache         | Valkey                                 | Redis-compatible in-memory store       |
-| Observability | Victoria Metrics/Logs/Traces + Grafana | Metrics, logs, traces, dashboards      |
-| Secrets       | SOPS/Age                               | Encrypted at rest in Git               |
-
 ## Hard Rules
 
 1. **Declarative only** - No manual kubectl patches for config changes; use Flux, Terraform, Talos configs. Operational commands (restart, scale, drain) via kubectl are permitted.
@@ -23,18 +9,6 @@ Talos Linux homelab GitOps repository on bare metal. No SSH to Talos nodes - use
    first.
 3. **No git amend** - Always new commits
 4. **No hardcoded domains** - Use `${EXTERNAL_DOMAIN}` substitution
-
-## Codebase
-
-| Path                       | Purpose                                      |
-| -------------------------- | -------------------------------------------- |
-| `cluster/apps/<ns>/<app>/` | Application deployments                      |
-| `cluster/flux/meta/`       | Flux config, cluster secrets                 |
-| `talos/`                   | Talos machine configs                        |
-| `infra/terraform/`         | Cloud infra (AWS backups, Cloudflare, TFC)   |
-| `cmd/`                     | Go services (containers deployed to cluster) |
-| `.taskfiles/`              | Automation (`task --list`)                   |
-| `docs/`                    | Human runbooks (bootstrap, DR, maintenance)  |
 
 ## Tool Usage
 
