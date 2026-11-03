@@ -13,7 +13,7 @@ spec:
     updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: vtraces
+      - containerName: vtsingle
         controlledValues: "RequestsOnly"
         minAllowed:
           cpu: 1m

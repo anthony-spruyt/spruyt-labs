@@ -3,7 +3,7 @@
 #
 # Pod selector label produced by chart: app.kubernetes.io/name=vt-single
 # StatefulSet name: victoria-traces-single-vt-single-server
-# Container name: vtraces
+# Container name: vtsingle
 # Service port: 10428 (HTTP, OTLP ingest at /insert/opentelemetry/v1/traces)
 
 server:
