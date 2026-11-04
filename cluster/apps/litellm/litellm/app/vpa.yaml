@@ -86,4 +86,5 @@ spec:
           cpu: "1"
           memory: 1Mi
         maxAllowed:
+          cpu: "3"
           memory: 4Gi

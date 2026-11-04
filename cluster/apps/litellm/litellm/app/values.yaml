@@ -301,6 +301,16 @@ controllers:
               matchLabelKeys:
                 - pod-template-hash
               topologyKey: kubernetes.io/hostname
+          # Scans contend for the game's P-cores; soft so the game still schedules with a worker down
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: enshrouded
+                namespaces:
+                  - enshrouded
+                topologyKey: kubernetes.io/hostname
     containers:
       llm-tool-guard:
         image:
@@ -365,9 +375,10 @@ controllers:
               failureThreshold: 3
         resources:
           requests:
-            cpu: 500m
+            cpu: "1"
             memory: 2Gi
           limits:
+            cpu: "3"
             memory: 4Gi
             gpu.intel.com/i915: 1
         securityContext:
