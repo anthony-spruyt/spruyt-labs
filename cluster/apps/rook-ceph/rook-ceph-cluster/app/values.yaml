@@ -6,7 +6,7 @@
 # Ceph container image - KEEP IN SYNC with toolbox init container in release.yaml
 cephImage:
   repository: quay.io/ceph/ceph
-  tag: v20.2.4@sha256:6bb1c8a42fbc0bf87938946990b65174466997bc11c31eb5a323225a779fd8f9
+  tag: v21.2.0@sha256:c9e6ed4ac3fcf67b28f38358bb9619dee4d1dfb96ddd4b9b583eee316a15f04d
 
 toolbox:
   # IMPORTANT: Must stay enabled - SSO config sidecar is patched onto this deployment via postRenderers in release.yaml
