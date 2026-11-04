@@ -182,8 +182,8 @@ controllers:
           LIVEMAP_PUBLIC_URL: https://enshrouded-map.${EXTERNAL_DOMAIN}
           LIVEMAP_REPO: "anthony-spruyt/enshrouded-livemap"
           # renovate: depName=anthony-spruyt/enshrouded-livemap datasource=github-release-attachments digest=sha256
-          LIVEMAP_VERSION: "v1.7.2"
-          LIVEMAP_SHA256: "275f009fc1ddd8db0142253f1bdf5f2e998420d2cc89f426789d7727938fd1bf"
+          LIVEMAP_VERSION: "v1.7.3"
+          LIVEMAP_SHA256: "d9c70f0c64407f3c9249eb1e0e82cbba513fe8272f7243b3c1ff9d44abda8c6b"
         resources:
           requests:
             cpu: 3000m
