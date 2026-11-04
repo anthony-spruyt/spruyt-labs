@@ -73,6 +73,7 @@ CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane \
 | Ceph         | `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | HEALTH_OK         |
 | Flux ks      | `flux get kustomizations -A`                                      | All Ready         |
 | Flux hr      | `flux get helmreleases -A`                                        | No failures       |
+| Talos CoreDNS | `talosctl -n <first-cp> get manifests`; `kubectl -n kube-system get cm talos-bootstrap-manifests-inventory -o json \| jq -r '.data\|keys[]' \| grep -E 'coredns\|kube-dns'` | No `core-dns` manifest; grep prints nothing |
 
 **HARD GATE:** All checks must pass. Report specific failures.
 
@@ -90,13 +91,19 @@ talosctl -n $CP_NODE etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d-%H%M%S).snaps
 talosctl upgrade-k8s -n <cp-node-ip> --to v<version> --dry-run
 ```
 
-**HARD GATE:** Must succeed.
+**HARD GATE:** All must hold, else STOP and report the objects to the user:
+
+- The dry run succeeds
+- No `< Pruned <Kind>/<ns>/<name>` line
+- No `< configured` diff touches a Flux-owned object, except an annotation-only `config.k8s.io/owning-inventory` addition (today: the two VPA CRDs)
 
 ### Phase 9: Execute Upgrade
 
 ```bash
-talosctl upgrade-k8s -n <cp-node-ip> --to v<version>
+talosctl upgrade-k8s -n <cp-node-ip> --to v<version> --manifests-no-prune
 ```
+
+`--manifests-no-prune` stays on every run: Phase 8 shows nothing to prune, and the flag keeps it that way if the cluster changed since.
 
 Wait for all nodes to show new version (`kubectl get nodes`). If no progress after 20 min, investigate with `talosctl dmesg` and `kubectl describe nodes`.
 
