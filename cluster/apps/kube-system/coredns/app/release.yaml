@@ -10,6 +10,7 @@ spec:
     name: coredns-ocirepo
     namespace: flux-system
   interval: 4h
+  timeout: 10m
   valuesFrom:
     - kind: ConfigMap
       name: coredns-values
