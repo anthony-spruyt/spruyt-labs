@@ -45,10 +45,15 @@ make_map_zip() {
   pack_zip "${name}"
 }
 
+set_pin() {
+  mkdir -p "${LIVEMAP_PIN_DIR}"
+  PIN_SHA="$2"
+  printf 'LIVEMAP_VERSION: "%s"\nLIVEMAP_SHA256: "%s"\n' "$1" "$2" >"${LIVEMAP_PIN_DIR}/livemap-pin.yaml"
+}
+
 use_release() {
   export FAKE_ZIP="${WORK}/release-$1.zip"
-  LIVEMAP_SHA256="$(sha_of "$1")"
-  export LIVEMAP_SHA256
+  set_pin v1.7.0 "$(sha_of "$1")"
 }
 
 assert_page_has_icon() {
@@ -145,17 +150,26 @@ done
 cp "${FAKE_ZIP}" "${out}"
 EOF
   chmod +x "${BIN}/curl"
+  cat >"${BIN}/crontab" <<'EOF'
+#!/bin/bash
+f="$(dirname "$0")/../crontab"
+case "$1" in
+-l) [ -f "${f}" ] && cat "${f}" ;;
+-) cat >"${f}" ;;
+esac
+EOF
+  chmod +x "${BIN}/crontab"
   export PATH="${BIN}:${PATH}"
+  export LIVEMAP_PIN_DIR="${WORK}/pin"
+  export LIVEMAP_STATE_DIR="${WORK}/state"
 
   make_zip v1
   export FAKE_ZIP="${WORK}/release-v1.zip"
   export LIVEMAP_ROOT="${WORK}/root"
   mkdir -p "${LIVEMAP_ROOT}"
-  export LIVEMAP_VERSION="v1.7.0"
-  LIVEMAP_SHA256="$(sha_of v1)"
-  export LIVEMAP_SHA256
+  set_pin v1.7.0 "$(sha_of v1)"
   export LIVEMAP_PUBLIC_URL="https://enshrouded-map.example.test"
-  unset LIVEMAP_KEY LIVEMAP_REPO
+  unset LIVEMAP_KEY
 }
 
 teardown() {
@@ -168,36 +182,42 @@ teardown() {
   [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v1" ]
   [ "$(<"${LIVEMAP_ROOT}/livemap/index.html")" = "index-v1" ]
   [ "$(<"${LIVEMAP_ROOT}/livemap/maps.json")" = "maps-v1" ]
-  [ "$(<"${LIVEMAP_ROOT}/livemap/.installed")" = "${LIVEMAP_SHA256}" ]
+  [ "$(sed -n 1p "${LIVEMAP_ROOT}/livemap/.installed")" = "${PIN_SHA}" ]
+  [ "$(sed -n 2p "${LIVEMAP_ROOT}/livemap/.installed")" = "v1.7.0" ]
   [ "$(curl_calls)" -eq 1 ]
+}
+
+@test "a version on the bad list is not installed, and livemap.ini is still written" {
+  mkdir -p "${LIVEMAP_STATE_DIR}"
+  echo "v1.7.0" >"${LIVEMAP_STATE_DIR}/bad-list"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ ! -e "${LIVEMAP_ROOT}/iphlpapi.dll" ]
+  [ "$(curl_calls)" -eq 0 ]
+  [ "$(head -n1 "${LIVEMAP_ROOT}/livemap.ini")" = "[livemap]" ]
+  [[ "${output}" == *"livemap-install: v1.7.0 is on the bad list, not installing it"* ]]
+}
+
+@test "another version on the bad list does not stop the install" {
+  mkdir -p "${LIVEMAP_STATE_DIR}"
+  echo "v1.7.1" >"${LIVEMAP_STATE_DIR}/bad-list"
+  run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v1" ]
 }
 
 @test "downloads the release asset named after the version without the v" {
   run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
-  grep -q 'github.com/oggii/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
-}
-
-@test "downloads the release from the repo in LIVEMAP_REPO" {
-  LIVEMAP_REPO="anthony-spruyt/enshrouded-livemap" run bash "${SCRIPT}"
-  [ "${status}" -eq 0 ]
   grep -q 'github.com/anthony-spruyt/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
-  run grep -c 'oggii' "${CALLS}"
-  [ "${output}" = "0" ]
 }
 
-@test "an empty LIVEMAP_REPO downloads from oggii/enshrouded-livemap" {
-  LIVEMAP_REPO="" run bash "${SCRIPT}"
+@test "the download comes from the fork whatever LIVEMAP_REPO says" {
+  LIVEMAP_REPO="someone/else" run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
-  grep -q 'github.com/oggii/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
-}
-
-@test "the pod downloads from the repo Renovate takes the version and hash from" {
-  local repo dep
-  repo="$(sed -n 's/^ *LIVEMAP_REPO: *"\([^"]*\)".*/\1/p' "${VALUES}")"
-  dep="$(grep -B1 'LIVEMAP_VERSION:' "${VALUES}" | sed -n 's/.*# renovate: depName=\([^ ]*\).*/\1/p')"
-  [ -n "${repo}" ]
-  [ "${repo}" = "${dep}" ]
+  grep -q 'github.com/anthony-spruyt/enshrouded-livemap/releases/download/' "${CALLS}"
+  run grep -c 'someone/else' "${CALLS}"
+  [ "${output}" = "0" ]
 }
 
 @test "the worst-case download time leaves 30 s of the 300 s hook timeout" {
@@ -280,7 +300,8 @@ teardown() {
   [ "${status}" -eq 0 ]
   make_zip v2
   exec {held}<"${LIVEMAP_ROOT}/iphlpapi.dll"
-  run env FAKE_ZIP="${WORK}/release-v2.zip" LIVEMAP_VERSION=v2.0.0 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
+  set_pin v2.0.0 "$(sha_of v2)"
+  run env FAKE_ZIP="${WORK}/release-v2.zip" bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
   [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v2" ]
   [ "$(cat <&"${held}")" = "dll-v1" ]
@@ -308,12 +329,14 @@ teardown() {
   first="$(ini_get key)"
   make_zip v2
   export FAKE_ZIP="${WORK}/release-v2.zip"
-  run env LIVEMAP_VERSION=v2.0.0 LIVEMAP_SHA256="${WRONG_SHA}" bash "${SCRIPT}"
+  set_pin v2.0.0 "${WRONG_SHA}"
+  run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
   [ "$(curl_calls)" -eq 2 ]
   [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v1" ]
   [ "$(<"${LIVEMAP_ROOT}/livemap/index.html")" = "index-v1" ]
-  [ "$(<"${LIVEMAP_ROOT}/livemap/.installed")" = "$(sha_of v1)" ]
+  [ "$(sed -n 1p "${LIVEMAP_ROOT}/livemap/.installed")" = "$(sha_of v1)" ]
+  [ "$(sed -n 2p "${LIVEMAP_ROOT}/livemap/.installed")" = "v1.7.0" ]
   [ "$(ini_get key)" = "${first}" ]
 }
 
@@ -323,13 +346,15 @@ teardown() {
   local first
   first="$(ini_get key)"
   make_zip v2
-  run env FAKE_CURL_EXIT=22 LIVEMAP_VERSION=v9.9.9 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
+  set_pin v9.9.9 "$(sha_of v2)"
+  run env FAKE_CURL_EXIT=22 bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
   [[ "${output}" == *"livemap-install: download of v9.9.9 failed (curl exit 22), keeping installed files"* ]]
   [ "$(curl_calls)" -eq 2 ]
   [ "$(<"${LIVEMAP_ROOT}/iphlpapi.dll")" = "dll-v1" ]
   [ "$(<"${LIVEMAP_ROOT}/livemap/index.html")" = "index-v1" ]
-  [ "$(<"${LIVEMAP_ROOT}/livemap/.installed")" = "$(sha_of v1)" ]
+  [ "$(sed -n 1p "${LIVEMAP_ROOT}/livemap/.installed")" = "$(sha_of v1)" ]
+  [ "$(sed -n 2p "${LIVEMAP_ROOT}/livemap/.installed")" = "v1.7.0" ]
   [ "$(ini_get key)" = "${first}" ]
 }
 
@@ -350,9 +375,11 @@ teardown() {
   run bash "${SCRIPT}"
   all+="${output}"
   make_zip v2
-  run env LIVEMAP_VERSION=v2.0.0 LIVEMAP_SHA256="${WRONG_SHA}" bash "${SCRIPT}"
+  set_pin v2.0.0 "${WRONG_SHA}"
+  run bash "${SCRIPT}"
   all+="${output}"
-  run env FAKE_CURL_EXIT=22 LIVEMAP_VERSION=v9.9.9 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
+  set_pin v9.9.9 "$(sha_of v2)"
+  run env FAKE_CURL_EXIT=22 bash "${SCRIPT}"
   all+="${output}"
   [ -n "${key}" ]
   [ -n "${all}" ]
@@ -470,9 +497,11 @@ break"
   run env LIVEMAP_KEY="${key}" bash "${SCRIPT}"
   all+="${output}"
   make_zip v2
-  run env LIVEMAP_KEY="${key}" LIVEMAP_VERSION=v2.0.0 LIVEMAP_SHA256="${WRONG_SHA}" bash "${SCRIPT}"
+  set_pin v2.0.0 "${WRONG_SHA}"
+  run env LIVEMAP_KEY="${key}" bash "${SCRIPT}"
   all+="${output}"
-  run env LIVEMAP_KEY="${key}" FAKE_CURL_EXIT=22 LIVEMAP_VERSION=v9.9.9 LIVEMAP_SHA256="$(sha_of v2)" bash "${SCRIPT}"
+  set_pin v9.9.9 "$(sha_of v2)"
+  run env LIVEMAP_KEY="${key}" FAKE_CURL_EXIT=22 bash "${SCRIPT}"
   all+="${output}"
   run env LIVEMAP_KEY="bad key!" bash "${SCRIPT}"
   all+="${output}"
@@ -538,7 +567,8 @@ break"
   cmp "${LIVEMAP_ROOT}/livemap/index.html" "${WORK}/src-noicon/livemap/index.html"
   [[ "${output}" == *"livemap-install: altar.png not found"* ]]
   [ "$(grep -c 'favicon\|altar' <<<"${output}")" -eq 1 ]
-  [ "$(<"${LIVEMAP_ROOT}/livemap/.installed")" = "${LIVEMAP_SHA256}" ]
+  [ "$(sed -n 1p "${LIVEMAP_ROOT}/livemap/.installed")" = "${PIN_SHA}" ]
+  [ "$(sed -n 2p "${LIVEMAP_ROOT}/livemap/.installed")" = "v1.7.0" ]
 }
 
 @test "a page without the empty icon tag is unchanged and logs nothing about the icon" {

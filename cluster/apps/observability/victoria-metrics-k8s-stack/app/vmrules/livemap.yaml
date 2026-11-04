@@ -1,0 +1,54 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/operator.victoriametrics.com/vmrule_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: livemap
+  namespace: observability
+  labels:
+    vmalert.spruyt-labs/datasource: victorialogs
+spec:
+  groups:
+    - name: livemap-status
+      type: vlogs
+      interval: 30m
+      eval_delay: 30s
+      rules:
+        # fields keeps one series per pod: every stats field would otherwise alert on its own
+        - alert: LivemapInactive
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded"}
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod)
+              count() if ("[ecss] Stats:") as server_lines,
+              count() if (_msg:~`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} livemap-status: state=active `) as active,
+              count() if (_msg:~`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} livemap-status: ` -_msg:~`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} livemap-status: state=active `) as inactive
+            | filter server_lines:>0 inactive:>0 active:0
+            | fields namespace, pod, inactive
+          for: 4h
+          labels:
+            severity: warning
+            owned_by: workflow
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} live map is not active"
+            description: >-
+              The game server in pod {{ $labels.pod }} (namespace {{ $labels.namespace }})
+              has run for 4h without the live map reporting active.
+              Check the livemap-status, livemap-install and livemap-crash lines in the pod log.
+              State off means a crash turned the map off until a newer version is pinned.
+
+        # A pod younger than the 30m window has no status line yet, so for must span a second evaluation
+        - alert: LivemapStatusMissing
+          expr: >-
+            {"kubernetes.pod_namespace"="enshrouded","kubernetes.container_name"="app"}
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) count() if (_msg:~`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} livemap-status: `) as status_lines
+            | filter status_lines:0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} logs no live map status"
+            description: >-
+              Pod {{ $labels.pod }} (namespace {{ $labels.namespace }}) logged
+              no livemap-status line for about an hour. The live map cron job is not running.

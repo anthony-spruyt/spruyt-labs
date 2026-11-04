@@ -37,15 +37,15 @@ Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunn
 
 The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. The hook is `app/livemap-install.sh`, mounted from a ConfigMap at `/opt/livemap`:
 
-- It downloads the release for `LIVEMAP_VERSION` from the repo in `LIVEMAP_REPO` (the fork; the script falls back to `oggii/enshrouded-livemap` when it is unset or empty), checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
+- It downloads the release for `LIVEMAP_VERSION` from the fork, `anthony-spruyt/enshrouded-livemap` (the repo is fixed in the script), checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
+  The two values are the pin in `app/livemap-pin.yaml`, which reaches the pod as the ConfigMap `enshrouded-livemap-pin` mounted at `/opt/livemap-pin`. Only a version shaped `vX.Y.Z` and a lowercase 64 digit hash are used; the hook logs a fixed line for any other value and installs nothing. A bad-listed version (see Updating the live map) is never installed.
 - It checks `livemap/index.html` on every start and, while it still has the empty page icon upstream ships, inlines the Flame Altar icon from the release in its place, so the browser tab has an icon without a request that would need the key. It does nothing once upstream ships its own icon.
 - It rewrites `livemap.ini` on every start. `Key=` is `LIVEMAP_KEY`, the key from the Secret `enshrouded-livemap-key`. If `LIVEMAP_KEY` is empty or breaks the map's key rule (3-64 letters, digits, `-` or `_`, and not a reserved word), the hook keeps the existing `Key=`, or makes a new one when there is none. When it ignores a key that is set, it logs why, without the key. The Secret is optional,
   so the server still starts while it is missing.
+- It adds one line to the image crontab (the image rewrites the crontab on every start, so the hook adds it again each time) that runs the same script with `--cron` every 5 minutes, off the updater's minutes.
 - It always exits 0 and is capped at 300 s, so a map problem never stops the server from starting. `WINEDLLOVERRIDES=iphlpapi=n,b` is what makes Wine load the DLL.
 
 The DLL, `livemap.ini` and `livemap.log` live on the game PVC under `/opt/enshrouded/server`. The `livemap/` folder is a subPath of the saves PVC, so Velero backs up the map history (`finds.json`, `discovered.json`, `explored.json`).
-
-Renovate bumps the pin: it moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together from the fork's releases. A download or hash failure keeps the last good install and logs one line in the pod log. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
 
 The key is the Secret `enshrouded-livemap-key`, which External Secrets generates once (`app/livemap-key-eso.yaml`: `CreatedOnce`, `Orphan`, immutable). It stays the same when the game PVC is rebuilt and changes only when you rotate it. Share the link once in the friends' group chat so it's clickable.
 
@@ -60,6 +60,48 @@ kubectl -n enshrouded rollout restart statefulset/enshrouded
 ```
 
 If the map breaks a rollout, switch it off by removing `WINEDLLOVERRIDES`: Wine then loads its own `iphlpapi` and the DLL does nothing. A failed rollout only self-remediates after the HelmRelease timeout, so don't wait for it.
+
+#### Updating the live map
+
+Renovate bumps the pin: it moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together in `app/livemap-pin.yaml` from the fork's releases. Reloader watches only the two Secrets, so a bump does not restart the pod; the cron job picks it up. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
+
+Every run of `--cron` reads the pin from the mounted file (cron has no container environment), never rewrites `livemap.ini`, always exits 0 and is capped at 40 min. The rule is: a map that works stays on, and a map that crashes the server stays off until a newer version is pinned. Each run does three things:
+
+- It logs `livemap-status: state=<active|inactive|disabled|off> version=<v> build=<b>` to the pod log, taken from `livemap.log` and the game build in `/opt/enshrouded/current_version`. `inactive` means the DLL does not know the running game build and hooks nothing. `off` means the DLL is not installed (turned off after a crash, see below).
+- It compares the server's pid and start time with the ones it recorded last run (kept in `/tmp` with the size of `/var/log/supervisor/supervisord.log`, so a pod start begins anew).
+  A change nobody planned is a crash with the report and decision below.
+  Planned: a `stopped:` line for the server in supervisord's log since the last run (an unplanned exit logs `exited:` instead, and a stop excuses a server that is up or starting, never one that is down), the image updater, a game build change,
+  the image's restart jobs (`enshrouded-restart`, `-force-update`, `-reset-roles`), our own swap restart and a pod start.
+- A server in `STARTING` or `EXITED` that was up at the last run is a crash. A server in `BACKOFF` or `FATAL` is a crash when it was up at the last run, and counts once per container when there is no record:
+  the first run writes the marker `/tmp/livemap-fatal` and later runs of that container count nothing more. A restarted container loses the marker, so a crash loop that restarts the container still adds up to the second crash.
+  A server that is `STOPPING` or `STOPPED` is no verdict. Nothing counts while the updater or a restart job runs.
+- The report reads the run that crashed, which is the last one the DLL started by the time the server was last seen (plus 5 s, because the DLL stamps its start line a moment after the server is `RUNNING`), not the run that has just started.
+- It swaps in the pinned release when that differs from the installed one and the version is not on the bad list. It skips while another run holds its lock, while the image updater or a restart job runs, while the server is not `RUNNING` or when it just handled a crash. It checks that the server is `RUNNING` with nothing planned running again after the download and before it installs and restarts.
+
+A crash is never read from `crash_dumps/` (dumps also appear on slow planned stops, [mornedhels/enshrouded-server#265](https://github.com/mornedhels/enshrouded-server/issues/265)).
+Every unplanned crash logs one line, `livemap-crash: version=<v> build=<b> dump=<new file name or none> count=<n> decision=<off|stays-on> fault=<FAULT line or none>`; `count` is the crashes of that version in the last 24 h.
+
+The map turns off only when the decision is `off`: the DLL logged a `[livemap] FAULT` line in `livemap.log` for the run that crashed, or the same version crashed the server a second time within 24 h.
+The fork has no code that writes a `[livemap] FAULT` line yet, so for now the map turns off only on that second crash.
+One function, `crash_decision`, holds that rule. Planned stops never count, even when the game writes a dump while stopping.
+
+Turning the map off adds the installed version to the bad list, removes `iphlpapi.dll` and logs `state=off`. It restarts the server to unload the map only when `checkServerEmpty` says nobody is on; otherwise the next restart does. A bad-listed version is never installed again, at pod start or by the cron job; a newer pinned version installs as usual.
+
+A swap goes like this:
+
+1. Download the release and check its hash into a staging folder. Players on the server at the start or after the download (checked with the image's `checkServerEmpty`) leave everything as it was, and the next run tries again. An image without `checkServerEmpty` counts as a server that is not empty.
+2. Install the new files and restart `enshrouded-server` with `supervisorctl` (allow up to 180 s: the stop alone takes about a minute).
+3. Watch the server for 10 min once it is `RUNNING` again. If it stops being `RUNNING` or restarts, that is a crash and the report and decision above apply. If the updater or a restart job ran, the game build changed or supervisord logged a stop for the server during the watch, there is no verdict.
+
+The bad list and the crash history live on the game PVC in `/opt/enshrouded/livemap-state`: `bad-list` holds one version per line and `crashes` one `<epoch> <version>` line per crash of the last 24 h. There is no rollback to an older map. To turn the map back on without a new release, remove the version from `bad-list` and the next run installs the pinned one again.
+
+```bash
+kubectl -n enshrouded exec statefulset/enshrouded -- cat /opt/enshrouded/livemap-state/bad-list
+kubectl -n enshrouded exec statefulset/enshrouded -- rm /opt/enshrouded/livemap-state/bad-list
+kubectl -n enshrouded logs statefulset/enshrouded | grep -E 'livemap-(install|status|crash)'
+```
+
+A download or hash failure keeps the installed release and logs one `livemap-install` line. The `LivemapInactive` alert fires when the server runs for 4 h and the status is never `active` (a new game build the fork has not released a fix for yet, or a map turned off after a crash), and `LivemapStatusMissing` fires after the pod logged no status line for 60 to 90 min (the cron job is not running).
 
 ### Updates
 

@@ -77,6 +77,11 @@ jobs:
               - 'cluster/apps/enshrouded/enshrouded/app/values.yaml'
               - 'cluster/apps/enshrouded/enshrouded/app/network-policies.yaml'
               - 'cluster/apps/traefik/traefik/ingress/enshrouded/ingress-routes.yaml'
+              # Pin file, its ConfigMap generator and the alert rules asserted by tests/livemap-cron.bats
+              - 'cluster/apps/enshrouded/enshrouded/app/livemap-pin.yaml'
+              - 'cluster/apps/enshrouded/enshrouded/app/kustomization.yaml'
+              - 'cluster/apps/observability/victoria-metrics-k8s-stack/app/vmrules/livemap.yaml'
+              - 'cluster/apps/observability/victoria-metrics-k8s-stack/app/vmrules/kustomization.yaml'
   kubeconform:
     name: "kubeconform"
     needs: "changes"
@@ -109,6 +114,7 @@ jobs:
             ! -name 'namespace.yaml' \
             ! -name 'values.yaml' \
             ! -name 'kustomizeconfig.yaml' \
+            ! -name 'livemap-pin.yaml' \
             ! -path '*/flux-system/*' \
             ! -path '*/blueprints/*' \
             -print0 | xargs -0 kubeconform \

@@ -21,5 +21,13 @@ configMapGenerator:
       disableNameSuffixHash: true
     files:
       - livemap-install.sh
+  - name: enshrouded-livemap-pin
+    namespace: enshrouded
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        kustomize.toolkit.fluxcd.io/substitute: disabled
+    files:
+      - livemap-pin.yaml
 configurations:
   - ./kustomizeconfig.yaml
