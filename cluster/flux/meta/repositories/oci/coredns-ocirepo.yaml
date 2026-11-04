@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: coredns-ocirepo
+  namespace: flux-system
+spec:
+  ref:
+    tag: "1.50.0"
+    digest: sha256:f606e1c85008c1722cfdc8dcb5097a1c6f49af5ba4c38f32769be9a88a887da8
+  url: oci://ghcr.io/coredns/charts/coredns
+  secretRef:
+    name: image-pull-secrets

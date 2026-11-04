@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/helmfile
+{{- $coredns := readFile "../../cluster/flux/meta/repositories/oci/coredns-ocirepo.yaml" | fromYaml }}
+helmDefaults:
+  cleanupOnFail: true
+  wait: true
+releases:
+  - name: coredns
+    namespace: kube-system
+    chart: {{ $coredns.spec.url }}
+    version: {{ $coredns.spec.ref.tag | quote }}
+    values:
+      - ../../cluster/apps/kube-system/coredns/app/values.yaml
+      - coredns-values.yaml

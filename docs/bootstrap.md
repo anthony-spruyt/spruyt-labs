@@ -1,6 +1,6 @@
 # Cluster Bootstrap
 
-One-time build of the cluster from bare metal: Talos on six nodes, then Cilium, then Flux, which deploys everything else from `cluster/`. For restoring data afterwards, continue with [disaster-recovery.md](disaster-recovery.md).
+One-time build of the cluster from bare metal: Talos on six nodes, then Cilium, then CoreDNS, then Flux, which deploys everything else from `cluster/`. For restoring data afterwards, continue with [disaster-recovery.md](disaster-recovery.md).
 
 ## Current Hardware
 
@@ -116,6 +116,23 @@ kubectl get nodes
 talosctl -n <control-plane-ip> -e <control-plane-ip> health
 ```
 
+## 3b. CoreDNS
+
+Talos renders no CoreDNS of its own (`talos/patches/control-plane/19-disable-coredns.yaml`), so install the upstream chart before Flux. The helmfile takes the chart version from `cluster/flux/meta/repositories/oci/coredns-ocirepo.yaml` and the values from `cluster/apps/kube-system/coredns/app/values.yaml`.
+The override in `talos/helmfile/coredns-values.yaml` pins the Service IP and keeps only the default Corefile block, because the split-DNS zone needs variables Flux fills in and Technitium is not running yet. See [coredns/README.md](../cluster/apps/kube-system/coredns/README.md).
+
+1. Install CoreDNS:
+
+   ```bash
+   helmfile -f talos/helmfile/coredns.yaml.gotmpl apply --suppress-diff
+   ```
+
+**Verify:** the Deployment is rolled out. `talosctl health` skips its CoreDNS check when Talos renders none, so check it directly:
+
+```bash
+kubectl -n kube-system rollout status deploy/coredns
+```
+
 ## 4. Flux
 
 Flux is installed by the Flux Operator, not `flux bootstrap`. The `FluxInstance` values in [`flux-instance/app/values.yaml`](../cluster/apps/flux-system/flux-instance/app/values.yaml) point it at `./cluster/flux/cluster` using the `flux-gitops-key` secret, and SOPS decryption uses `sops-age`.
@@ -145,7 +162,7 @@ kubectl -n flux-system get fluxinstance flux
 flux get kustomizations -A --status-selector ready=false
 ```
 
-Flux then takes over the Cilium and Flux Operator Helm releases installed above (same release names and chart versions) and replaces the minimal Cilium bootstrap values with the full set from `cluster/apps/kube-system/cilium/app/values.yaml`.
+Flux then takes over the Cilium, CoreDNS and Flux Operator Helm releases installed above (same release names and chart versions). It replaces the minimal Cilium bootstrap values with the full set from `cluster/apps/kube-system/cilium/app/values.yaml`, and the CoreDNS bootstrap Corefile with the one from `cluster/apps/kube-system/coredns/app/values.yaml`, which adds the split-DNS zone.
 
 ## 5. Final Checks
 

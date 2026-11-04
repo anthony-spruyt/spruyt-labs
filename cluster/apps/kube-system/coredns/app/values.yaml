@@ -1,0 +1,108 @@
+---
+# #yaml-language-server: $schema=TODO
+# Documentation: https://github.com/coredns/helm/blob/master/charts/coredns/README.md
+# Default values: https://github.com/coredns/helm/blob/master/charts/coredns/values.yaml
+fullnameOverride: coredns
+image:
+  repository: registry.k8s.io/coredns/coredns
+  tag: v1.14.6
+replicaCount: 2
+k8sAppLabelOverride: kube-dns
+priorityClassName: system-cluster-critical
+deployment:
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+service:
+  name: kube-dns
+  selector:
+    k8s-app: kube-dns
+clusterRole:
+  nameOverride: system:coredns
+resources:
+  requests:
+    cpu: 100m
+    memory: 70Mi
+  limits:
+    # Removes the chart's default CPU limit
+    cpu: null
+    memory: 170Mi
+env:
+  - name: GOMEMLIMIT
+    value: 161MiB
+rollingUpdate:
+  maxUnavailable: 0
+  maxSurge: 1
+customAnnotations:
+  helm.sh/resource-policy: keep
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+nodeSelector:
+  kubernetes.io/os: linux
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: node.cloudprovider.kubernetes.io/uninitialized
+    operator: Exists
+    effect: NoSchedule
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: k8s-app
+                operator: In
+                values: ["kube-dns"]
+          topologyKey: kubernetes.io/hostname
+# The bootstrap helmfile (talos/helmfile/coredns-values.yaml) replaces this list without the split-DNS zone
+servers:
+  - zones:
+      - zone: .
+        use_tcp: true
+    port: 53
+    plugins:
+      - name: errors
+      - name: health
+        configBlock: |-
+          lameduck 5s
+      - name: ready
+      - name: log
+        parameters: .
+        configBlock: |-
+          class error
+      - name: prometheus
+        parameters: :9153
+      - name: kubernetes
+        parameters: cluster.local in-addr.arpa ip6.arpa
+        configBlock: |-
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+          ttl 30
+      - name: forward
+        parameters: . /etc/resolv.conf
+        configBlock: |-
+          max_concurrent 1000
+      - name: cache
+        parameters: 30
+        configBlock: |-
+          disable success cluster.local
+          disable denial cluster.local
+      - name: loop
+      - name: reload
+      - name: loadbalance
+  - zones:
+      - zone: ${EXTERNAL_DOMAIN}
+        use_tcp: true
+    port: 53
+    plugins:
+      - name: errors
+      - name: forward
+        parameters: . ${TECHNITIUM_IP4} ${TECHNITIUM_SECONDARY_IP4}
+      - name: cache
+        parameters: 30
