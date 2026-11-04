@@ -186,6 +186,12 @@ teardown() {
   [ "${output}" = "0" ]
 }
 
+@test "an empty LIVEMAP_REPO downloads from oggii/enshrouded-livemap" {
+  LIVEMAP_REPO="" run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  grep -q 'github.com/oggii/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
+}
+
 @test "the pod downloads from the repo Renovate takes the version and hash from" {
   local repo dep
   repo="$(sed -n 's/^ *LIVEMAP_REPO: *"\([^"]*\)".*/\1/p' "${VALUES}")"
