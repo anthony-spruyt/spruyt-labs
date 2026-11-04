@@ -6,6 +6,10 @@ root=/opt/enshrouded/server
 if [ -n "$LIVEMAP_ROOT" ]; then
   root=$LIVEMAP_ROOT
 fi
+repo=oggii/enshrouded-livemap
+if [ -n "$LIVEMAP_REPO" ]; then
+  repo=$LIVEMAP_REPO
+fi
 ini=$root/livemap.ini
 marker=$root/livemap/.installed
 
@@ -33,7 +37,7 @@ install_release() {
   ver=$(printf '%s' "$LIVEMAP_VERSION" | sed 's/^v//')
   curl -fsSL --proto '=https' --connect-timeout 10 --max-time 80 --retry 2 \
     -o "$tmp/release.zip" \
-    "https://github.com/oggii/enshrouded-livemap/releases/download/$LIVEMAP_VERSION/EnshroudedLiveMap-$ver.zip" 2>/dev/null
+    "https://github.com/$repo/releases/download/$LIVEMAP_VERSION/EnshroudedLiveMap-$ver.zip" 2>/dev/null
   rc=$?
   if [ "$rc" -ne 0 ]; then
     log "download of $LIVEMAP_VERSION failed (curl exit $rc), keeping installed files"

@@ -180,9 +180,10 @@ controllers:
           WINEDLLOVERRIDES: "iphlpapi=n,b"
           BOOTSTRAP_HOOK: "timeout 300 bash /opt/livemap/livemap-install.sh || true"
           LIVEMAP_PUBLIC_URL: https://enshrouded-map.${EXTERNAL_DOMAIN}
-          # renovate: depName=oggii/enshrouded-livemap datasource=github-release-attachments digest=sha256
-          LIVEMAP_VERSION: "v1.7.0"
-          LIVEMAP_SHA256: "edb1c346b3d245307239de8b2561713c04d2b49170011b98f3e718c760d325b9"
+          LIVEMAP_REPO: "anthony-spruyt/enshrouded-livemap"
+          # renovate: depName=anthony-spruyt/enshrouded-livemap datasource=github-release-attachments digest=sha256
+          LIVEMAP_VERSION: "v1.7.1"
+          LIVEMAP_SHA256: "bc19b1fb05b8a9e416981f10dacc07c00ef630a9d6d134bb280690a3456be2fd"
         resources:
           requests:
             cpu: 3000m

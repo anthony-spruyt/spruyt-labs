@@ -155,7 +155,7 @@ EOF
   LIVEMAP_SHA256="$(sha_of v1)"
   export LIVEMAP_SHA256
   export LIVEMAP_PUBLIC_URL="https://enshrouded-map.example.test"
-  unset LIVEMAP_KEY
+  unset LIVEMAP_KEY LIVEMAP_REPO
 }
 
 teardown() {
@@ -176,6 +176,22 @@ teardown() {
   run bash "${SCRIPT}"
   [ "${status}" -eq 0 ]
   grep -q 'github.com/oggii/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
+}
+
+@test "downloads the release from the repo in LIVEMAP_REPO" {
+  LIVEMAP_REPO="anthony-spruyt/enshrouded-livemap" run bash "${SCRIPT}"
+  [ "${status}" -eq 0 ]
+  grep -q 'github.com/anthony-spruyt/enshrouded-livemap/releases/download/v1.7.0/EnshroudedLiveMap-1.7.0.zip' "${CALLS}"
+  run grep -c 'oggii' "${CALLS}"
+  [ "${output}" = "0" ]
+}
+
+@test "the pod downloads from the repo Renovate takes the version and hash from" {
+  local repo dep
+  repo="$(sed -n 's/^ *LIVEMAP_REPO: *"\([^"]*\)".*/\1/p' "${VALUES}")"
+  dep="$(grep -B1 'LIVEMAP_VERSION:' "${VALUES}" | sed -n 's/.*# renovate: depName=\([^ ]*\).*/\1/p')"
+  [ -n "${repo}" ]
+  [ "${repo}" = "${dep}" ]
 }
 
 @test "the worst-case download time leaves 30 s of the 300 s hook timeout" {

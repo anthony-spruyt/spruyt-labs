@@ -30,14 +30,14 @@ Players pick the server from the in-game Join list, or choose "Search by IPv4 / 
 
 ### Live map
 
-`https://enshrouded-map.${EXTERNAL_DOMAIN}` shows online players, Flame Altars, fog, weather and time. It is [oggii/enshrouded-livemap](https://github.com/oggii/enshrouded-livemap): a DLL the game loads in place of the system `iphlpapi.dll`, which serves the map over HTTP from inside the game process on TCP 15637. Every request needs the `?key=` from `livemap.ini`. When a player joins, the game
-announces the link with the key in chat.
+`https://enshrouded-map.${EXTERNAL_DOMAIN}` shows online players, Flame Altars, fog, weather and time. It is a DLL from [anthony-spruyt/enshrouded-livemap](https://github.com/anthony-spruyt/enshrouded-livemap), a fork of [oggii/enshrouded-livemap](https://github.com/oggii/enshrouded-livemap) that builds, checks and releases compatibility updates for new server builds.
+The game loads it in place of the system `iphlpapi.dll`, and it serves the map over HTTP from inside the game process on TCP 15637. Every request needs the `?key=` from `livemap.ini`. When a player joins, the game announces the link with the key in chat.
 
 Traefik routes the host to the `enshrouded-map` Service, and the Cloudflare Tunnel route is in `infra/terraform/cloudflare/tunnel.tf`. Outside the LAN only visitors in Australia can open it, and the map serves at most 32 open pages at once.
 
 The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. The hook is `app/livemap-install.sh`, mounted from a ConfigMap at `/opt/livemap`:
 
-- It downloads the release for `LIVEMAP_VERSION`, checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
+- It downloads the release for `LIVEMAP_VERSION` from the repo in `LIVEMAP_REPO` (the fork; the script falls back to `oggii/enshrouded-livemap` when it is unset or empty), checks it against `LIVEMAP_SHA256`, and copies `iphlpapi.dll` next to the server executable and the web files into `livemap/`.
 - It checks `livemap/index.html` on every start and, while it still has the empty page icon upstream ships, inlines the Flame Altar icon from the release in its place, so the browser tab has an icon without a request that would need the key. It does nothing once upstream ships its own icon.
 - It rewrites `livemap.ini` on every start. `Key=` is `LIVEMAP_KEY`, the key from the Secret `enshrouded-livemap-key`. If `LIVEMAP_KEY` is empty or breaks the map's key rule (3-64 letters, digits, `-` or `_`, and not a reserved word), the hook keeps the existing `Key=`, or makes a new one when there is none. When it ignores a key that is set, it logs why, without the key. The Secret is optional,
   so the server still starts while it is missing.
@@ -45,7 +45,7 @@ The image runs `BOOTSTRAP_HOOK` after Wine boots and before the server starts. T
 
 The DLL, `livemap.ini` and `livemap.log` live on the game PVC under `/opt/enshrouded/server`. The `livemap/` folder is a subPath of the saves PVC, so Velero backs up the map history (`finds.json`, `discovered.json`, `explored.json`).
 
-Renovate moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together. A download or hash failure keeps the last good install and logs one line in the pod log. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
+Renovate bumps the pin: it moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together from the fork's releases. A download or hash failure keeps the last good install and logs one line in the pod log. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
 
 The key is the Secret `enshrouded-livemap-key`, which External Secrets generates once (`app/livemap-key-eso.yaml`: `CreatedOnce`, `Orphan`, immutable). It stays the same when the game PVC is rebuilt and changes only when you rotate it. Share the link once in the friends' group chat so it's clickable.
 
