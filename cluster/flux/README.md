@@ -25,7 +25,7 @@ Chart and Git sources for all apps live in [`meta/repositories/`](meta/repositor
 
 | Applied to                          | Default                                                                 | Opt-out label                                    |
 | ----------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------ |
-| Kustomizations under `cluster-apps` | `interval` and `sourceRef` (the `flux-system` GitRepository)            | `kustomizationdefaults.flux.home.arpa/disabled`  |
+| Kustomizations under `cluster-apps` | `interval`, `retryInterval`, `sourceRef` (`flux-system` GitRepository)  | `kustomizationdefaults.flux.home.arpa/disabled`  |
 | Kustomizations under `cluster-apps` | SOPS decryption with the `sops-age` secret                              | `sops.flux.home.arpa/disabled`                   |
 | Kustomizations under `cluster-apps` | `postBuild.substituteFrom` the `cluster-settings` and `cluster-secrets` | `substitution.flux.home.arpa/disabled`           |
 | HelmRepositories in `cluster-meta`  | `interval`, `timeout`                                                   | `helmrepositorydefaults.flux.home.arpa/disabled` |

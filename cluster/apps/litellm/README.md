@@ -226,7 +226,7 @@ LiteLLM PyPI versions 1.82.7-1.82.8 were compromised via a trivy scan dependency
 
 ### Flux timeout
 
-`litellm/ks.yaml` uses a 30m timeout with a 5m retry interval because `traefik-ingress` depends on it and a slow image pull would otherwise fail the Kustomization after Helm succeeded. Keep the two in step with the HelmRelease timeout (Ref #2591).
+`litellm/ks.yaml` uses a 30m timeout because `traefik-ingress` depends on it and a slow image pull would otherwise fail the Kustomization after Helm succeeded. Keep it in step with the HelmRelease timeout (Ref #2591).
 
 ## Troubleshooting
 

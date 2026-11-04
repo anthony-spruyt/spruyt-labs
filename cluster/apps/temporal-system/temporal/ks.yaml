@@ -20,5 +20,4 @@ spec:
   prune: true
   # Must exceed the Kyverno-injected HelmRelease timeout (10m); first deploy also bootstraps CNPG.
   timeout: 15m
-  retryInterval: 5m
   wait: true

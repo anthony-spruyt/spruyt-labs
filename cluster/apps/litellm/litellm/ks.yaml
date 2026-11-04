@@ -21,8 +21,6 @@ spec:
   prune: true
   # Must match the HelmRelease timeout: wait: true includes its Ready condition
   timeout: 30m
-  # Without it a failed reconcile waits the full 4h interval, and traefik-ingress dependsOn this
-  retryInterval: 5m
   wait: true
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
@@ -40,7 +38,6 @@ spec:
   dependsOn:
     - name: litellm
   prune: true
-  retryInterval: 5m
   timeout: 10m
   wait: true
 ---
@@ -61,6 +58,5 @@ spec:
     - name: external-secrets
     - name: github-app-tokens
   prune: true
-  retryInterval: 5m
   timeout: 10m
   wait: true

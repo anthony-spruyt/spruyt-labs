@@ -28,6 +28,7 @@ metadata:
     sops.flux.home.arpa/disabled: "true"
 spec:
   interval: 4h
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: external-snapshotter-gitrepo

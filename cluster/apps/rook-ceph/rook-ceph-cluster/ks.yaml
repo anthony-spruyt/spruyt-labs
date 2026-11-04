@@ -26,13 +26,7 @@ spec:
       kind: CephCluster
       name: rook-ceph
       namespace: *namespace
-  #healthCheckExprs:
-  #  - apiVersion: ceph.rook.io/v1
-  #    kind: CephCluster
-  #    failed: status.ceph.health == 'HEALTH_ERR'
-  #    current: status.ceph.health in ['HEALTH_OK', 'HEALTH_WARN']
   prune: true
-  retryInterval: 2m
   timeout: 15m
   wait: true
 ---
