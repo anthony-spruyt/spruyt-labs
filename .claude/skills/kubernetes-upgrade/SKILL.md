@@ -10,12 +10,12 @@ Orchestrate safe Kubernetes version upgrades on Talos Linux. Primary value: comp
 
 ## Quick Reference
 
-| Item            | Value                                               |
-| --------------- | --------------------------------------------------- |
-| Upgrade command | `talosctl upgrade-k8s -n <cp-node> --to v<version>` |
-| Config file     | `talos/topf.yaml` (`kubernetesVersion` field)       |
-| Node topology   | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3)            |
-| Talos OS skill  | `talos-upgrade` (different from this skill)         |
+| Item            | Value                                                                    |
+| --------------- | ------------------------------------------------------------------------ |
+| Upgrade command | `talosctl upgrade-k8s -n <cp-node> --to v<version> --manifests-no-prune` |
+| Config file     | `talos/topf.yaml` (`kubernetesVersion` field)                            |
+| Node topology   | 3 CP (e2-1/2/3), 3 workers (ms-01-1/2/3)                                 |
+| Talos OS skill  | `talos-upgrade` (different from this skill)                              |
 
 ## Workflow
 
@@ -73,7 +73,13 @@ CP_NODES=$(kubectl get nodes -l node-role.kubernetes.io/control-plane \
 | Ceph         | `kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status` | HEALTH_OK         |
 | Flux ks      | `flux get kustomizations -A`                                      | All Ready         |
 | Flux hr      | `flux get helmreleases -A`                                        | No failures       |
-| Talos CoreDNS | `talosctl -n <first-cp> get manifests`; `kubectl -n kube-system get cm talos-bootstrap-manifests-inventory -o json \| jq -r '.data\|keys[]' \| grep -E 'coredns\|kube-dns'` | No `core-dns` manifest; grep prints nothing |
+
+Talos must neither render nor track CoreDNS (Flux owns it). Both commands must print `true`:
+
+```bash
+talosctl -n <first-cp> get manifests -o json | jq -se 'length > 0 and ([.[].metadata.id | select(test("core-dns"))] | length == 0)'
+kubectl -n kube-system get cm talos-bootstrap-manifests-inventory -o json | jq -e '[.data | keys[] | select(test("coredns|kube-dns"))] | length == 0'
+```
 
 **HARD GATE:** All checks must pass. Report specific failures.
 
@@ -91,11 +97,11 @@ talosctl -n $CP_NODE etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d-%H%M%S).snaps
 talosctl upgrade-k8s -n <cp-node-ip> --to v<version> --dry-run
 ```
 
-**HARD GATE:** All must hold, else STOP and report the objects to the user:
+**HARD GATE:** All must hold, else STOP and report the object names to the user, never the diff output:
 
 - The dry run succeeds
-- No `< Pruned <Kind>/<ns>/<name>` line
-- No `< configured` diff touches a Flux-owned object, except an annotation-only `config.k8s.io/owning-inventory` addition (today: the two VPA CRDs)
+- No ` < Pruned ` line
+- No ` < configured ` diff touches a Flux-owned object, except an annotation-only `config.k8s.io/owning-inventory` addition (today: the two VPA CRDs). Flux-owned means the live object has a `kustomize.toolkit.fluxcd.io/name` or `helm.toolkit.fluxcd.io/name` label, which every CRD from `talos/patches/control-plane/07-extra-manifests.yaml` has
 
 ### Phase 9: Execute Upgrade
 
@@ -156,7 +162,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
 
 ## Rollback
 
-- `talosctl upgrade-k8s` is idempotent — re-run if it fails partway
+- `talosctl upgrade-k8s` is idempotent — re-run the Phase 9 command if it fails partway
 - etcd backup from Phase 7 is primary recovery (**WARNING:** restore is destructive, resets to snapshot point)
 - Debug: `talosctl -n <ip> logs kubelet`, `talosctl -n <ip> dmesg`
 - Context7: `query-docs(libraryId: "/siderolabs/talos", query: "kubernetes upgrade rollback recovery")`

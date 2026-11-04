@@ -167,10 +167,10 @@ Renovate bumps `kubernetesVersion` in `talos/topf.yaml`. Talos upgrades the cont
 
    ```bash
    talosctl -n <cp-ip> upgrade-k8s --to <version> --dry-run
-   talosctl -n <cp-ip> upgrade-k8s --to <version>
+   talosctl -n <cp-ip> upgrade-k8s --to <version> --manifests-no-prune
    ```
 
-   The dry run must succeed and must not prune anything: a `Pruned` line deletes that object on the real run. The upgrade is safe to re-run if it stops partway.
+   The dry run must succeed and must not prune anything: a `Pruned` line means Talos would delete that object. `--manifests-no-prune` keeps the real run from deleting anything. The upgrade is safe to re-run if it stops partway.
 
 3. **Verify:** `kubectl get nodes` shows the new version on all six nodes, and the health check passes.
 
