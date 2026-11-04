@@ -7,6 +7,7 @@ Flux runs all of CoreDNS from the upstream `coredns` Helm chart: Deployment, Ser
 ## Prerequisites
 
 - **Talos renders no CoreDNS** (`talos/patches/control-plane/19-disable-coredns.yaml`). `talosctl upgrade-k8s` re-applies every manifest Talos renders, so while Talos owned CoreDNS each Kubernetes upgrade rewrote the Corefile and dropped the split-DNS zone. Do not use `cluster.coreDNS.disabled`; `KubeCoreDNSConfig` is the switch.
+- **Not in the Talos inventory**: `upgrade-k8s` prunes every object listed in `kube-system/talos-bootstrap-manifests-inventory` that Talos no longer renders, so no CoreDNS object may be listed there. Its dry run must show no `Pruned` line.
 - **Bootstrap**: `talos/helmfile/coredns.yaml.gotmpl` installs the chart before Flux on a rebuild, with `talos/helmfile/coredns-values.yaml` swapping in a Corefile without the split-DNS zone (Technitium is not running yet). Flux then upgrades the same release to the full values. See [bootstrap.md](../../../../docs/bootstrap.md#3b-coredns).
 
 ## Operations

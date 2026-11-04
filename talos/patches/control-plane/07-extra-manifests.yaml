@@ -1,7 +1,5 @@
-# Bootstrap seeds. Talos creates these once and never updates them, so bumping
-# a URL here has no effect on a running cluster. Each tag is annotated so
-# Renovate keeps it in lockstep with the GitRepository or chart that owns the
-# same CRDs at runtime.
+# Bootstrap seeds that talosctl upgrade-k8s also re-applies: keep each tag in
+# lockstep with the GitRepository or chart that owns the same CRDs at runtime.
 cluster:
   extraManifests:
     # renovate: depName=kubernetes-sigs/gateway-api datasource=github-tags

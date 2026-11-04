@@ -1,0 +1,5 @@
+---
+apiVersion: v1alpha1
+kind: KubeCoreDNSConfig
+# Flux runs CoreDNS from cluster/apps/kube-system/coredns; while Talos also renders it, talosctl upgrade-k8s overwrites the Corefile
+enabled: false

@@ -21,7 +21,7 @@ Procedures live in the runbooks:
 | `talsecret.sops.yaml` | The cluster PKI bundle. Reused as-is; never regenerate it on a running cluster.                                                             |
 | `patches/`            | Machine config patches - see [Patch layering](#patch-layering).                                                                             |
 | `schematics/`         | Image Factory schematic per hardware class - see [Talos Image Schematics](#talos-image-schematics).                                         |
-| `helmfile/`           | Bootstrap-only installs of Cilium and Flux, used before Flux exists. Chart versions are read from the manifests under `cluster/`.           |
+| `helmfile/`           | Bootstrap-only installs of Cilium, CoreDNS and Flux, used before Flux exists. Chart versions are read from the manifests under `cluster/`.  |
 | `clusterconfig/`      | Gitignored. `task talos:render` output and the generated `talosconfig`. `task talos:apply` does not read it; it renders in memory.          |
 
 ## Patch layering
