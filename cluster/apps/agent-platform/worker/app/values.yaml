@@ -25,7 +25,7 @@ controllers:
         image:
           repository: docker.io/aspruyt/agent-platform
           # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
-          tag: "1.20.2@sha256:eb761f10bf3a77b6dbf9fb057004f1a82fa68ed9dd4ca6a14a72ca02d32d5bc2"
+          tag: "1.20.3@sha256:8ee071ff71a13b37d82651eef9d4d584b7d74487009e74f84d526400c03e4f1d"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Migrate
@@ -59,7 +59,7 @@ controllers:
         image:
           repository: docker.io/aspruyt/agent-platform
           # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
-          tag: "1.20.2@sha256:eb761f10bf3a77b6dbf9fb057004f1a82fa68ed9dd4ca6a14a72ca02d32d5bc2"
+          tag: "1.20.3@sha256:8ee071ff71a13b37d82651eef9d4d584b7d74487009e74f84d526400c03e4f1d"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Worker
@@ -69,6 +69,9 @@ controllers:
           AgentPods__MaxConcurrentActivities: "1"
           AgentPods__Model: opus
           AgentPrompts__Directory: /etc/agent-platform/prompts
+          ClaudeBudget__MaxPerHour: "4"
+          ClaudeBudget__MaxPerDay: "32"
+          ClaudeBudget__Kinds__RenovateTriage__MaxPerSubjectPerDay: "2"
           AgentGateway__SessionTokenKey:
             valueFrom:
               secretKeyRef:
@@ -100,9 +103,6 @@ controllers:
           LiteLlm__JevPath: v1/systemone
           LiteLlm__JevModel: jev-1.14.0
           RenovateTriage__Mode: Live
-          RenovateTriage__Claude__MaxPerHour: "4"
-          RenovateTriage__Claude__MaxPerDay: "32"
-          RenovateTriage__Claude__MaxPerPrPerDay: "2"
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
           OTEL_SERVICE_NAME: agent-platform-worker
