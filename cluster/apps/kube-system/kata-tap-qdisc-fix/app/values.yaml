@@ -22,7 +22,7 @@ controllers:
       app:
         image:
           repository: docker.io/aspruyt/kata-tap-qdisc-fix
-          tag: 1.0.3@sha256:2e9c7bb075f79034f464927f0386241cde5492b7fb546c0485446f3f69c6bbee
+          tag: 1.0.4@sha256:bff94b166fe0000fd5497d47b6ff70fb6b6bc4ae9b7553ed4e85126c2730ceab
           pullPolicy: IfNotPresent
         env:
           - name: DRY_RUN
