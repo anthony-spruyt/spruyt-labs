@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=cilium/cilium-cli datasource=github-releases
-VERSION="v0.20.1"
+VERSION="v0.20.2"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
