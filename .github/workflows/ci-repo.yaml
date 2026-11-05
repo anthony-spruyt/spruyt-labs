@@ -20,7 +20,7 @@ jobs:
       bats: "${{ steps.filter.outputs.bats }}"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@071e82f6889e771fa6a7283465d129b9f9e5e9ca # main
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@62f9de477d70d6338bba7385d69a9e02c291b994 # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -94,7 +94,7 @@ jobs:
       KUBERNETES_VERSION: "1.36.6"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@071e82f6889e771fa6a7283465d129b9f9e5e9ca # main
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@62f9de477d70d6338bba7385d69a9e02c291b994 # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -132,7 +132,7 @@ jobs:
       contents: "read"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@071e82f6889e771fa6a7283465d129b9f9e5e9ca # main
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@62f9de477d70d6338bba7385d69a9e02c291b994 # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -250,7 +250,7 @@ jobs:
       contents: "read"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@071e82f6889e771fa6a7283465d129b9f9e5e9ca # main
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@62f9de477d70d6338bba7385d69a9e02c291b994 # main
         with:
           allowed-endpoints: >-
             api.github.com:443
@@ -291,7 +291,7 @@ jobs:
           - "infra/terraform/cloudflare"
     steps:
       - name: Harden Runner
-        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@071e82f6889e771fa6a7283465d129b9f9e5e9ca # main
+        uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@62f9de477d70d6338bba7385d69a9e02c291b994 # main
         with:
           allowed-endpoints: >-
             api.github.com:443
