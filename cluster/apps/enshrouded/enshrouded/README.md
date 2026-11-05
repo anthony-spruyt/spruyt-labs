@@ -82,7 +82,6 @@ A crash is never read from `crash_dumps/` (dumps also appear on slow planned sto
 Every unplanned crash logs one line, `livemap-crash: version=<v> build=<b> dump=<new file name or none> count=<n> decision=<off|stays-on> fault=<FAULT line or none>`; `count` is the crashes of that version in the last 24 h.
 
 The map turns off only when the decision is `off`: the DLL logged a `[livemap] FAULT` line in `livemap.log` for the run that crashed, or the same version crashed the server a second time within 24 h.
-The fork has no code that writes a `[livemap] FAULT` line yet, so for now the map turns off only on that second crash.
 One function, `crash_decision`, holds that rule. Planned stops never count, even when the game writes a dump while stopping.
 
 Turning the map off adds the installed version to the bad list, removes `iphlpapi.dll` and logs `state=off`. It restarts the server to unload the map only when `checkServerEmpty` says nobody is on; otherwise the next restart does. A bad-listed version is never installed again, at pod start or by the cron job; a newer pinned version installs as usual.
