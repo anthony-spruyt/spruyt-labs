@@ -65,7 +65,7 @@ controllers:
           AgentPlatform__Role: Worker
           ASPNETCORE_HTTP_PORTS: "8080"
           # renovate: datasource=docker depName=docker.io/aspruyt/claude-agent-read
-          AgentPods__Image: "docker.io/aspruyt/claude-agent-read:1.1.12@sha256:a210c38aaf36919bccd3778ab30dfd4b3da7982ece8d91b6293dde7b62ed4ce7"
+          AgentPods__Image: "docker.io/aspruyt/claude-agent-read:1.1.13@sha256:9f7195b96e5dbc6141f01f367ed8ea1dd6ec32ee1bd03e5829995d30e2f521ec"
           AgentPods__MaxConcurrentActivities: "1"
           AgentPods__Model: opus
           AgentPrompts__Directory: /etc/agent-platform/prompts
