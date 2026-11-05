@@ -1369,7 +1369,7 @@ persistence:
     type: image
     image:
       repository: docker.io/aspruyt/llm-tool-guard-model
-      tag: 1.1.1@sha256:bc07b0a0035ba7e8f6fcbee1a8db194caf28680c082318fbfbc6810905b58c50
+      tag: 1.1.2@sha256:bd4bf0d13b99dbaae302dc49e95b3357959c526bd129d7c3f8f8195a74230397
     pullPolicy: IfNotPresent
     advancedMounts:
       llm-tool-guard:
