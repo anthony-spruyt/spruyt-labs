@@ -91,7 +91,7 @@ jobs:
       contents: "read"
     env:
       # renovate: datasource=github-releases depName=kubernetes/kubernetes
-      KUBERNETES_VERSION: "1.36.6"
+      KUBERNETES_VERSION: "1.37.2"
     steps:
       - name: Harden Runner
         uses: anthony-spruyt/repo-operator/.github/actions/harden-runner@62f9de477d70d6338bba7385d69a9e02c291b994 # main
