@@ -5,7 +5,7 @@ instance:
   # -- Distribution https://fluxcd.control-plane.io/operator/fluxinstance/#distribution-configuration
   distribution: # @schema required: true
     # renovate: depName=fluxcd/flux2 datasource=github-releases
-    version: "2.9.6" # @schema required: true
+    version: "2.10.0" # @schema required: true
     registry: "ghcr.io/fluxcd" # @schema required: true
     artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:latest"
     artifactPullSecret: ""
