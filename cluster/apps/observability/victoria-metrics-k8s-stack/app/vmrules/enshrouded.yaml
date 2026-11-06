@@ -77,3 +77,25 @@ spec:
             | math peak_us / 1000 as peak_ms
             | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
             | stats by (namespace, pod) max(peak_ms) as peak_ms
+
+    - name: enshrouded-impact-pool
+      type: vlogs
+      interval: 5m
+      eval_delay: 30s
+      rules:
+        # The 45m window must stay above the 30m repeat of the Allocator Usage High line or the alert flaps
+        - alert: EnshroudedImpactPoolFull
+          expr: >-
+            _time:45m {"kubernetes.pod_namespace"="enshrouded"}
+            ("[impact] Allocator Usage High" OR "Impact System could not allocate impact")
+            | rename kubernetes.pod_namespace as namespace, kubernetes.pod_name as pod
+            | stats by (namespace, pod) count() as impact_logs
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} effects pool is nearly full"
+            description: >-
+              The game server in pod {{ $labels.pod }} (namespace {{ $labels.namespace }})
+              logged in the last 45m that its effects pool is nearly full or overflowing.
+              Hits and interactions can drop while it overflows.
+              Restart the game server when players are done.
