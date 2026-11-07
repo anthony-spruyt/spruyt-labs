@@ -731,9 +731,6 @@ configMaps:
               - list_pull_requests
               - list_branches
               - search_dependency_risks
-              - start_agentic_readiness_assessment
-              - get_agentic_readiness_assessment
-              - list_agentic_readiness_assessments
             allow_all_keys: false
             available_on_public_internet: false
           terraform:
