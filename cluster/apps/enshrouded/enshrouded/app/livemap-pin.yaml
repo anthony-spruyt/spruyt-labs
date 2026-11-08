@@ -1,3 +1,3 @@
 # renovate: depName=anthony-spruyt/enshrouded-livemap datasource=github-release-attachments digest=sha256
-LIVEMAP_VERSION: "v1.8.0"
-LIVEMAP_SHA256: "00f095755545866c6b2e3531a90339c31debc81f080b44d15386a3b0b4dda313"
+LIVEMAP_VERSION: "v1.9.0"
+LIVEMAP_SHA256: "62cca25adb7b5fe637789caaf4a2225b86768db72888922970f7039ccb2766ca"
