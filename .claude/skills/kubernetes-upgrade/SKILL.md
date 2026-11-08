@@ -154,7 +154,7 @@ K8s upgrades restart all kubelets. After restart, kubelet's `Watch`-based secret
    - `grep -rln --include='*.yaml' --include='*.md' --include='*.sh' -F '<old-version>' talos/ docs/ cluster/ .github/workflows/ .taskfiles/`
 2. Common locations: `talos/topf.yaml` (`kubernetesVersion`), `.github/workflows/ci-repo.yaml` (`KUBERNETES_VERSION`), `.taskfiles/install/scripts/install-kubectl.sh` (`VERSION`)
 3. Land the version change:
-   - **Started from a Renovate PR:** it already bumps the files Renovate tracks. If step 1 found other references, update them on the PR branch, run qa-validator with the issue number and changed files, and land them per the `orchestration` skill (fresh reviewer READY, `push-reviewed.sh` to the PR branch). Then `gh pr merge <N> --squash`
+   - **Started from a Renovate PR:** it already bumps the files Renovate tracks. If step 1 found other references, update them on the PR branch, run qa-validator with the issue number and changed files, and land them per the `orchestration` skill (push to the PR branch, get CI green, then a fresh reviewer READY). Then `gh pr merge <N> --squash`
    - **Otherwise:** update every reference, run qa-validator with the issue number and changed files, then land it per the `orchestration` skill, as in `talos-upgrade`'s landing rule
    - Either way, run cluster-validator if a changed file is under `cluster/`
 4. Verify zero old references remain on `main` and `task talos:diff` exits 0, then close the issue
