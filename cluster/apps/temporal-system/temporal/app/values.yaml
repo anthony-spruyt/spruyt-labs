@@ -173,7 +173,7 @@ web:
   enabled: true
   image:
     repository: temporalio/ui
-    tag: 2.57.0@sha256:d944f959d0923c35cd991a17a0edbe087770eff843724b181933e0cfdd563ab2
+    tag: 2.58.0@sha256:d36185e811d0ce1720b8d3ca4d9ac4dac504b67181e9b5e3d3ca72b2294f3590
   priorityClassName: standard
   resources:
     requests:
