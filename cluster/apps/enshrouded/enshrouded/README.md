@@ -65,6 +65,8 @@ If the map breaks a rollout, switch it off by removing `WINEDLLOVERRIDES`: Wine 
 
 Renovate bumps the pin: it moves `LIVEMAP_VERSION` and `LIVEMAP_SHA256` together in `app/livemap-pin.yaml` from the fork's releases. Reloader watches only the two Secrets, so a bump does not restart the pod; the cron job picks it up. Shipped files in `livemap/` are replaced on each bump, so don't hand-edit them; the history files are kept.
 
+The agent-platform worker also reads `LIVEMAP_VERSION` from this file on `main` (`Livemap__PinPath` in `cluster/apps/agent-platform/worker/app/values.yaml`) to learn which builds the live map already covers. Moving or renaming the file needs that value changed too.
+
 Every run of `--cron` reads the pin from the mounted file (cron has no container environment), never rewrites `livemap.ini`, always exits 0 and is capped at 40 min. The rule is: a map that works stays on, and a map that crashes the server stays off until a newer version is pinned. Each run does three things:
 
 - It logs `livemap-status: state=<active|inactive|disabled|off> version=<v> build=<b>` to the pod log, taken from `livemap.log` and the game build in `/opt/enshrouded/current_version`. `inactive` means the DLL does not know the running game build and hooks nothing. `off` means the DLL is not installed (turned off after a crash, see below).
