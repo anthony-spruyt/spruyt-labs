@@ -56,6 +56,15 @@ controllers:
           Livemap__Repo: anthony-spruyt/enshrouded-livemap
           Livemap__PinRepo: anthony-spruyt/spruyt-labs
           Livemap__PinPath: cluster/apps/enshrouded/enshrouded/app/livemap-pin.yaml
+          Livemap__TrackingIssue: "28"
+          Livemap__AutoMerge: "false"
+          Livemap__RequiredChecks__0: "lint / MegaLinter"
+          Livemap__RequiredChecks__1: "repo / Build, test, package"
+          Livemap__RequiredChecks__2: "repo / Boot the server with the DLL"
+          Livemap__RequiredChecks__3: "repo / data-only"
+          Livemap__RequiredChecks__4: "repo / Build and test the compat tool"
+          Livemap__RequiredChecks__5: "repo / Classify the pull request"
+          Livemap__RequiredChecks__6: "summary / Check Results"
           OTEL_SERVICE_NAME: agent-platform-web
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry
