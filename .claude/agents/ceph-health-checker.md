@@ -1,7 +1,7 @@
 ---
 name: ceph-health-checker
 description: "Checks Rook Ceph storage cluster health. Posts to a GitHub issue when given one.\\n\\n**When to use:**\\n- User asks about storage health, Ceph status, or disk usage\\n- After storage-related changes (Rook Ceph config, OSD changes, pool modifications), once cluster-validator has run\\n- Periodic storage health check\\n\\n**When NOT to use:**\\n- Ceph cluster bootstrap or initial setup\\n- Rook operator upgrades (use cluster-validator after push)\\n- Non-storage cluster health checks"
-model: opus
+model: sonnet
 tools:
   - Bash
   - Read
