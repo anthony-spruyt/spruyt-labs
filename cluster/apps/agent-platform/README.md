@@ -22,6 +22,7 @@ The pod spec for agents (env, MCP config, settings, clone, deadline) is built in
 settings are in `web/app/values.yaml` and `worker/app/values.yaml`. The worker depends on the web Kustomization for the `agent-platform-session` Secret, and on `temporal` for the run-data role, Role and CA copy.
 
 Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. Both use the Temporal namespace `agent-platform`.
+Both set the same four `Livemap__*` values, so change them together: the web role wakes a Livemap build only for check suites of `Livemap__Repo`, and with `Livemap__Enabled` on it fails startup when any of the four is missing or invalid.
 
 The worker pod runs a `migrate` initContainer (same image, `AgentPlatform__Role: Migrate`) that applies the run-data EF Core migrations before the worker starts; the web pod has no database access.
 
@@ -49,20 +50,20 @@ The worker creates the per-run GitHub token Secret after the pod, with an ownerR
 
 DNS is allowed cluster-wide by `allow-kube-dns-egress`. Everything else is allowlisted, on both sides where the destination has an ingress policy:
 
-| From                | To                                                           | Destination-side policy                                                                                                                              |
-| ------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| worker              | kube-apiserver `6443`                                        | n/a                                                                                                                                                  |
-| web, worker         | Temporal frontend `7233`                                     | `temporal-system/temporal` `allow-temporal-frontend-clients-ingress`                                                                                 |
-| worker              | Temporal CNPG cluster `5432` (run-data database)             | `temporal-system/temporal` `allow-temporal-cnpg-agent-platform-ingress`                                                                              |
-| worker              | LiteLLM `4000`                                               | `litellm/litellm` `allow-agent-platform-ingress`                                                                                                     |
-| worker              | llm-tool-guard `8080` (text scans)                           | `litellm/litellm` `llm-tool-guard-policy`                                                                                                            |
-| worker              | world `443` (GitHub, Discord, Steam info API)                | n/a                                                                                                                                                  |
-| web, worker, agents | vmsingle `8428`, VictoriaLogs `9428`, VictoriaTraces `10428` | VictoriaTraces: `observability/victoria-traces-single` `allow-agent-platform-traces-ingress`; vmsingle and VictoriaLogs accept any in-cluster source |
-| agents              | AgentGateway `8081`                                          | `allow-web-agent-gateway-ingress` (this app)                                                                                                         |
-| agents              | LiteLLM `4000`                                               | `litellm/litellm` `allow-agent-platform-ingress`                                                                                                     |
-| agents              | world `443` (GitHub)                                         | n/a                                                                                                                                                  |
-| agents              | Nexus `8081` (npm/PyPI/NuGet)                                | `nexus-system/nexus` `nexus-default`                                                                                                                 |
-| Traefik             | web `8080`                                                   | `allow-web-traefik-ingress` (this app)                                                                                                               |
+| From                | To                                                               | Destination-side policy                                                                                                                              |
+| ------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| worker              | kube-apiserver `6443`                                            | n/a                                                                                                                                                  |
+| web, worker         | Temporal frontend `7233`                                         | `temporal-system/temporal` `allow-temporal-frontend-clients-ingress`                                                                                 |
+| worker              | Temporal CNPG cluster `5432` (run-data database)                 | `temporal-system/temporal` `allow-temporal-cnpg-agent-platform-ingress`                                                                              |
+| worker              | LiteLLM `4000`                                                   | `litellm/litellm` `allow-agent-platform-ingress`                                                                                                     |
+| worker              | llm-tool-guard `8080` (text scans)                               | `litellm/litellm` `llm-tool-guard-policy`                                                                                                            |
+| worker              | world `443` (GitHub, Actions artifacts, Discord, Steam info API) | n/a                                                                                                                                                  |
+| web, worker, agents | vmsingle `8428`, VictoriaLogs `9428`, VictoriaTraces `10428`     | VictoriaTraces: `observability/victoria-traces-single` `allow-agent-platform-traces-ingress`; vmsingle and VictoriaLogs accept any in-cluster source |
+| agents              | AgentGateway `8081`                                              | `allow-web-agent-gateway-ingress` (this app)                                                                                                         |
+| agents              | LiteLLM `4000`                                                   | `litellm/litellm` `allow-agent-platform-ingress`                                                                                                     |
+| agents              | world `443` (GitHub)                                             | n/a                                                                                                                                                  |
+| agents              | Nexus `8081` (npm/PyPI/NuGet)                                    | `nexus-system/nexus` `nexus-default`                                                                                                                 |
+| Traefik             | web `8080`                                                       | `allow-web-traefik-ingress` (this app)                                                                                                               |
 
 Policies in `agent-platform-agents` select every pod in the namespace, and agent pods accept no ingress. Agent pods send telemetry only as `POST` to the OTLP ingest path on each port (Cilium L7 rules in `allow-otel-egress`), and these policies apply to Kata pods the same way. vmagent scrape rules are added when those exist.
 

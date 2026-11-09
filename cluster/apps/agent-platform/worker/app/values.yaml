@@ -25,7 +25,7 @@ controllers:
         image:
           repository: docker.io/aspruyt/agent-platform
           # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
-          tag: "1.22.0@sha256:a5fbd29a2dd6348376b14e5184c50289e365442fe4721cafba6c3ddbccf1c49f"
+          tag: "1.23.0@sha256:31608176e32da5c1c0e174a04fce060239742334a1c6e7e8f97078a3c532ddca"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Migrate
@@ -59,7 +59,7 @@ controllers:
         image:
           repository: docker.io/aspruyt/agent-platform
           # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
-          tag: "1.22.0@sha256:a5fbd29a2dd6348376b14e5184c50289e365442fe4721cafba6c3ddbccf1c49f"
+          tag: "1.23.0@sha256:31608176e32da5c1c0e174a04fce060239742334a1c6e7e8f97078a3c532ddca"
           pullPolicy: IfNotPresent
         env:
           AgentPlatform__Role: Worker

@@ -29,7 +29,7 @@ controllers:
         image:
           repository: docker.io/aspruyt/agent-platform
           # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
-          tag: "1.22.0@sha256:a5fbd29a2dd6348376b14e5184c50289e365442fe4721cafba6c3ddbccf1c49f"
+          tag: "1.23.0@sha256:31608176e32da5c1c0e174a04fce060239742334a1c6e7e8f97078a3c532ddca"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
@@ -52,6 +52,10 @@ controllers:
                 key: github-webhook-secret
           Temporal__Address: temporal-frontend.temporal-system.svc:7233
           Temporal__Namespace: agent-platform
+          Livemap__Enabled: "true"
+          Livemap__Repo: anthony-spruyt/enshrouded-livemap
+          Livemap__PinRepo: anthony-spruyt/spruyt-labs
+          Livemap__PinPath: cluster/apps/enshrouded/enshrouded/app/livemap-pin.yaml
           OTEL_SERVICE_NAME: agent-platform-web
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry
