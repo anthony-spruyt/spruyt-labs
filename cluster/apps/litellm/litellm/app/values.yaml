@@ -1280,7 +1280,7 @@ configMaps:
                   SIMPLE: "anthropic/claude-haiku-5-5"
                   MEDIUM: "anthropic/claude-sonnet-5-5"
                   COMPLEX: "anthropic/claude-opus-5-5"
-                  REASONING: "anthropic/claude-fable-5-1"
+                  REASONING: "anthropic/claude-fable-5-2"
                 classifier_type: jev
                 jev_classifier_config:
                   model: jev-latest
