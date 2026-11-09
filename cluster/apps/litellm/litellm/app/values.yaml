@@ -1188,6 +1188,10 @@ configMaps:
             litellm_params:
               model: "anthropic/claude-fable-5-1"
               stream_timeout: 120
+          - model_name: "anthropic/claude-fable-5-2"
+            litellm_params:
+              model: "anthropic/claude-fable-5-2"
+              stream_timeout: 120
           - model_name: "anthropic/claude-opus-5-5"
             litellm_params:
               model: "anthropic/claude-opus-5-5"
@@ -1224,6 +1228,11 @@ configMaps:
           - model_name: "anthropic-api/claude-fable-5-1"
             litellm_params:
               model: "anthropic/claude-fable-5-1"
+              api_key: os.environ/ANTHROPIC_API_KEY
+              stream_timeout: 120
+          - model_name: "anthropic-api/claude-fable-5-2"
+            litellm_params:
+              model: "anthropic/claude-fable-5-2"
               api_key: os.environ/ANTHROPIC_API_KEY
               stream_timeout: 120
           - model_name: "anthropic-api/claude-opus-5-5"
@@ -1283,6 +1292,7 @@ configMaps:
           fallbacks:
             - "anthropic/claude-fable-5": ["anthropic-api/claude-fable-5"]
             - "anthropic/claude-fable-5-1": ["anthropic-api/claude-fable-5-1"]
+            - "anthropic/claude-fable-5-2": ["anthropic-api/claude-fable-5-2"]
             - "anthropic/claude-opus-5-5": ["anthropic-api/claude-opus-5-5"]
             - "anthropic/claude-sonnet-5-5": ["anthropic-api/claude-sonnet-5-5"]
             - "anthropic/claude-haiku-5-5": ["anthropic-api/claude-haiku-5-5"]
@@ -1306,6 +1316,7 @@ configMaps:
             "claude-opus-5-5": "anthropic/claude-opus-5-5"
             "claude-fable-5": "anthropic/claude-fable-5"
             "claude-fable-5-1": "anthropic/claude-fable-5-1"
+            "claude-fable-5-2": "anthropic/claude-fable-5-2"
           redis_host: litellm-valkey.litellm.svc
           redis_port: "6379"
           redis_password: os.environ/REDIS_PASSWORD
