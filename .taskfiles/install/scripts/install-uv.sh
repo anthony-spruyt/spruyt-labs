@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=astral-sh/uv datasource=github-releases
-VERSION="0.13.6"
+VERSION="0.13.7"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
