@@ -57,7 +57,8 @@ controllers:
           Livemap__PinRepo: anthony-spruyt/spruyt-labs
           Livemap__PinPath: cluster/apps/enshrouded/enshrouded/app/livemap-pin.yaml
           Livemap__TrackingIssue: "28"
-          Livemap__AutoMerge: "false"
+          Livemap__AutoMerge: "true"
+          Livemap__HardPath: "true"
           Livemap__RequiredChecks__0: "lint / MegaLinter"
           Livemap__RequiredChecks__1: "repo / Build, test, package"
           Livemap__RequiredChecks__2: "repo / Boot the server with the DLL"

@@ -25,6 +25,7 @@ Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway_
 Both set the same `Livemap__*` values, so change them together: the web role wakes a Livemap build only for check suites of `Livemap__Repo`, and with `Livemap__Enabled` on both roles fail startup when a required one is missing or invalid.
 `Livemap__RequiredChecks__<n>` are the fork's check-run names that must pass before the worker merges a data pull request, and `Livemap__ReleaseRequiredChecks__<n>` the ones that must pass on the fork's release pull request, opened by `Livemap__ReleaseBot`.
 A skipped check counts as failed, so list only checks that run on that kind of pull request. `Livemap__AutoMerge` switches on every worker merge: the data pull request, the release pull request and the pin pull request in this repo.
+`Livemap__HardPath` lets the worker run the hard-patch agent in an `agent-platform-agents` pod for a build the fork's data can't cover. A data result goes through the data pull request; a code result opens a fork pull request that waits for the owner and is never merged by the worker. Turning it off hands a build in progress to a person.
 Renovate bumps the image on its own, so when a release adds a required `Livemap__*` value, set it here before that release merges; older images ignore values they do not know.
 
 The worker pod runs a `migrate` initContainer (same image, `AgentPlatform__Role: Migrate`) that applies the run-data EF Core migrations before the worker starts; the web pod has no database access.
@@ -64,7 +65,7 @@ DNS is allowed cluster-wide by `allow-kube-dns-egress`. Everything else is allow
 | web, worker, agents | vmsingle `8428`, VictoriaLogs `9428`, VictoriaTraces `10428`     | VictoriaTraces: `observability/victoria-traces-single` `allow-agent-platform-traces-ingress`; vmsingle and VictoriaLogs accept any in-cluster source |
 | agents              | AgentGateway `8081`                                              | `allow-web-agent-gateway-ingress` (this app)                                                                                                         |
 | agents              | LiteLLM `4000`                                                   | `litellm/litellm` `allow-agent-platform-ingress`                                                                                                     |
-| agents              | world `443` (GitHub)                                             | n/a                                                                                                                                                  |
+| agents              | world `443` (GitHub, Steam depot download)                       | n/a                                                                                                                                                  |
 | agents              | Nexus `8081` (npm/PyPI/NuGet)                                    | `nexus-system/nexus` `nexus-default`                                                                                                                 |
 | Traefik             | web `8080`                                                       | `allow-web-traefik-ingress` (this app)                                                                                                               |
 
