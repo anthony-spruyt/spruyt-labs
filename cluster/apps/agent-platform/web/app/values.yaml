@@ -65,6 +65,13 @@ controllers:
           Livemap__RequiredChecks__4: "repo / Build and test the compat tool"
           Livemap__RequiredChecks__5: "repo / Classify the pull request"
           Livemap__RequiredChecks__6: "summary / Check Results"
+          Livemap__ReleaseBot: "repo-operator-release-bot[bot]"
+          Livemap__ReleaseRequiredChecks__0: "lint / MegaLinter"
+          Livemap__ReleaseRequiredChecks__1: "repo / Build, test, package"
+          Livemap__ReleaseRequiredChecks__2: "repo / Boot the server with the DLL"
+          Livemap__ReleaseRequiredChecks__3: "repo / Build and test the compat tool"
+          Livemap__ReleaseRequiredChecks__4: "repo / Classify the pull request"
+          Livemap__ReleaseRequiredChecks__5: "summary / Check Results"
           OTEL_SERVICE_NAME: agent-platform-web
           OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
           OTEL_EXPORTER_OTLP_ENDPOINT: http://vmsingle-victoria-metrics-k8s-stack.observability.svc:8428/opentelemetry
