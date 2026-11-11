@@ -23,7 +23,9 @@ settings are in `web/app/values.yaml` and `worker/app/values.yaml`. The worker d
 
 Only the worker mounts a ServiceAccount token. Both releases read `AgentGateway__SessionTokenKey` from the `agent-platform-session` Secret. Both use the Temporal namespace `agent-platform`.
 Both set the same `Livemap__*` values, so change them together: the web role wakes a Livemap build only for check suites of `Livemap__Repo`, and with `Livemap__Enabled` on both roles fail startup when a required one is missing or invalid.
-`Livemap__RequiredChecks__<n>` are the fork's check-run names that must pass before the worker merges a data pull request; `Livemap__AutoMerge` switches that merge on. A skipped check counts as failed, so list only checks that run on a data-only pull request.
+`Livemap__RequiredChecks__<n>` are the fork's check-run names that must pass before the worker merges a data pull request, and `Livemap__ReleaseRequiredChecks__<n>` the ones that must pass on the fork's release pull request, opened by `Livemap__ReleaseBot`.
+A skipped check counts as failed, so list only checks that run on that kind of pull request. `Livemap__AutoMerge` switches on every worker merge: the data pull request, the release pull request and the pin pull request in this repo.
+Renovate bumps the image on its own, so when a release adds a required `Livemap__*` value, set it here before that release merges; older images ignore values they do not know.
 
 The worker pod runs a `migrate` initContainer (same image, `AgentPlatform__Role: Migrate`) that applies the run-data EF Core migrations before the worker starts; the web pod has no database access.
 
