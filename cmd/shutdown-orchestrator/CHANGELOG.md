@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.33](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.32...shutdown-orchestrator/v1.1.33) (2026-11-13)
+
+
+### Dependencies
+
+* **deps:** update container image gcr.io/distroless/static to 25ac8f0 ([#4222](https://github.com/anthony-spruyt/spruyt-labs/issues/4222)) ([65ac89e](https://github.com/anthony-spruyt/spruyt-labs/commit/65ac89e9f280aba72ae4fb94c3d1f8a81034d6c2))
+
 ## [1.1.32](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.31...shutdown-orchestrator/v1.1.32) (2026-11-03)
 
 
