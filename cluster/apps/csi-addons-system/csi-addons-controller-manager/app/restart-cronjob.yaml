@@ -69,7 +69,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: restart
-              image: alpine/k8s:1.36.6@sha256:d9cb78be55e6e47c54e8a77bbf35ef87e98e5a03fbe5db7654d28bb78cc7d57e
+              image: alpine/k8s:1.37.1@sha256:712dc5385d1c1a3f83b747fa9e40f64d433a97f72ff42f9755ff7dd1f62846e4
               command:
                 - /bin/sh
                 - -c
