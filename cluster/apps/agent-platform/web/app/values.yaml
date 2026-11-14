@@ -29,7 +29,7 @@ controllers:
         image:
           repository: docker.io/aspruyt/agent-platform
           # renovate: datasource=docker depName=docker.io/aspruyt/agent-platform
-          tag: "1.26.0@sha256:b4ee18ca26b5c5ffe1ab0482b101dbf53aa0d49a9e24fc1aa93088cd3fdee10a"
+          tag: "1.27.0@sha256:2617081f1c9497324734b59d94af72554f28ec0ea38ed0a1f428d1af9a549f96"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
