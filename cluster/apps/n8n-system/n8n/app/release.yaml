@@ -80,7 +80,7 @@ spec:
                   spec:
                     containers:
                       - name: mcp-header-proxy
-                        image: docker.io/aspruyt/mcp-header-proxy:1.0.3@sha256:908361d7ba235fff65f461539aa7686a121e3e44c05f30dd4885ebe831074fcc
+                        image: docker.io/aspruyt/mcp-header-proxy:1.0.4@sha256:73b1e3b677d004d5ba8991bcfd56f109b762c298b6c970d6511b2b32b6471621
                         env:
                           - name: UPSTREAM_URL
                             value: http://localhost:5678
