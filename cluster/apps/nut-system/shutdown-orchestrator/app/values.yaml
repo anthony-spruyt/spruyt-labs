@@ -29,7 +29,7 @@ controllers:
       app:
         image:
           repository: docker.io/aspruyt/shutdown-orchestrator
-          tag: 1.1.32@sha256:ab6b57abd49ee5998989727222076ed3443bcd04f1d141346a953cd528a682fc
+          tag: 1.1.33@sha256:03c8793b2e3de23f3f0af2a9c2569073b6e9fb2ef4fe54167627f0f191b7d00b
           pullPolicy: IfNotPresent
         env:
           - name: NUT_SERVER
