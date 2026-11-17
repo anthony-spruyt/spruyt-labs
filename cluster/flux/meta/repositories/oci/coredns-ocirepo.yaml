@@ -7,8 +7,8 @@ metadata:
   namespace: flux-system
 spec:
   ref:
-    tag: "1.50.1"
-    digest: sha256:8d4d61023c039ea959d4dd571d8a333b5a437ff9e32ea96320c7c803fb91219d
+    tag: "1.50.3"
+    digest: sha256:df24da082af7115e9914ea4b48ac828cff3281b052804894125d92445e90e378
   url: oci://ghcr.io/coredns/charts/coredns
   secretRef:
     name: image-pull-secrets
