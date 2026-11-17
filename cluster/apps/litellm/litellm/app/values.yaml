@@ -1388,7 +1388,7 @@ persistence:
     type: image
     image:
       repository: docker.io/aspruyt/litellm-middleware
-      tag: 1.7.2@sha256:4249f9ea03c768dbfe9d347ccf97bc6de0405248d118c2f82bf1f9cc6a6618bf
+      tag: 1.7.3@sha256:3de79c3a499465425082bd69a566d1827a825bc61b1856a525e29869eee541bf
     pullPolicy: IfNotPresent
     advancedMounts:
       litellm:
