@@ -36,7 +36,7 @@ controllers:
               - ALL
         image:
           repository: docker.io/aspruyt/chrony
-          tag: "5.0.8@sha256:9da6d03ea9f68cc673edaefb0a4903e51fae9f3607538cef9da43a4ec60b3b99"
+          tag: "5.0.9@sha256:e7baae17ffd2f9896d8399183ed228b78010c18b276764f49cdf1dd3e4956266"
           pullPolicy: IfNotPresent
         ports:
           - containerPort: 1123
