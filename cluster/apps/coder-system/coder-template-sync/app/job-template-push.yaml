@@ -32,7 +32,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: push
-          image: docker.io/aspruyt/coder-gitops:1.0.32@sha256:27b77f571dfb1a7ffe6c505ca592746756ea5b5bdf7a6642dc8a818061c32980
+          image: docker.io/aspruyt/coder-gitops:1.0.33@sha256:2e3947909ba7fa061b26db07bfa2f2dabf67a0fc5b5451a19d341e923348fddd
           command: ["/usr/local/bin/push-templates.sh"]
           env:
             - name: CODER_URL
