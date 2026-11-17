@@ -315,7 +315,7 @@ controllers:
       llm-tool-guard:
         image:
           repository: docker.io/aspruyt/llm-tool-guard
-          tag: "1.7.7@sha256:d392af3966fd4fe538a24ddb028272c0d6d97f65879ff993f39baa04ab8f5638"
+          tag: "1.7.8@sha256:c1b91cf90b7b80432c6d4adb2677b77d8602eaf322534d9f6bea389c1781f5b9"
           pullPolicy: IfNotPresent
         lifecycle:
           preStop:
