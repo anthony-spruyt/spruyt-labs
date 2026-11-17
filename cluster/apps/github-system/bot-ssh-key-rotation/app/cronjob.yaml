@@ -30,7 +30,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: rotate-ssh-key
-              image: docker.io/aspruyt/ssh-key-rotation:2.0.13@sha256:886c12a35fcdd920d9f70ecfda27f4709880f5f6656e0d49431b9d4d9f54c678
+              image: docker.io/aspruyt/ssh-key-rotation:2.0.14@sha256:aeba396151addf1bbba93a6c6262a5a549fee18c6391a7131f0f72d285116fb5
               env:
                 - name: GITHUB_PAT
                   valueFrom:
