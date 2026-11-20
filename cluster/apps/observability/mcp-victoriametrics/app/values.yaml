@@ -18,7 +18,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/victoriametrics/mcp-victoriametrics
-          tag: v1.20.2@sha256:bcbf84f945d6efb03fb8b2d2ccc3294420dccdc0b445752dce96f02619416dfe
+          tag: v1.21.0@sha256:c03d2a0160871d0870cf082c39c04046fb7951b3cd9ac459f4e1daebc1599e44
           pullPolicy: IfNotPresent
         env:
           - name: VM_INSTANCE_ENTRYPOINT
