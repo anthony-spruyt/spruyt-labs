@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.34](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.33...shutdown-orchestrator/v1.1.34) (2026-11-21)
+
+
+### Dependencies
+
+* **deps:** update container image gcr.io/distroless/static to aafe993 ([#4336](https://github.com/anthony-spruyt/spruyt-labs/issues/4336)) ([dba752a](https://github.com/anthony-spruyt/spruyt-labs/commit/dba752a09172fa2839c22e4c55ff52e1e165efff))
+* **deps:** update module golang.org/x/crypto to v0.59.0 [security] ([#4304](https://github.com/anthony-spruyt/spruyt-labs/issues/4304)) ([cdc9a49](https://github.com/anthony-spruyt/spruyt-labs/commit/cdc9a492917bbed07463c96d053c069fbb301aa3))
+
 ## [1.1.33](https://github.com/anthony-spruyt/spruyt-labs/compare/shutdown-orchestrator/v1.1.32...shutdown-orchestrator/v1.1.33) (2026-11-13)
 
 
