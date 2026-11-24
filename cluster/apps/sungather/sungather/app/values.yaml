@@ -22,7 +22,7 @@ controllers:
       app:
         image:
           repository: docker.io/aspruyt/sungather
-          tag: 3.0.11@sha256:0123f1280384969313490865ddc1eefc1e9857b2af889d0926c894c02534a2af
+          tag: 3.0.12@sha256:763eb8e2b4762f8c980ae05cc276d883045eb6925285ab6b1b0e1b75e87c8353
           pullPolicy: IfNotPresent
         env:
           TZ: ${TIMEZONE}
