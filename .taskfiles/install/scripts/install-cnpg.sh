@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: depName=cloudnative-pg/cloudnative-pg datasource=github-releases
-VERSION="v1.30.1"
+VERSION="v1.30.2"
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
