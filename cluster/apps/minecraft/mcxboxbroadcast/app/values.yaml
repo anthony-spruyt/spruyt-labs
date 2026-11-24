@@ -45,7 +45,7 @@ controllers:
       main:
         image:
           repository: ghcr.io/mcxboxbroadcast/standalone
-          tag: latest@sha256:372ab1c256e980c3e6fe2d593a3ad2391f7fe00f91f5d30ee9c4aba1480e1a0b
+          tag: latest@sha256:6a8c8ad0442f12b6d7cfcafd948c116cd6471429d8ad2254344ec313d9518462
           pullPolicy: IfNotPresent
         env:
           JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
