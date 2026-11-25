@@ -910,6 +910,7 @@ configMaps:
               - unifi_get_switch_capabilities
               - unifi_get_switch_ports
               - unifi_get_system_info
+              - unifi_get_teleport_settings
               - unifi_get_threat_management_settings
               - unifi_get_threat_posture
               - unifi_get_top_clients
@@ -962,7 +963,9 @@ configMaps:
               - unifi_reorder_firewall_policies
               - unifi_set_client_fixed_ap
               - unifi_set_client_ip_settings
+              - unifi_set_device_ip_settings
               - unifi_set_device_led
+              - unifi_set_device_outdoor_mode
               - unifi_set_jumbo_frames
               - unifi_set_site_leds
               - unifi_set_switch_port_profile
@@ -1024,6 +1027,7 @@ configMaps:
               - unifi_subscribe_events
               - unifi_tool_index
               - unifi_unauthorize_guest
+              - unifi_update_teleport_settings
             allow_all_keys: false
             available_on_public_internet: false
           valkeyshared:
