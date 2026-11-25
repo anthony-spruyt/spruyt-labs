@@ -12,8 +12,9 @@ metadata:
     policies.kyverno.io/description: >-
       ghcr.io/berriai/litellm* images in pods in the litellm namespace must
       carry a cosign signature that verifies against the upstream BerriAI
-      public key. The same key is committed in litellm-middleware at
-      cosign/litellm.pub, where CI checks the pinned image against it.
+      public key, or a keyless signature from upstream's release workflow.
+      The key is also committed in litellm-middleware at cosign/litellm.pub,
+      where CI checks the pinned image against it.
 spec:
   validationActions: [Deny]
   failurePolicy: Fail
@@ -52,7 +53,15 @@ spec:
             MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEG06dpKM+vEDnmp2zcjyXgVCXxzRg
             JA5H2LnmwBKQafZGka6OOrWujCEWATQewiAgyD4WQdJ0pvU9RC4mvNAjvQ==
             -----END PUBLIC KEY-----
+    - name: cosignKeyless
+      cosign:
+        keyless:
+          identities:
+            - issuer: https://token.actions.githubusercontent.com
+              subject: https://github.com/BerriAI/project-releaser/.github/workflows/release.yml@refs/heads/main
+          additionalExtensions:
+            githubWorkflowRepository: BerriAI/project-releaser
   validations:
     - expression: >-
-        images.containers.map(image, verifyImageSignatures(image, [attestors.cosign])).all(e, e > 0)
-      message: "LiteLLM images must carry a cosign signature that verifies against the upstream BerriAI public key"
+        images.containers.map(image, verifyImageSignatures(image, [attestors.cosign]) > 0 || verifyImageSignatures(image, [attestors.cosignKeyless]) > 0).all(e, e)
+      message: "LiteLLM images must carry a cosign signature that verifies against the upstream BerriAI public key or a keyless signature from upstream's release workflow"

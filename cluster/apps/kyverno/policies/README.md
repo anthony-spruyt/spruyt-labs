@@ -45,9 +45,11 @@ Strips `imagePullSecrets` from pods pulling from GHCR or Docker Hub. Registry cr
 
 ### verify-litellm-image
 
-`ghcr.io/berriai/litellm*` images in `litellm` pods must carry a cosign signature that verifies against upstream BerriAI's public key (Deny mode). The key is inline in the manifest and also committed in litellm-middleware as `cosign/litellm.pub`, where CI verifies the pinned image against it.
+`ghcr.io/berriai/litellm*` images in `litellm` pods must carry a cosign signature that verifies against upstream BerriAI's public key, or a keyless signature from upstream's release workflow (Deny mode). The key is inline in the manifest and also committed in litellm-middleware as `cosign/litellm.pub`, where CI verifies the pinned image against it. The keyless attestor `cosignKeyless` accepts
+exactly one certificate subject and issuer, as upstream documents in `.github/SECURITY.md` of BerriAI/litellm, from workflow runs in the `BerriAI/project-releaser` repository.
 
-The admission controller looks up signatures on `ghcr.io` and `pkg-containers.githubusercontent.com` and fetches Sigstore TUF metadata from `tuf-repo-cdn.sigstore.dev`; `allow-image-verification-egress` in [network-policies.yaml](../kyverno/app/network-policies.yaml) allows exactly those hosts. The `LiteLLMImageSignatureRejected` and `LiteLLMImageCheckUnavailable` alerts
+The admission controller looks up signatures on `ghcr.io` and `pkg-containers.githubusercontent.com` and fetches Sigstore TUF metadata from `tuf-repo-cdn.sigstore.dev`; `allow-image-verification-egress` in [network-policies.yaml](../kyverno/app/network-policies.yaml) allows exactly those hosts. Keyless verification needs no other host: the attestors set no `ctlog`, so Kyverno checks the
+transparency-log entry embedded in the signature offline against the Sigstore trusted root, and queries no Rekor instance. The `LiteLLMImageSignatureRejected` and `LiteLLMImageCheckUnavailable` alerts
 (`verify-litellm-image-vmrule.yaml`) are critical and route through Alertmanager.
 
 ## Operations
@@ -81,6 +83,17 @@ both keys in this order so the pinned image always verifies:
 3. In one commit, remove the old attestor and its call in the expression, and rename `cosignNext` to `cosign` in the attestor and the expression, so the next rotation starts from the same names.
 
 When upstream revokes a key instead of rotating it, do not overlap the keys: once the litellm-middleware PR has merged and the spruyt-labs Renovate bump PR is open, replace the key data of the `cosign` attestor in one commit and leave the expression as it is. New LiteLLM pods are denied until the bump lands, so merge it straight after.
+
+### Moving LiteLLM to the keyless signer
+
+Upstream signs releases keylessly instead of with a key. While both signers are accepted, `verify-litellm-image.yaml` has the `cosign` (key) and `cosignKeyless` attestors, one `verifyImageSignatures` call each, joined with `||`, key first. Once the pods run an image that litellm-middleware verifies keylessly, drop the key in one commit: remove the `cosign` attestor, then rename `cosignKeyless` to
+`cosign` in the attestor and the expression, leaving one call:
+
+```text
+images.containers.map(image, verifyImageSignatures(image, [attestors.cosign])).all(e, e > 0)
+```
+
+The key-rotation steps above then no longer apply.
 
 ## Troubleshooting
 
