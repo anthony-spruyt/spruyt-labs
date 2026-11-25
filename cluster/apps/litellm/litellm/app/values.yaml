@@ -567,6 +567,7 @@ configMaps:
               - execute
             disallowed_tools:
               - docs
+              - submit_feedback
               - whoami
             allow_all_keys: false
             available_on_public_internet: false
