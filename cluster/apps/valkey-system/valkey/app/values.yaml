@@ -25,7 +25,7 @@ auth:
   # https://valkey.io/topics/acl/
   aclUsers:
     default:
-      permissions: "~* &* -@all"
+      permissions: "~* &* -@all +ping"
     n8n:
       permissions: "~n8n:* &* +@all"
     redisinsight:
@@ -35,16 +35,16 @@ auth:
     metrics:
       permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
 deploymentStrategy: Recreate
-valkeyConfig: |
+extraConfig: |
   appendonly yes
   appendfsync everysec
   no-appendfsync-on-rewrite yes
   maxmemory 256mb
   maxmemory-policy noeviction
-dataStorage:
+persistence:
   enabled: true
-  className: rbd-fast-delete
-  requestedSize: 2Gi
+  size: 2Gi
+  storageClass: rbd-fast-delete
 metrics:
   enabled: true
   serviceMonitor:
@@ -53,6 +53,12 @@ metrics:
     args:
       - --redis.addr=localhost:6379
       - --redis.user=metrics
+    extraEnv:
+      - name: REDIS_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: valkey-users
+            key: metrics
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
