@@ -25,7 +25,7 @@ auth:
   # https://valkey.io/topics/acl/
   aclUsers:
     default:
-      permissions: "~* &* -@all"
+      permissions: "~* &* -@all +ping"
     litellm:
       permissions: "~* &* +@all"
     llm-tool-guard:
@@ -35,17 +35,17 @@ auth:
     metrics:
       permissions: "~* &* +@read +@connection +info +client +config|get +slowlog +latency +memory +cluster|info +cluster|slots +cluster|nodes"
 deploymentStrategy: Recreate
-valkeyConfig: |
+extraConfig: |
   appendonly yes
   appendfsync everysec
   no-appendfsync-on-rewrite yes
   maxmemory 128mb
   # Only TTL'd keys (response cache) are evictable; untimed keys (spend buffer) are kept
   maxmemory-policy volatile-lru
-dataStorage:
+persistence:
   enabled: true
-  className: rbd-fast-delete
-  requestedSize: 1Gi
+  size: 1Gi
+  storageClass: rbd-fast-delete
 metrics:
   enabled: true
   serviceMonitor:
@@ -54,6 +54,12 @@ metrics:
     args:
       - --redis.addr=localhost:6379
       - --redis.user=metrics
+    extraEnv:
+      - name: REDIS_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: litellm-valkey-users
+            key: metrics
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
