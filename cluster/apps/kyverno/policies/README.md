@@ -66,7 +66,8 @@ When LiteLLM pods cannot be admitted and a revert of the policy commit cannot la
 
 Use this when upstream changes its signing identity. `attestors` is a CEL map: name attestors without hyphens so `attestors.<name>` parses, and never leave an expression naming a removed attestor: it still compiles, but the lookup errors at admission and denies the pod unless another `||` call passes. Change the signer in this order so the pinned image always verifies:
 
-1. Add the new identity to `verify-litellm-image.yaml` as a second attestor named `cosignNext` and replace the validation expression with one call per attestor, joined with `||`, `cosign` first. One call per attestor because a single call with both attestors caches a success only when every attestor verifies. Wait for Flux to reconcile `kyverno-policies`.
+1. Confirm the new identity in upstream's `.github/SECURITY.md` Release Signing section.
+   Then add it to `verify-litellm-image.yaml` as a second attestor named `cosignNext` and replace the validation expression with one call per attestor, joined with `||`, `cosign` first. One call per attestor because a single call with both attestors caches a success only when every attestor verifies. Wait for Flux to reconcile `kyverno-policies`.
 
    ```text
    images.containers.map(image, verifyImageSignatures(image, [attestors.cosign]) > 0 || verifyImageSignatures(image, [attestors.cosignNext]) > 0).all(e, e)
