@@ -18,7 +18,7 @@ controllers:
       copy-db:
         image:
           repository: ghcr.io/czlonkowski/n8n-mcp
-          tag: "2.103.1@sha256:5e110b9e880d5cb795ff0bc8bf8613315043bcfecfd041c0dba8fb1cc98e469e"
+          tag: "2.103.2@sha256:e7e8377e8bcb683abbe56e6ced70d142bbd4c607cf0fbea438a9365de14ddef1"
           pullPolicy: IfNotPresent
         command: ["cp", "/app/data/nodes.db", "/mnt/data/nodes.db"]
         securityContext:
@@ -31,7 +31,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/czlonkowski/n8n-mcp
-          tag: "2.103.1@sha256:5e110b9e880d5cb795ff0bc8bf8613315043bcfecfd041c0dba8fb1cc98e469e"
+          tag: "2.103.2@sha256:e7e8377e8bcb683abbe56e6ced70d142bbd4c607cf0fbea438a9365de14ddef1"
           pullPolicy: IfNotPresent
         env:
           - name: MCP_MODE
