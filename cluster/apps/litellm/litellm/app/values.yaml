@@ -545,6 +545,7 @@ configMaps:
             allowed_tools:
               - brave_web_search
             disallowed_tools:
+              - brave_answers
               - brave_image_search
               - brave_llm_context
               - brave_local_search
