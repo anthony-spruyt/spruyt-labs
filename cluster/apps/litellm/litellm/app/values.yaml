@@ -882,6 +882,7 @@ configMaps:
               - unifi_get_event_types
               - unifi_get_firewall_group_details
               - unifi_get_firewall_policy_details
+              - unifi_get_firewall_policy_order
               - unifi_get_firewall_policy_ordering
               - unifi_get_gateway_settings
               - unifi_get_gateway_stats
@@ -966,6 +967,7 @@ configMaps:
               - unifi_set_device_ip_settings
               - unifi_set_device_led
               - unifi_set_device_outdoor_mode
+              - unifi_set_firewall_policy_order
               - unifi_set_jumbo_frames
               - unifi_set_site_leds
               - unifi_set_switch_port_profile
