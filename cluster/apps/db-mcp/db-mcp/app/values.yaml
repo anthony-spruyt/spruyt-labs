@@ -21,7 +21,7 @@ controllers:
       dbhub:
         image:
           repository: docker.io/bytebase/dbhub
-          tag: 2.0.0@sha256:1b722af2af2293736ce3df7e4411b043f61ca7737839c7b9fe4414764c89b68c
+          tag: 2.0.1@sha256:00289fc52124dec779e672b0db646da2cb202c4ee3d1c42588c7c2b8e1a8e8f5
           pullPolicy: IfNotPresent
         args:
           - --transport
