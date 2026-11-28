@@ -1016,6 +1016,7 @@ configMaps:
             disallowed_tools:
               - unifi_authorize_guest
               - unifi_batch
+              - unifi_batch_cancel
               - unifi_batch_status
               - unifi_configure_port_aggregation
               - unifi_create_voucher

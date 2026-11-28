@@ -28,8 +28,8 @@ Two upstream alternatives were considered and rejected: `apps/api` (a separate R
 
 #### When upgrading
 
-On an image bump, new tools show up as drift. Compare the keys of `.module_map` in the new tag's `apps/network/src/unifi_network_mcp/tools_manifest.json` (plus `unifi_get_support_bundle` and the meta-tools named under Tool registration mode) with `allowed_tools` and `disallowed_tools` under `mcp_servers.unifi` in `cluster/apps/litellm/litellm/app/values.yaml`. Add each new tool to one of the two
-lists, keep the lists disjoint, and drop entries upstream removed. Otherwise the daily drift job opens an issue.
+On an image bump, new tools show up as drift. Compare the names in the `.tools` array of the new tag's `apps/network/src/unifi_network_mcp/tools_manifest.json`, except `unifi_load_tools` (it registers only in lazy mode), with `allowed_tools` and `disallowed_tools` under `mcp_servers.unifi` in `cluster/apps/litellm/litellm/app/values.yaml`. Add each new tool to one
+of the two lists, keep the lists disjoint, and drop entries upstream removed. Otherwise the daily drift job opens an issue.
 
 ### LiteLLM registration
 
@@ -55,7 +55,7 @@ After changing any `UNIFI_POLICY_*` variable, check the startup logs for `[polic
 
 `UNIFI_TOOL_REGISTRATION_MODE=eager` registers every tool, meta-tools included, up front. `lazy` is not used: it adds each module's tools to `tools/list` on first use, so the list changes with use and the LiteLLM drift check cannot track it.
 
-LiteLLM exposes the domain tools directly by name, plus `unifi_get_support_bundle`, and hides tools for hardware or features this site doesn't have, plus the meta-tools (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`). `allowed_tools` decides what agents can call and `disallowed_tools` records the tools kept off, so a tool is in exactly one of the two lists.
+LiteLLM exposes the domain tools directly by name, plus `unifi_get_support_bundle`, and hides tools for hardware or features this site doesn't have, plus the meta-tools (the tool index and the execute and batch wrappers). `allowed_tools` decides what agents can call and `disallowed_tools` records the tools kept off, so a tool is in exactly one of the two lists.
 
 ## Troubleshooting
 
